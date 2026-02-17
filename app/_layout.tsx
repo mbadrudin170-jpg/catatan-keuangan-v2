@@ -10,6 +10,8 @@ export default function RootLayout() {
     if (Platform.OS === 'android') {
       NavigationBar.setButtonStyleAsync('dark');
     }
+
+    
   }, []);
   return (
     <KategoriProvider>
