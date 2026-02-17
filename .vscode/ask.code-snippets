@@ -2,7 +2,9 @@
   "Print to console": {
     "prefix": ";ask",
     "body": [
-      "{/** ask:  $1 , selalu tulis kan jalur path file di paling atas setiap file */}"
+      "{/** ask:  $1 ",
+      "ini file terbaru yang sudah saya modifikasi",
+      " selalu tulis kan jalur path file di paling atas setiap file */}",
     ],
     "description": "Log output to console"
   }
