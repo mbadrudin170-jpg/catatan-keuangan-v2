@@ -9,7 +9,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View,
+  View, // Pastikan View diimpor
 } from 'react-native';
 import { useKategori } from '../../context/KategoriContext';
 
@@ -29,8 +29,7 @@ export default function ListKategori() {
   const [teksEdit, setTeksEdit] = useState('');
   const [modalTerlihat, setModalTerlihat] = useState(false);
 
-  // Ref untuk elemen pemicu dan state untuk posisi modal
-  const pemicuRef = useRef(null);
+  const pemicuRef = useRef<View>(null);
   const [posisiModal, setPosisiModal] = useState({ top: 0, left: 0, width: 0 });
 
   const handleTambah = () => {
@@ -74,13 +73,21 @@ export default function ListKategori() {
     setModalTerlihat(false);
   };
 
-  // Fungsi untuk mengukur layout dan menampilkan modal
   const tampilkanModal = () => {
     if (pemicuRef.current) {
-      pemicuRef.current.measure((fx, fy, width, height, px, py) => {
-        setPosisiModal({ top: py + height, left: px, width: width });
-        setModalTerlihat(true);
-      });
+      pemicuRef.current.measure(
+        (
+          fx: number,
+          fy: number,
+          width: number,
+          height: number,
+          px: number,
+          py: number
+        ) => {
+          setPosisiModal({ top: py + height, left: px, width: width });
+          setModalTerlihat(true);
+        }
+      );
     }
   };
 
@@ -125,7 +132,6 @@ export default function ListKategori() {
         </View>
       )}
 
-      {/* Container untuk pilihan kategori, sekarang memiliki ref */}
       <View style={styles.itemContainer}>
         {sedangMengedit ? (
           <TextInput
@@ -136,9 +142,9 @@ export default function ListKategori() {
           />
         ) : (
           <Pressable
-            ref={pemicuRef}
+            ref={pemicuRef as any}
             style={styles.selectorPressable}
-            onPress={tampilkanModal} // <-- Panggil fungsi baru
+            onPress={tampilkanModal}
             disabled={sedangMenambah}
           >
             <View>
@@ -188,7 +194,6 @@ export default function ListKategori() {
         </View>
       </View>
 
-      {/* Modal yang sudah dimodifikasi menjadi Dropdown */}
       <Modal
         visible={modalTerlihat}
         transparent
@@ -202,36 +207,50 @@ export default function ListKategori() {
         <View
           style={[
             styles.dropdownContent,
-            { top: posisiModal.top, left: posisiModal.left, width: posisiModal.width },
+            {
+              top: posisiModal.top,
+              left: posisiModal.left,
+              width: posisiModal.width,
+            },
           ]}
         >
           <FlatList
             data={daftarKategori}
             showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.modalItem,
-                  pressed && styles.modalItemPressed,
-                  item.id === kategoriTerpilih?.id && styles.modalItemActive,
-                ]}
-                onPress={() => handlePilih(item.id)}
-              >
-                <Text
-                  style={[
-                    styles.modalItemText,
-                    item.id === kategoriTerpilih?.id &&
-                      styles.modalItemTextActive,
+            renderItem={({ item }) => {
+              // Pengecekan untuk memastikan item valid sebelum dirender
+              if (
+                !item ||
+                typeof item.id !== 'string' ||
+                typeof item.nama !== 'string'
+              ) {
+                return null; // Jangan render item yang tidak valid
+              }
+              return (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.modalItem,
+                    pressed && styles.modalItemPressed,
+                    item.id === kategoriTerpilih?.id && styles.modalItemActive,
                   ]}
+                  onPress={() => handlePilih(item.id)}
                 >
-                  {item.nama}
-                </Text>
-                {item.id === kategoriTerpilih?.id && (
-                  <Ionicons name="checkmark" size={18} color="#007BFF" />
-                )}
-              </Pressable>
-            )}
-            keyExtractor={(item) => item.id}
+                  <Text
+                    style={[
+                      styles.modalItemText,
+                      item.id === kategoriTerpilih?.id &&
+                        styles.modalItemTextActive,
+                    ]}
+                  >
+                    {item.nama}
+                  </Text>
+                  {item.id === kategoriTerpilih?.id && (
+                    <Ionicons name="checkmark" size={18} color="#007BFF" />
+                  )}
+                </Pressable>
+              );
+            }}
+            keyExtractor={(item, index) => item?.id || `kategori-${index}`}
           />
         </View>
       </Modal>
@@ -344,9 +363,8 @@ const styles = StyleSheet.create({
   },
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'transparent', // <-- Latar belakang dibuat transparan
+    backgroundColor: 'transparent',
   },
-  // Style baru untuk konten dropdown
   dropdownContent: {
     position: 'absolute',
     backgroundColor: 'white',

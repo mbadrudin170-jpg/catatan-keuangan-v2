@@ -10,13 +10,9 @@ import ListSubKategori from './ListSubKategori';
 import TombolSimpan from './TombolSimpan';
 import TombolTipe from './TombolTipe';
 
+// Komponen ini tidak perlu lagi mem-passing props ke TombolTipe
 function FormKategoriContent() {
-  // Logika yang berhubungan dengan tampilan seperti activeTab bisa tetap di sini
-  const [activeTab, setActiveTab] = React.useState('Pemasukkan');
-
   const handleSave = () => {
-    // Fungsi simpan bisa diimplementasikan di sini jika diperlukan,
-    // atau bisa juga dipindahkan ke dalam context jika melibatkan banyak komponen.
     alert('Simpan!');
   };
 
@@ -28,11 +24,11 @@ function FormKategoriContent() {
         </Pressable>
         <Text style={styles.headerText}>Tambah Transaksi</Text>
       </View>
-      <TombolTipe activeTab={activeTab} setActiveTab={setActiveTab} />
-      <ListKategori />{' '}
-      {/** ask:  kok jarak list kategori dengan list sub kategori terlalu jauh
-      ini file terbaru yang sudah saya modifikasi
-       selalu tulis kan jalur path file di paling atas setiap file */}
+
+      {/* TombolTipe tidak lagi memerlukan props karena mengambil state dari context */}
+      <TombolTipe />
+
+      <ListKategori />
       <ListSubKategori />
       <TombolSimpan onPress={handleSave} />
     </SafeAreaView>

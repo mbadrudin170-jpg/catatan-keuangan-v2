@@ -1,25 +1,173 @@
 {
-  /**"Print to console": {
-    "prefix": "",
-    "body": [""],
-    "description": "Log output to console"
-  },*/
-
-  "Print to conole": {
+  "Export Default Function": {
     "prefix": "exdefu",
     "body": ["export default function $1 (){return($2)}"],
     "description": "export default function"
   },
 
-  "Print to console": {
+  "React Native Functional Component": {
     "prefix": "rnfc",
     "body": [
       "import {View, Text, Pressable,} from 'react-native';",
       "import { SafeAreaView } from 'react-native-safe-area-context';",
-      "export default function $1 (){",
+      "export default function ${TM_FILENAME_BASE} (){",
       "return(",
       "<SafeAreaView><View><Pressable><Text></Text></Pressable></View></SafeAreaView>)}"
     ],
-    "description": "komponen lengkap"
+    "description": "Komponen lengkap React Native"
+  },
+
+  "RenderItem for FlatList": {
+    "prefix": "rnrender",
+    "body": [
+      "const renderItem = ({ item }: { item: ${1:any} }) => {",
+      "\treturn (",
+      "\t\t<View style={${2:styles.itemContainer}} key={item.id}>",
+      "\t\t\t<Text>${3:item.nama}</Text>",
+      "\t\t</View>",
+      "\t);",
+      "};"
+    ],
+    "description": "Membuat fungsi renderItem untuk FlatList"
+  },
+
+  "React State Hook": {
+    "prefix": "rnstate",
+    "body": [
+      "const [${1:state}, set${1/(.*)/${1:/capitalize}/}] = useState(${2:null});"
+    ],
+    "description": "Membuat kerangka useState hook"
+  },
+
+  "React Effect Hook": {
+    "prefix": "rneffect",
+    "body": ["useEffect(() => {", "\t${1}", "}, [${2}]);"],
+    "description": "Membuat kerangka useEffect hook"
+  },
+
+  "React Native StyleSheet": {
+    "prefix": "rnstyle",
+    "body": ["const styles = StyleSheet.create({", "\t${1}", "});"],
+    "description": "Membuat kerangka StyleSheet.create"
+  },
+
+  "React Native FlatList": {
+    "prefix": "rnflat",
+    "body": [
+      "<FlatList",
+      "\tdata={${1:data}}",
+      "\trenderItem={renderItem}",
+      "\tkeyExtractor={(item) => item.id.toString()}",
+      "/>"
+    ],
+    "description": "Membuat komponen FlatList lengkap"
+  },
+
+  "React Context API Boilerplate": {
+    "prefix": "rncontext",
+    "body": [
+      "import React, { createContext, useContext, useState, ReactNode } from 'react';",
+      "",
+      "// 1. Definisikan tipe untuk nilai context",
+      "interface ${1:My}ContextType {",
+      "\t${2:value}: string;",
+      "\tset${2/(.*)/${1:/capitalize}/}: (value: string) => void;",
+      "}",
+      "",
+      "// 2. Buat context dengan nilai default",
+      "const ${1:My}Context = createContext<${1:My}ContextType | undefined>(undefined);",
+      "",
+      "// 3. Buat Provider Component",
+      "export function ${1:My}Provider({ children }: { children: ReactNode }) {",
+      "\tconst [${2:value}, set${2/(.*)/${1:/capitalize}/}] = useState<string>('${3:initialValue}');",
+      "",
+      "\tconst contextValue = {",
+      "\t\t${2:value},",
+      "\t\tset${2/(.*)/${1:/capitalize}/},",
+      "\t};",
+      "",
+      "\treturn (",
+      "\t\t<${1:My}Context.Provider value={contextValue}>",
+      "\t\t\t{children}",
+      "\t\t</${1:My}Context.Provider>",
+      "\t);",
+      "}",
+      "",
+      "// 4. Buat custom hook untuk menggunakan context",
+      "export function use${1:My}() {",
+      "\tconst context = useContext(${1:My}Context);",
+      "\tif (context === undefined) {",
+      "\t\tthrow new Error('use${1:My} must be used within a ${1:My}Provider');",
+      "\t}",
+      "\treturn context;",
+      "}"
+    ],
+    "description": "Membuat kerangka lengkap untuk React Context API"
+  },
+
+  "Expo Vector Icon": {
+    "prefix": "rnicon",
+    "body": [
+      "<${1|Ionicons,MaterialIcons,FontAwesome,AntDesign,Entypo|} name=\"${2:icon-name}\" size={${3:24}} color=\"${4:black}\" />"
+    ],
+    "description": "Membuat komponen Ikon dari @expo/vector-icons"
+  },
+
+  "Expo Router Stack Screen": {
+    "prefix": "rnstack",
+    "body": [
+      "<Stack.Screen",
+      "\tname=\"${1:screen-name}\"",
+      "\toptions={{ ",
+      "\t\ttitle: '${2:My Screen}',",
+      "\t\theaderShown: ${3|true,false|}",
+      "\t}} ",
+      "/>"
+    ],
+    "description": "Membuat Stack.Screen untuk Expo Router"
+  },
+
+  "Expo System Navigation Bar Style": {
+    "prefix": "rnsysnav",
+    "body": [
+      "import { useEffect } from 'react';",
+      "import { Platform } from 'react-native';",
+      "import * as NavigationBar from 'expo-navigation-bar';",
+      "",
+      "// ... di dalam komponen Anda",
+      "useEffect(() => {",
+      "  if (Platform.OS !== 'android') {",
+      "    return; // Hanya berjalan di Android",
+      "  }",
+      "",
+      "  const configureNavigationBar = async () => {",
+      "    try {",
+      "      await NavigationBar.setBackgroundColorAsync('${1:white}');",
+      "      await NavigationBar.setButtonStyleAsync('${2|dark,light|}');",
+      "    } catch (error) {",
+      "      console.warn('Gagal mengatur System Navigation Bar:', error);",
+      "    }",
+      "  };",
+      "",
+      "  configureNavigationBar();",
+      "",
+      "  // Optional: Reset warna saat komponen unmount",
+      "  return () => {",
+      "    if (Platform.OS !== 'android') {",
+      "      return;",
+      "    }",
+      "    const resetNavigationBar = async () => {",
+      "      try {",
+      "        await NavigationBar.setBackgroundColorAsync('${3:#1A1A1A}');",
+      "        await NavigationBar.setButtonStyleAsync('${4|light,dark|}');",
+      "      } catch (error) {",
+      "        console.warn('Gagal mereset System Navigation Bar:', error);",
+      "      }",
+      "    };",
+      "    // resetNavigationBar(); // Uncomment untuk mereset saat meninggalkan layar",
+      "  };",
+      "}, []);"
+    ],
+    "description": "Mengatur gaya sistem navigation bar bawah dengan useEffect (Android)"
   }
 }

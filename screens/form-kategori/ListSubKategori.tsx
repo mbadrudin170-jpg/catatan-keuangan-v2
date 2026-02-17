@@ -1,6 +1,6 @@
 // screens/form-kategori/ListSubKategori.tsx
 import { Ionicons } from '@expo/vector-icons';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -13,7 +13,7 @@ import { useKategori } from '../../context/KategoriContext';
 
 export default function ListSubKategori() {
   const {
-    daftarSubKategori,
+    daftarSubKategori, // Langsung gunakan data yang sudah difilter dari context
     kategoriTerpilih,
     idSubKategoriEdit,
     namaSubKategoriEdit,
@@ -27,79 +27,63 @@ export default function ListSubKategori() {
   const [sedangMenambah, setSedangMenambah] = useState(false);
   const [subKategoriBaru, setSubKategoriBaru] = useState('');
 
-  // Filter sub-kategori berdasarkan kategori yang dipilih
-  const subKategoriFilter = useMemo(() => {
-    if (!kategoriTerpilih) return [];
-    return daftarSubKategori.filter(
-      (sub) => sub.idKategori === kategoriTerpilih.id
-    );
-  }, [daftarSubKategori, kategoriTerpilih]);
-
   const handleTambah = () => {
-    if (subKategoriBaru.trim() === '' || !kategoriTerpilih) {
-      return;
-    }
+    if (subKategoriBaru.trim() === '' || !kategoriTerpilih) return;
     tambahSubKategori(subKategoriBaru);
     setSubKategoriBaru('');
     setSedangMenambah(false);
   };
 
-  const renderItem = ({ item }: { item: { id: string; nama: string } }) => {
-    const sedangMengedit = item.id === idSubKategoriEdit;
+  const handleMulaiEdit = (item: { id: string; nama: string }) => {
+    setIdSubKategoriEdit(item.id);
+    setNamaSubKategoriEdit(item.nama);
+    setSedangMenambah(false); // Tutup form tambah jika sedang aktif
+  };
 
-    return (
-      <View
-        style={[styles.itemContainer, sedangMengedit && styles.itemEditing]}
-      >
-        {sedangMengedit ? (
+  const handleBatalEdit = () => {
+    setIdSubKategoriEdit(null);
+    setNamaSubKategoriEdit('');
+  };
+
+  const handleSimpanEdit = () => {
+    perbaruiSubKategori(); // Logika sudah dihandle di context
+  }
+
+  const renderItem = ({ item }: { item: { id: string; nama: string } }) => {
+    const sedangMengeditItemIni = item.id === idSubKategoriEdit;
+
+    if (sedangMengeditItemIni) {
+      return (
+        <View style={styles.inputContainer}>
           <TextInput
-            style={styles.itemInput}
+            style={styles.input}
             value={namaSubKategoriEdit}
             onChangeText={setNamaSubKategoriEdit}
             autoFocus
-            placeholder="Edit nama sub kategori..."
+            placeholder="Edit nama..."
           />
-        ) : (
-          <View style={styles.textWrapper}>
-            <Text style={styles.itemText}>{item.nama}</Text>
+          <View style={styles.inputActions}>
+            <Pressable style={[styles.actionIconBtn, styles.saveButton]} onPress={handleSimpanEdit}>
+              <Ionicons name="checkmark-outline" size={22} color="white" />
+            </Pressable>
+            <Pressable style={[styles.actionIconBtn, styles.cancelButton]} onPress={handleBatalEdit}>
+              <Ionicons name="close-outline" size={22} color="white" />
+            </Pressable>
           </View>
-        )}
+        </View>
+      );
+    }
 
+    return (
+      <View style={styles.itemContainer}>
+        <Text style={styles.itemText}>{item.nama}</Text>
         <View style={styles.itemActions}>
-          {sedangMengedit ? (
-            <>
-              <Pressable
-                style={styles.actionIconBtn}
-                onPress={perbaruiSubKategori}
-              >
-                <Ionicons name="checkmark-circle" size={26} color="#34C759" />
-              </Pressable>
-              <Pressable
-                style={styles.actionIconBtn}
-                onPress={() => setIdSubKategoriEdit(null)}
-              >
-                <Ionicons name="close-circle" size={26} color="#FF3B30" />
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <Pressable
-                style={styles.actionIconBtn}
-                onPress={() => {
-                  setIdSubKategoriEdit(item.id);
-                  setNamaSubKategoriEdit(item.nama);
-                }}
-              >
-                <Ionicons name="create-outline" size={22} color="#007BFF" />
-              </Pressable>
-              <Pressable
-                style={styles.actionIconBtn}
-                onPress={() => hapusSubKategori(item.id)}
-              >
-                <Ionicons name="trash-outline" size={22} color="#FF3B30" />
-              </Pressable>
-            </>
-          )}
+          <Pressable style={styles.editBtn} onPress={() => handleMulaiEdit(item)} disabled={sedangMenambah || idSubKategoriEdit !== null}>
+            <Ionicons name="create-outline" size={20} color="#007BFF" />
+          </Pressable>
+          <Pressable style={styles.deleteBtn} onPress={() => hapusSubKategori(item.id)} disabled={sedangMenambah || idSubKategoriEdit !== null}>
+            <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+          </Pressable>
         </View>
       </View>
     );
@@ -108,13 +92,10 @@ export default function ListSubKategori() {
   return (
     <View style={styles.wrapper}>
       <View style={styles.header}>
-        <Text style={styles.title}>Sub Kategori</Text>
-        {kategoriTerpilih && !sedangMenambah && (
-          <Pressable
-            style={styles.headerAddBtn}
-            onPress={() => setSedangMenambah(true)}
-          >
-            <Ionicons name="add-circle-outline" size={18} color="#007BFF" />
+        <Text style={styles.title}>Sub-Kategori</Text>
+        {kategoriTerpilih && !sedangMenambah && idSubKategoriEdit === null && (
+          <Pressable style={styles.headerAddBtn} onPress={() => setSedangMenambah(true)}>
+            <Ionicons name="add-circle-outline" size={20} color="#007BFF" />
             <Text style={styles.addButtonText}>Tambah</Text>
           </Pressable>
         )}
@@ -124,22 +105,16 @@ export default function ListSubKategori() {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="Input sub kategori baru..."
+            placeholder="Input sub-kategori baru..."
             value={subKategoriBaru}
             onChangeText={setSubKategoriBaru}
             autoFocus
           />
           <View style={styles.inputActions}>
-            <Pressable
-              onPress={handleTambah}
-              style={[styles.iconBtn, styles.saveButton]}
-            >
+            <Pressable style={[styles.actionIconBtn, styles.saveButton]} onPress={handleTambah}>
               <Ionicons name="checkmark-outline" size={22} color="white" />
             </Pressable>
-            <Pressable
-              onPress={() => setSedangMenambah(false)}
-              style={[styles.iconBtn, styles.cancelButton]}
-            >
+            <Pressable style={[styles.actionIconBtn, styles.cancelButton]} onPress={() => setSedangMenambah(false)}>
               <Ionicons name="close-outline" size={22} color="white" />
             </Pressable>
           </View>
@@ -147,23 +122,20 @@ export default function ListSubKategori() {
       )}
 
       <FlatList
-        data={subKategoriFilter}
+        data={daftarSubKategori}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        extraData={idSubKategoriEdit} // re-render on edit change
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={() =>
-          !kategoriTerpilih ? (
+        ListEmptyComponent={() => (
+          <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>
-              Pilih sebuah kategori terlebih dahulu.
+              {!kategoriTerpilih
+                ? 'Pilih sebuah kategori terlebih dahulu.'
+                : 'Belum ada sub-kategori. Silakan tambahkan.'}
             </Text>
-          ) : (
-            <Text style={styles.emptyText}>
-              Belum ada sub-kategori. Silakan tambahkan.
-            </Text>
-          )
-        }
+          </View>
+        )}
       />
     </View>
   );
@@ -174,16 +146,16 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     backgroundColor: '#FFFFFF',
+    paddingTop: 10,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 15,
-    marginTop: 10,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 18,
+    fontSize: 22, // Disesuaikan
     fontWeight: '700',
     color: '#1A1A1A',
   },
@@ -200,7 +172,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12, // Disesuaikan
     gap: 10,
   },
   input: {
@@ -217,7 +189,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
-  iconBtn: {
+  actionIconBtn: {
     width: 44,
     height: 44,
     borderRadius: 12,
@@ -237,46 +209,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 14,
+    padding: 16,
     backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#EEEEEE',
+    borderColor: '#EEE',
     marginBottom: 10,
   },
-  itemEditing: {
-    borderColor: '#007BFF',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-  },
-  textWrapper: {
-    flex: 1,
-  },
   itemText: {
-    fontSize: 16,
-    color: '#333333',
+    fontSize: 17,
     fontWeight: '500',
-  },
-  itemInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#007BFF',
-    fontWeight: '600',
-    paddingVertical: 4,
+    color: '#333',
+    flex: 1, // Memastikan teks tidak terpotong
   },
   itemActions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginLeft: 10,
+    gap: 12,
+    borderLeftWidth: 1,
+    borderLeftColor: '#DDD',
+    paddingLeft: 12,
+    marginLeft: 10, // Memberi jarak antara teks dan tombol
   },
-  actionIconBtn: {
+  editBtn: {
     padding: 4,
   },
+  deleteBtn: {
+    padding: 4,
+  },
+  emptyContainer: {
+    paddingTop: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   emptyText: {
-    textAlign: 'center',
-    marginTop: 20,
     fontSize: 16,
-    color: '#888',
+    color: '#8E8E93',
+    textAlign: 'center',
   },
 });

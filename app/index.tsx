@@ -1,5 +1,5 @@
-import FormKategoriScreen from '@/screens/form-kategori/FormKategoriScreen';
+import KategoriScreen from '@/screens/kategori/KategoriScreen';
 
 export default function index() {
-  return <FormKategoriScreen />;
+  return <KategoriScreen />;
 }

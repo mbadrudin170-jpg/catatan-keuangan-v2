@@ -1,26 +1,26 @@
 // screens/form-kategori/TombolTipe.tsx
 import React from 'react';
-import { View, Pressable, Text, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useKategori } from '../../context/KategoriContext';
 
-interface TombolTipeProps {
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
-}
+// Komponen tidak lagi menerima props
+export default function TombolTipe() {
+  // Mengambil state dan fungsi langsung dari context
+  const { tipeAktif, setTipeAktif } = useKategori();
 
-export default function TombolTipe({ activeTab, setActiveTab }: TombolTipeProps) {
   return (
     <View style={styles.buttonContainer}>
       <Pressable
         style={[
           styles.button,
-          activeTab === 'Pemasukkan' && styles.activePemasukkan,
+          tipeAktif === 'Pemasukkan' && styles.activePemasukkan,
         ]}
-        onPress={() => setActiveTab('Pemasukkan')}
+        onPress={() => setTipeAktif('Pemasukkan')}
       >
         <Text
           style={[
             styles.buttonText,
-            activeTab === 'Pemasukkan' && styles.textPemasukkan,
+            tipeAktif === 'Pemasukkan' && styles.textPemasukkan,
           ]}
         >
           Pemasukkan
@@ -30,14 +30,14 @@ export default function TombolTipe({ activeTab, setActiveTab }: TombolTipeProps)
       <Pressable
         style={[
           styles.button,
-          activeTab === 'Pengeluaran' && styles.activePengeluaran,
+          tipeAktif === 'Pengeluaran' && styles.activePengeluaran,
         ]}
-        onPress={() => setActiveTab('Pengeluaran')}
+        onPress={() => setTipeAktif('Pengeluaran')}
       >
         <Text
           style={[
             styles.buttonText,
-            activeTab === 'Pengeluaran' && styles.textPengeluaran,
+            tipeAktif === 'Pengeluaran' && styles.textPengeluaran,
           ]}
         >
           Pengeluaran
@@ -63,7 +63,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Style khusus saat Pemasukkan aktif
   activePemasukkan: {
     backgroundColor: '#FFFFFF',
     elevation: 3,
@@ -72,7 +71,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
-  // Style khusus saat Pengeluaran aktif
   activePengeluaran: {
     backgroundColor: '#FFFFFF',
     elevation: 3,
@@ -86,11 +84,9 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontWeight: '600',
   },
-  // Warna teks hijau untuk Pemasukkan
   textPemasukkan: {
     color: '#34C759',
   },
-  // Warna teks merah untuk Pengeluaran
   textPengeluaran: {
     color: '#FF3B30',
   },
