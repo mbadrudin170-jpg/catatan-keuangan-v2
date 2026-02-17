@@ -28,7 +28,7 @@
   },
   "Print to conle": {
     "prefix": "inpttxt",
-    "body": ["<InputText/>$1"],
+    "body": ["<TextInput$1/>"],
     "description": "InputText"
   },
   "Print to cosole": {
