@@ -1,0 +1,7 @@
+{
+  "Print to console": {
+    "prefix": ";ask",
+    "body": ["/** ask:  $1  */"],
+    "description": "Log output to console"
+  }
+}

@@ -1,7 +1,24 @@
 {
   "editor.codeActionsOnSave": {
-    "source.fixAll": "explicit",
-    "source.organizeImports": "explicit",
-    "source.sortMembers": "explicit"
-  }
+    // Menjalankan tindakan kode saat menyimpan
+    "source.fixAll": "explicit", // Memperbaiki semua masalah yang dapat diperbaiki secara otomatis
+    "source.organizeImports": "explicit", // Mengatur pernyataan impor
+    "source.sortMembers": "explicit" // Mengurutkan anggota dalam file
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode", // Mengatur Prettier sebagai pemformat kode default
+  "editor.formatOnSave": true, // Secara otomatis memformat seluruh file saat disimpan
+  "editor.formatOnPaste": true, // Secara otomatis memformat kode yang ditempel
+  "files.autoSave": "afterDelay", // Menyimpan file secara otomatis setelah penundaan
+  "files.autoSaveDelay": 1000, // Penundaan dalam milidetik untuk penyimpanan otomatis (1 detik)
+  "editor.bracketPairColorization.enabled": true, // Mewarnai pasangan kurung agar mudah dicocokkan
+  "editor.guides.bracketPairs": "active", // Menampilkan garis panduan untuk pasangan kurung
+  "files.trimTrailingWhitespace": true, // Menghapus spasi kosong di akhir baris saat menyimpan
+  "editor.wordWrap": "off", // Membungkus baris yang melebihi lebar editor
+  "editor.fontLigatures": false, // Mengaktifkan ligatur font (jika font mendukung)
+  "breadcrumbs.enabled": true, // Menampilkan navigasi breadcrumb di bagian atas editor
+  "explorer.compactFolders": true, // Menampilkan folder dalam struktur yang lebih ringkas di Explorer
+
+  // Pengaturan Tambahan
+  "editor.minimap.enabled": true, // Menampilkan minimap di sisi kanan editor
+  "editor.tabSize": 2 // Mengatur lebar tab menjadi 2 spasi
 }

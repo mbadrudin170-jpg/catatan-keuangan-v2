@@ -1,0 +1,25 @@
+{
+  /**"Print to console": {
+    "prefix": "",
+    "body": [""],
+    "description": "Log output to console"
+  },*/
+
+  "Print to conole": {
+    "prefix": "exdefu",
+    "body": ["export default function $1 (){return($2)}"],
+    "description": "export default function"
+  },
+
+  "Print to console": {
+    "prefix": "rnfc",
+    "body": [
+      "import {View, Text, Pressable,} from 'react-native';",
+      "import { SafeAreaView } from 'react-native-safe-area-context';",
+      "export default function $1 (){",
+      "return(",
+      "<SafeAreaView><View><Pressable><Text></Text></Pressable></View></SafeAreaView>)}"
+    ],
+    "description": "komponen lengkap"
+  }
+}

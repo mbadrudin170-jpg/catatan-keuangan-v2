@@ -1,0 +1,49 @@
+{
+  /**"Print to console": {
+    "prefix": "",
+    "body": [""],
+    "description": "Log output to console"
+  },*/
+
+  "Prin": {
+    "prefix": "Viw",
+    "body": ["<View>$1</View>"],
+    "description": "View"
+  },
+
+  "Print to consle": {
+    "prefix": "Txt",
+    "body": ["<Text>$1</Text>"],
+    "description": "Text"
+  },
+  "Print to onsole": {
+    "prefix": "psbl",
+    "body": ["<Pressable>$1</Pressable>"],
+    "description": "Pressable"
+  },
+  "Print to cnsole": {
+    "prefix": "safreviw",
+    "body": ["<SafeAreaView>$1</SafeAreaView>"],
+    "description": "SafeAreaView"
+  },
+  "Print to conle": {
+    "prefix": "inpttxt",
+    "body": ["<InputText/>$1"],
+    "description": "InputText"
+  },
+  "Print to cosole": {
+    "prefix": "ionicns",
+    "body": ["<Ionicons size={24}  color='black'/>"],
+    "description": "Ionicons"
+  },
+  "Print to conole": {
+    "prefix": "push",
+    "body": ["onPress ={()=>router.push('/$1')}"],
+    "description": "router.push"
+  },
+  "Print to console": {
+    "prefix": "back",
+    "body": ["onPress ={()=>router.back()}$1"],
+    "description": "router.back"
+  }
+}
