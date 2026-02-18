@@ -11,6 +11,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 Android previews are defined as a `workspace.onStart` hook and started as a vscode task when the workspace is opened/started.
 
 Note, if you can't find the task, either:
+
 - Rebuild the environment (using command palette: `IDX: Rebuild Environment`), or
 - Run `npm run android -- --tunnel` command manually run android and see the output in your terminal. The device should pick up this new command and switch to start displaying the output from it.
 
@@ -51,3 +52,5 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+- proyek saya ini adalah aplikasi catatan keuangan.

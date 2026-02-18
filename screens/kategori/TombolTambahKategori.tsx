@@ -1,34 +1,42 @@
-import { Pressable, Text, View, StyleSheet } from 'react-native';
+// screens/kategori/TombolTambahKategori.tsx
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function TombolTambahKategori() {
   return (
-    <View style={styles.container}>
-      <Pressable style={styles.button}>
-        <Text style={styles.text}>Tambah</Text>
+    <View style={styles.wadah}>
+      <Pressable
+        style={styles.tombol}
+        onPress={() => router.push('/form-kategori')}
+      >
+        <Text style={styles.teksTombol}>Tambah / Edit</Text>
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
+  wadah: {
+    // Menghapus position: 'absolute' agar tombol menjadi bagian dari alur normal
+    paddingHorizontal: 20,
+    paddingVertical: 15,
   },
-  button: {
+  tombol: {
     backgroundColor: '#007bff',
-    borderRadius: 50,
-    padding: 15,
+    borderRadius: 25,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     elevation: 5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.8,
     shadowRadius: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  text: {
-    color: 'white',
+  teksTombol: {
+    color: '#fff',
     fontWeight: 'bold',
-    textAlign: 'center',
+    fontSize: 16,
   },
 });

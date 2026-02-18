@@ -1,11 +1,14 @@
+// screens/kategori/KategoriScreen.tsx
+import HeaderKategori from '@/screens/kategori/HeaderKategori';
+import ListKategori from '@/screens/kategori/ListKategori';
+import TombolTambahKategori from '@/screens/kategori/TombolTambahKategori';
+import TombolTipe from '@/screens/kategori/TombolTipe';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import HeaderKategori from './HeaderKategori';
-import ListKategori from './ListKategori';
-import TombolTambahKategori from './TombolTambahKategori';
-import TombolTipe from './TombolTipe';
+
 export default function KategoriScreen() {
   return (
-    <SafeAreaView>
+    <SafeAreaView style={styles.container}>
       <HeaderKategori />
       <TombolTipe />
       <ListKategori />
@@ -13,3 +16,9 @@ export default function KategoriScreen() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});
