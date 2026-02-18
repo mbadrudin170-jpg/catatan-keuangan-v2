@@ -2,19 +2,22 @@
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HeaderFormDompet from './HeaderFormDompet';
+import Input from './InputFormDompet';
+import TombolSimpan from './TombolSimpan';
 
 export default function HalamanFormDompet() {
   return (
-    <SafeAreaView style={gaya.wadahAman}>
+    <SafeAreaView style={style.wadahAman}>
       <HeaderFormDompet />
-      <View style={gaya.konten}>
-        {/* Elemen form untuk dompet akan ditambahkan di sini */}
+      <View style={style.konten}>
+        <Input />
+        <TombolSimpan />
       </View>
     </SafeAreaView>
   );
 }
 
-const gaya = StyleSheet.create({
+const style = StyleSheet.create({
   wadahAman: {
     flex: 1,
     backgroundColor: 'white',

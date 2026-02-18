@@ -5,16 +5,16 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function HeaderFormDompet() {
   return (
-    <View style={gaya.wadah}>
+    <View style={style.wadah}>
       <Pressable onPress={() => router.back()}>
         <Ionicons name="arrow-back" size={24} color="black" />
       </Pressable>
-      <Text style={gaya.judul}>Form Dompet</Text>
+      <Text style={style.judul}>Form Dompet</Text>
     </View>
   );
 }
 
-const gaya = StyleSheet.create({
+const style = StyleSheet.create({
   wadah: {
     flexDirection: 'row',
     alignItems: 'center',

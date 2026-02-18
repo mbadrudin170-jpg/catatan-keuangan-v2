@@ -1,5 +1,5 @@
-import HeaderFormDompet from '@/screens/form-dompet/HeaderFormDompet';
+import HalamanFormDompet from '@/screens/form-dompet/FormDompetscreen';
 
 export default function index() {
-  return <HeaderFormDompet />;
+  return <HalamanFormDompet />;
 }

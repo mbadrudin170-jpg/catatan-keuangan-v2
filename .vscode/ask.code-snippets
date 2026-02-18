@@ -5,7 +5,8 @@
       "{/** ask:  $1 ",
       "ini file terbaru yang sudah saya modifikasi",
       " selalu tulis kan jalur path file di paling atas setiap file",
-      " tolong untuk penamaan variabel usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris */}",
+      " tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya",
+      " */}"
     ],
     "description": "Log output to console"
   }
