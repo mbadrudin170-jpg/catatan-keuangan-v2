@@ -13,3 +13,4 @@ Dokumen ini berisi aturan dan pedoman untuk kerja sama antara pengembang dan asi
 9.  **Validasi**: Setelah setiap perubahan pada kode, selalu jalankan perintah `npm run valid` untuk memastikan tidak ada *error* tipe atau *linting*.
 10. **Pratinjau Aplikasi**: Pengembang yang akan bertanggung jawab untuk menjalankan pratinjau (preview) aplikasi.
 11. **Prompt Perintah Cepat**: Jika menerima prompt "p", Gemini akan memeriksa file yang sedang aktif dan mencari komentar yang diawali dengan `ask:` untuk dieksekusi sebagai perintah.
+12. **Konfigurasi ESLint**: Proyek ini menggunakan `eslint.config.js` untuk konfigurasi ESLint. Semua aturan dan plugin ESLint harus didefinisikan di dalam file ini untuk menjaga konsistensi gaya kode.

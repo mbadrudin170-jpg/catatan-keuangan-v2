@@ -1,14 +1,21 @@
 // context/KategoriContext.tsx
 import type { JSX, ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Impor tipe terpusat yang sudah diperbaiki
-import type { Kategori, Subkategori, TipeTransaksi } from '../database/tipe';
+// Impor tipe terpusat
+import type { Kategori, Subkategori, TipeTransaksi } from '@/database/tipe';
+// Impor operasi database
+import {
+  tambahKategori as dbTambahKategori,
+  dapatkanSemuaKategori,
+  hapusKategori as dbHapusKategori,
+  perbaruiKategori as dbPerbaruiKategori,
+  tambahSubkategori as dbTambahSubkategori,
+  hapusSubkategori as dbHapusSubkategori,
+  perbaruiSubkategori as dbPerbaruiSubkategori,
+} from '@/database/operasi';
 
-const KUNCI_PENYIMPANAN = 'kategori_dan_subkategori_storage_v4'; // Versi diubah untuk menghindari konflik data lama
-
-// --- Definisi Tipe Konteks (diperbaiki) ---
+// --- Definisi Tipe Konteks ---
 interface KategoriContextType {
   daftarKategori: Kategori[];
   tipeAktif: TipeTransaksi;
@@ -35,55 +42,17 @@ export const useKategori = (): KategoriContextType => {
   return context;
 };
 
-// --- Data Awal (diperbaiki) ---
-const DATA_AWAL: Kategori[] = [
-  {
-    id: 1,
-    nama: 'Gaji',
-    tipe: 'pemasukan', // huruf kecil
-    ikon: 'cash-outline', // ikon ditambahkan
-    subkategori: [],
-  },
-  {
-    id: 2,
-    nama: 'Kebutuhan',
-    tipe: 'pengeluaran', // huruf kecil
-    ikon: 'basket-outline', // ikon ditambahkan
-    subkategori: [
-      { id: 101, nama: 'Makanan' },
-      { id: 102, nama: 'Transportasi' },
-    ],
-  },
-  {
-    id: 3,
-    nama: 'Hiburan',
-    tipe: 'pengeluaran', // huruf kecil
-    ikon: 'game-controller-outline', // ikon ditambahkan
-    subkategori: [{ id: 103, nama: 'Film' }],
-  },
-];
-
-// --- Provider (diperbaiki) ---
+// --- Provider ---
 export function KategoriProvider({ children }: { children: ReactNode }): JSX.Element {
   const [semuaKategori, setSemuaKategori] = useState<Kategori[]>([]);
-  const [tipeAktif, setTipeAktif] = useState<TipeTransaksi>('pengeluaran'); // huruf kecil
+  const [tipeAktif, setTipeAktif] = useState<TipeTransaksi>('pengeluaran');
 
   const muatKategori = async (): Promise<void> => {
     try {
-      const dataTersimpan = await AsyncStorage.getItem(KUNCI_PENYIMPANAN);
-      const data = dataTersimpan ? JSON.parse(dataTersimpan) : DATA_AWAL;
+      const data = await dapatkanSemuaKategori();
       setSemuaKategori(data);
     } catch (e) {
-      console.error('Gagal memuat kategori:', e);
-      setSemuaKategori(DATA_AWAL);
-    }
-  };
-
-  const simpanKategori = async (data: Kategori[]): Promise<void> => {
-    try {
-      await AsyncStorage.setItem(KUNCI_PENYIMPANAN, JSON.stringify(data));
-    } catch (e) {
-      console.error('Gagal menyimpan kategori:', e);
+      console.error('Gagal memuat kategori dari database:', e);
     }
   };
 
@@ -92,58 +61,48 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   }, []);
 
   const tambahKategori = async (nama: string, ikon: string): Promise<void> => {
-    const kategoriBaru: Kategori = {
-      id: Date.now(), // number, bukan string
-      nama,
-      ikon,
-      tipe: tipeAktif,
-      subkategori: [],
-    };
-    const dataBaru = [...semuaKategori, kategoriBaru];
-    setSemuaKategori(dataBaru);
-    await simpanKategori(dataBaru);
+    try {
+      await dbTambahKategori(nama, ikon, tipeAktif);
+      await muatKategori(); // Muat ulang data setelah menambah
+    } catch (error) {
+      console.error('Gagal menambah kategori:', error);
+    }
   };
 
   const hapusKategori = async (idKategori: number): Promise<void> => {
-    const dataBaru = semuaKategori.filter((k) => k.id !== idKategori);
-    setSemuaKategori(dataBaru);
-    await simpanKategori(dataBaru);
+    try {
+      await dbHapusKategori(idKategori);
+      await muatKategori(); // Muat ulang data setelah menghapus
+    } catch (error) {
+      console.error('Gagal menghapus kategori:', error);
+    }
   };
 
   const perbaruiKategori = async (idKategori: number, namaBaru: string, ikonBaru: string): Promise<void> => {
-    const dataBaru = semuaKategori.map((k) =>
-      k.id === idKategori ? { ...k, nama: namaBaru, ikon: ikonBaru } : k
-    );
-    setSemuaKategori(dataBaru);
-    await simpanKategori(dataBaru);
+    try {
+      await dbPerbaruiKategori(idKategori, namaBaru, ikonBaru);
+      await muatKategori(); // Muat ulang data setelah memperbarui
+    } catch (error) {
+      console.error('Gagal memperbarui kategori:', error);
+    }
   };
 
   const tambahSubkategori = async (idKategori: number, namaSubkategori: string): Promise<void> => {
-    const subkategoriBaru: Subkategori = {
-      id: Date.now(), // number, bukan string
-      nama: namaSubkategori,
-    };
-    const dataBaru = semuaKategori.map((k) =>
-      k.id === idKategori
-        ? { ...k, subkategori: [...(k.subkategori || []), subkategoriBaru] }
-        : k
-    );
-    setSemuaKategori(dataBaru);
-    await simpanKategori(dataBaru);
+    try {
+      await dbTambahSubkategori(idKategori, namaSubkategori);
+      await muatKategori(); // Muat ulang data
+    } catch (error) {
+      console.error('Gagal menambah subkategori:', error);
+    }
   };
 
   const hapusSubkategori = async (idKategori: number, idSubkategori: number): Promise<void> => {
-    const dataBaru = semuaKategori.map((k) => {
-      if (k.id === idKategori) {
-        const subkategoriDiperbarui = (k.subkategori || []).filter(
-          (sub: Subkategori) => sub.id !== idSubkategori // tipe eksplisit ditambahkan
-        );
-        return { ...k, subkategori: subkategoriDiperbarui };
-      }
-      return k;
-    });
-    setSemuaKategori(dataBaru);
-    await simpanKategori(dataBaru);
+    try {
+      await dbHapusSubkategori(idSubkategori);
+      await muatKategori(); // Muat ulang data
+    } catch (error) {
+      console.error('Gagal menghapus subkategori:', error);
+    }
   };
 
   const perbaruiSubkategori = async (
@@ -151,17 +110,12 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
     idSubkategori: number,
     namaBaru: string
   ): Promise<void> => {
-    const dataBaru = semuaKategori.map((k) => {
-      if (k.id === idKategori) {
-        const subkategoriDiperbarui = (k.subkategori || []).map((sub: Subkategori) => // tipe eksplisit ditambahkan
-          sub.id === idSubkategori ? { ...sub, nama: namaBaru } : sub
-        );
-        return { ...k, subkategori: subkategoriDiperbarui };
-      }
-      return k;
-    });
-    setSemuaKategori(dataBaru);
-    await simpanKategori(dataBaru);
+    try {
+      await dbPerbaruiSubkategori(idSubkategori, namaBaru);
+      await muatKategori(); // Muat ulang data
+    } catch (error) {
+      console.error('Gagal memperbarui subkategori:', error);
+    }
   };
 
   const daftarKategoriYangDifilter = semuaKategori.filter(

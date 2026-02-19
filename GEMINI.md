@@ -8,6 +8,6 @@ baca file PEDOMAN_KOLABORASI.md kalau tidak ada di pedoman tambahkan ke pedoman
 6. untuk nama variabel dan nama key harus gunakan bahasa Indonesia ya terkecuali bahasa inggris yang sudah umum di indonesia.
 7. untuk path import gunakan @/ sebagai root nya.
 8. kalau ada error tolong jelaskan secara singkat saja kenapa bisa error.
-9. selalu jalankan npm run valid setelah meelakukan perubahan.
+9. selalu jalankan npm run validate setelah meelakukan perubahan.
 10. biar saya saja yang jalankan preview.
 11. kalau saya kirim prompt "p" maka kamu cek di file yang sedang saya buka disitu ada komentar dengan awalan " ask : " nah itu dia sebuah perintah untuk kamu.
