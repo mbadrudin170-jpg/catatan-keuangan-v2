@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useKategori } from '../../context/KategoriContext';
-import { Kategori, Subkategori } from '../../database/tipe';
+import type { Kategori, Subkategori } from '../../database/tipe';
 
 export default function ListKategori() {
   const { daftarKategori } = useKategori();

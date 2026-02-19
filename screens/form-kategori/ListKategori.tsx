@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useKategori } from '../../context/KategoriContext';
-import { Kategori } from '../../database/tipe';
+import type { Kategori } from '../../database/tipe';
 
 interface ListKategoriProps {
   onKategoriSelect: (kategori: Kategori | null) => void;
@@ -121,7 +121,7 @@ export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
         </View>
       ) : (
         <View>
-          <Pressable ref={pemicuRef as any} onPress={tampilkanModal} style={gaya.pemicuDropdown}>
+          <Pressable ref={pemicuRef as React.Ref<View>} onPress={tampilkanModal} style={gaya.pemicuDropdown}>
             <Text style={gaya.teksDropdown}>{kategoriTerpilih?.nama || 'Pilih Kategori'}</Text>
             <Ionicons name="chevron-down" size={20} color="#6B7280" />
           </Pressable>

@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import type { JSX } from 'react';
 
 import { DompetProvider } from '../context/DompetContext';
 import { KategoriProvider } from '../context/KategoriContext';
@@ -12,19 +13,18 @@ import { TransaksiProvider } from '../context/TransaksiContext';
 import { inisialisasiDB } from '../database/sqlite';
 
 // Mencegah splash screen hilang secara otomatis
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+export default function RootLayout(): JSX.Element | null {
   const [dbInisialisasi, setDbInisialisasi] = useState(false);
 
   useEffect(() => {
-    async function setupAplikasi() {
+    async function setupAplikasi(): Promise<void> {
       try {
         await inisialisasiDB();
-        console.log('Inisialisasi DB dari _layout berhasil.');
 
         if (Platform.OS === 'android') {
-          NavigationBar.setButtonStyleAsync('dark');
+          await NavigationBar.setButtonStyleAsync('dark');
         }
       } catch (e) {
         console.error('Gagal melakukan setup aplikasi dari _layout:', e);
@@ -33,10 +33,10 @@ export default function RootLayout() {
       }
     }
 
-    setupAplikasi();
+    void setupAplikasi();
   }, []);
 
-  const onLayoutRootView = useCallback(async () => {
+  const onLayoutRootView = useCallback(async (): Promise<void> => {
     if (dbInisialisasi) {
       await SplashScreen.hideAsync();
     }

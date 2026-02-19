@@ -1,5 +1,5 @@
 import { useDompet } from '@/context/DompetContext';
-import { Dompet } from '@/database/tipe';
+import type { Dompet } from '@/database/tipe';
 import { useMemo } from 'react';
 
 export const useLogikaDompet = () => {
@@ -8,7 +8,8 @@ export const useLogikaDompet = () => {
   const seksiData = useMemo(() => {
     // Mengelompokkan dompet berdasarkan tipenya
     const dompetDikelompokkan = daftarDompet.reduce((acc, dompet) => {
-      const { tipe } = dompet;
+      // Jika dompet.tipe tidak ada, kelompokkan ke dalam 'Lainnya'
+      const tipe = dompet.tipe || 'Lainnya';
       if (!acc[tipe]) {
         acc[tipe] = [];
       }

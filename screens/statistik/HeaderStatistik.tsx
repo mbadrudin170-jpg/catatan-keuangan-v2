@@ -16,11 +16,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 16,
     paddingTop: 16,
-    backgroundColor: WARNA.bg,
+    backgroundColor: WARNA.BG,
   },
   judul: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: WARNA.teksUtama,
+    color: WARNA.TEKS_UTAMA,
   },
 });

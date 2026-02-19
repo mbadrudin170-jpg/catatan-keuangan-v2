@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useKategori } from '../../context/KategoriContext';
-import { Kategori, Subkategori } from '../../database/tipe'; // Impor Subkategori
+import type { Kategori, Subkategori } from '../../database/tipe'; // Impor Subkategori
 
 interface Props {
   kategoriTerpilih: Kategori | null;

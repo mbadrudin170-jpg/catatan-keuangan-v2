@@ -1,7 +1,10 @@
 // screens/form-dompet/modal/ModalTipeDompet.tsx
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react'; // Impor React untuk mengakses tipe
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { DataFormDompet, useDompet } from '../../../context/DompetContext';
+
+import type { DataFormDompet } from '../../../context/DompetContext';
+import { useDompet } from '../../../context/DompetContext';
 
 const daftarTipeDompet = [
   { id: 1, nama: 'Dompet Digital', ikon: 'wallet-outline' },
@@ -53,7 +56,7 @@ export default function ModalTipeDompet() {
                 onPress={() => handlePilihTipe(item)}
               >
                 <Ionicons
-                  name={item.ikon as any}
+                  name={item.ikon as React.ComponentProps<typeof Ionicons>['name']}
                   size={22}
                   // Ubah warna ikon jika terpilih
                   color={terpilih ? warna.primer : warna.teksSekunder}

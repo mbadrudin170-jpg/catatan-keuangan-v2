@@ -1,6 +1,7 @@
 // screens/statistik/util.ts
-import { FilterPeriode } from './data';
-import { format, sub, startOfWeek, endOfWeek } from 'date-fns';
+import { endOfWeek, format, startOfWeek, sub } from 'date-fns';
+import { id as idLocale } from 'date-fns/locale';
+import type { FilterPeriode } from './tipe';
 
 export const formatRupiah = (angka: number): string => {
   if (angka >= 1_000_000_000) return `Rp ${(angka / 1_000_000_000).toFixed(1)}M`;
@@ -28,29 +29,32 @@ export const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat',
 
 export const getLabelPeriode = (periode: FilterPeriode, offset: number): string => {
   const sekarang = new Date();
+  // Offset dibuat absolut karena nilainya negatif saat mundur (misal: -1 untuk kemarin)
+  // sedangkan `sub` dari date-fns butuh angka positif untuk mengurangi tanggal.
+  const offsetAbs = Math.abs(offset);
 
   if (periode === 'harian') {
-    const tgl = sub(sekarang, { days: offset });
     if (offset === 0) return 'Hari Ini';
     if (offset === -1) return 'Kemarin';
-    return format(tgl, 'EEEE, dd MMMM yyyy');
+    const tgl = sub(sekarang, { days: offsetAbs });
+    return format(tgl, 'EEEE, dd MMMM yyyy', { locale: idLocale });
   }
 
   if (periode === 'mingguan') {
-    const targetMinggu = sub(sekarang, { weeks: offset });
+    const targetMinggu = sub(sekarang, { weeks: offsetAbs });
     const senin = startOfWeek(targetMinggu, { weekStartsOn: 1 });
     const minggu = endOfWeek(targetMinggu, { weekStartsOn: 1 });
-    const formatTanggal = (tgl: Date) => format(tgl, 'dd MMM');
+    const formatTanggal = (tgl: Date) => format(tgl, 'dd MMM', { locale: idLocale });
     return `${formatTanggal(senin)} - ${formatTanggal(minggu)} ${format(senin, 'yyyy')}`;
   }
 
   if (periode === 'bulanan') {
-    const tgl = sub(sekarang, { months: offset });
-    return format(tgl, 'MMMM yyyy');
+    const tgl = sub(sekarang, { months: offsetAbs });
+    return format(tgl, 'MMMM yyyy', { locale: idLocale });
   }
 
   if (periode === 'tahunan') {
-    const tgl = sub(sekarang, { years: offset });
+    const tgl = sub(sekarang, { years: offsetAbs });
     return format(tgl, 'yyyy');
   }
 

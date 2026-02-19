@@ -2,8 +2,9 @@
 import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import type { JSX } from 'react';
 
-export default function Index() {
+export default function Index(): JSX.Element {
   return (
     <SafeAreaView style={gaya.penampung}>
       <View style={gaya.header}>

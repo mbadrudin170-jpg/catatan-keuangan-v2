@@ -3,7 +3,7 @@ import React from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useDompet } from '../../../context/DompetContext';
 import { useTransaksi } from '../../../context/TransaksiContext';
-import { Dompet } from '../../../database/tipe';
+import type { Dompet } from '../../../database/tipe';
 
 interface Props {
   terlihat: boolean;

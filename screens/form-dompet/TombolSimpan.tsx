@@ -1,46 +1,47 @@
 // screens/form-dompet/TombolSimpan.tsx
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text } from 'react-native';
-import { useDompet } from '../../context/DompetContext';
 
-export default function TombolSimpan() {
-  // Ambil fungsi yang dibutuhkan dari context
-  const { simpanDompetBaru, setDataForm } = useDompet();
+import { useDompet } from '@/context/DompetContext';
 
-  // Buat fungsi handler untuk menangani beberapa aksi sekaligus
+// Terima prop `idEdit` yang bisa berupa angka atau undefined
+export default function TombolSimpan({ idEdit }: { idEdit?: number }) {
+  const { simpanDompetBaru, perbaruiDompet } = useDompet();
+
   const handleSimpan = async () => {
     try {
-      // 1. Panggil fungsi untuk menyimpan data
-      await simpanDompetBaru();
-
-      // 2. Jika berhasil, kembali ke layar sebelumnya
+      if (idEdit !== undefined) {
+        // Jika ada idEdit, panggil fungsi perbarui
+        await perbaruiDompet(idEdit);
+      } else {
+        // Jika tidak, panggil fungsi simpan baru
+        await simpanDompetBaru();
+      }
+      // Setelah berhasil, kembali ke layar sebelumnya
       router.back();
-
-      // 3. Bersihkan state form agar siap untuk input berikutnya
-      setDataForm({
-        namaDompet: '',
-        saldoAwal: '',
-        tipe: '',
-        ikon: '',
-      });
     } catch (error) {
-      console.error('Gagal menyimpan dompet:', error);
-      // Di sini bisa ditambahkan feedback ke pengguna jika terjadi error
+      // Pesan error lebih spesifik berdasarkan konteks
+      const aksi = idEdit !== undefined ? 'memperbarui' : 'menyimpan';
+      console.error(`Gagal ${aksi} dompet:`, error);
+      // Di sini bisa ditambahkan feedback ke pengguna
     }
   };
 
   return (
     <Pressable
       style={({ pressed }) => [gaya.tombol, pressed && gaya.tombolDitekan]}
-      onPress={handleSimpan} // Gunakan handler yang baru
+      onPress={handleSimpan}
     >
-      <Text style={gaya.teksTombol}>Simpan</Text>
+      {/* Teks tombol dinamis berdasarkan mode (edit atau simpan) */}
+      <Text style={gaya.teksTombol}>
+        {idEdit !== undefined ? 'Perbarui' : 'Simpan'}
+      </Text>
     </Pressable>
   );
 }
 
 const warna = {
-  primer: '#3b82f6', // Biru modern
+  primer: '#3b82f6',
   putih: '#ffffff',
 };
 
@@ -52,15 +53,15 @@ const gaya = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 24, // Beri jarak dari elemen di atasnya
-    elevation: 2, // Bayangan untuk Android
+    marginTop: 24,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
   tombolDitekan: {
-    opacity: 0.9, // Efek saat tombol ditekan
+    opacity: 0.9,
   },
   teksTombol: {
     color: warna.putih,

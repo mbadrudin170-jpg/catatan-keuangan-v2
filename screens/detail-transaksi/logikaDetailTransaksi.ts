@@ -3,12 +3,17 @@ import { useTransaksi } from '@/context/TransaksiContext';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 
-export function useLogikaDetailTransaksi() {
+interface TipeLogikaDetailTransaksi {
+  isLoading: boolean;
+  hapusTransaksi: () => Promise<void>;
+}
+
+export function useLogikaDetailTransaksi(): TipeLogikaDetailTransaksi {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { hapusSatuTransaksi } = useTransaksi();
   const [isLoading, setIsLoading] = useState(false);
 
-  const hapusTransaksi = async () => {
+  const hapusTransaksi = async (): Promise<void> => {
     if (!id) return;
 
     setIsLoading(true);

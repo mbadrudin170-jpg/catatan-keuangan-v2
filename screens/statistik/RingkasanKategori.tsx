@@ -1,36 +1,35 @@
 // screens/statistik/RingkasanKategori.tsx
+import type { TipeTransaksi } from '@/database/tipe';
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { TipeTransaksi, Kategori } from '@/database/tipe';
-import { RingkasanKategori as RingkasanKategoriTipe } from './data';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // DIUBAH
 import { WARNA } from './konstanta';
+import { useStatistik } from './StatistikContext';
+import type { RingkasanKategori as RingkasanKategoriTipe } from './tipe';
 
 // ─────────────────────────────────────────────
 // ITEM KATEGORI
 // ─────────────────────────────────────────────
 interface ItemKategoriProps {
   ringkasan: RingkasanKategoriTipe;
-  indeks: number;
+  persentase: number;
   onTekan: () => void;
 }
 
-const ItemKategori = ({ ringkasan, indeks, onTekan }: ItemKategoriProps) => (
+const ItemKategori = ({ ringkasan, persentase, onTekan }: ItemKategoriProps) => (
   <TouchableOpacity style={styles.itemContainer} onPress={onTekan}>
     <View style={styles.itemInfo}>
-      <Text style={styles.itemIkon}>{ringkasan.kategori.ikon || '❓'}</Text>
-      <Text style={styles.itemNama}>{ringkasan.kategori.nama}</Text>
+      <Text style={styles.itemIkon}>{ringkasan.ikon || '❓'}</Text>
+      <Text style={styles.itemNama}>{ringkasan.nama}</Text>
     </View>
     <View style={styles.itemJumlahContainer}>
-      <Text style={styles.itemJumlah}>
-        Rp {ringkasan.total.toLocaleString('id-ID')}
-      </Text>
+      <Text style={styles.itemJumlah}>Rp {ringkasan.total.toLocaleString('id-ID')}</Text>
       <View style={styles.persentaseBarContainer}>
         <View
           style={[
             styles.persentaseBar,
             {
-              width: `${ringkasan.persentase}%`,
-              backgroundColor: WARNA.biru, // Warna bisa disesuaikan
+              width: `${persentase}%`,
+              backgroundColor: WARNA.BIRU, // Warna bisa disesuaikan
             },
           ]}
         />
@@ -40,7 +39,7 @@ const ItemKategori = ({ ringkasan, indeks, onTekan }: ItemKategoriProps) => (
 );
 
 // ─────────────────────────────────────────────
-// TAB TIPE
+// TAB TIPE - DIPERBARUI
 // ─────────────────────────────────────────────
 interface TabTipeProps {
   aktif: TipeTransaksi;
@@ -49,62 +48,71 @@ interface TabTipeProps {
 
 const TabTipe = ({ aktif, onUbah }: TabTipeProps) => (
   <View style={styles.tabContainer}>
-    <TouchableOpacity
-      style={[styles.tab, aktif === 'pengeluaran' && styles.tabAktif]}
+    <Pressable
+      style={[styles.tab, aktif === 'pengeluaran' && { backgroundColor: WARNA.MERAH }]}
       onPress={() => onUbah('pengeluaran')}
     >
       <Text style={[styles.teksTab, aktif === 'pengeluaran' && styles.teksTabAktif]}>
         Pengeluaran
       </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      style={[styles.tab, aktif === 'pemasukan' && styles.tabAktif]}
+    </Pressable>
+    <Pressable
+      style={[styles.tab, aktif === 'pemasukan' && { backgroundColor: WARNA.HIJAU }]}
       onPress={() => onUbah('pemasukan')}
     >
-      <Text style={[styles.teksTab, aktif === 'pemasukan' && styles.teksTabAktif]}>
-        Pemasukan
-      </Text>
-    </TouchableOpacity>
+      <Text style={[styles.teksTab, aktif === 'pemasukan' && styles.teksTabAktif]}>Pemasukan</Text>
+    </Pressable>
   </View>
 );
 
+// ─────────────────────────────────────────────
+// KOMPONEN UTAMA
+// ─────────────────────────────────────────────
+export const RingkasanKategori = () => {
+  const { tabKategori, setTabKategori, ringkasanPemasukan, ringkasanPengeluaran } = useStatistik();
 
-interface RingkasanKategoriProps {
-  tabAktif: TipeTransaksi;
-  onTabChange: (tab: TipeTransaksi) => void;
-  ringkasanAktif: RingkasanKategoriTipe[];
-  onPilihKategori: (kategori: Kategori) => void;
-}
+  const ringkasanAktif = tabKategori === 'pemasukan' ? ringkasanPemasukan : ringkasanPengeluaran;
 
-export const RingkasanKategori = ({ tabAktif, onTabChange, ringkasanAktif, onPilihKategori }: RingkasanKategoriProps) => (
-  <View style={styles.seksi}>
-    <Text style={styles.judulSeksi}>Berdasarkan Kategori</Text>
-    <TabTipe aktif={tabAktif} onUbah={onTabChange} />
-    {ringkasanAktif.length === 0 ? (
-      <View style={styles.kosong}>
-        <Text style={styles.teksKosong}>Belum ada data pada periode ini</Text>
-      </View>
-    ) : (
-      ringkasanAktif.map((r, i) => (
-        <ItemKategori
-          key={r.kategori.id}
-          ringkasan={r}
-          indeks={i}
-          onTekan={() => onPilihKategori(r.kategori)}
-        />
-      ))
-    )}
-  </View>
-);
+  const onPilihKategori = (kategori: RingkasanKategoriTipe) => {
+    // Aksi ini bisa digunakan untuk navigasi ke detail kategori
+  };
+
+  const totalKeseluruhan = ringkasanAktif.reduce((acc, curr) => acc + curr.total, 0);
+
+  return (
+    <View style={styles.seksi}>
+      <Text style={styles.judulSeksi}>Berdasarkan Kategori</Text>
+      <TabTipe aktif={tabKategori} onUbah={setTabKategori} />
+      {ringkasanAktif.length === 0 ? (
+        <View style={styles.kosong}>
+          <Text style={styles.teksKosong}>Belum ada data pada periode ini</Text>
+        </View>
+      ) : (
+        ringkasanAktif.map((r) => {
+          const persentase = totalKeseluruhan > 0 ? (r.total / totalKeseluruhan) * 100 : 0;
+          return (
+            <ItemKategori
+              key={r.id}
+              ringkasan={r}
+              persentase={persentase}
+              onTekan={() => onPilihKategori(r)}
+            />
+          );
+        })
+      )}
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
- seksi: {
-    backgroundColor: WARNA.surface,
+  seksi: {
+    backgroundColor: WARNA.SURFACE,
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
+    marginHorizontal: 20,
     borderWidth: 1,
-    borderColor: WARNA.border,
+    borderColor: WARNA.BORDER,
     shadowColor: '#94A3B8',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -114,7 +122,7 @@ const styles = StyleSheet.create({
   judulSeksi: {
     fontSize: 16,
     fontWeight: '700',
-    color: WARNA.teksUtama,
+    color: WARNA.TEKS_UTAMA,
     marginBottom: 16,
   },
   kosong: {
@@ -123,11 +131,11 @@ const styles = StyleSheet.create({
   },
   teksKosong: {
     fontSize: 14,
-    color: WARNA.teksTersier,
+    color: WARNA.TEKS_TERSIER,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: WARNA.bg,
+    backgroundColor: WARNA.BG,
     borderRadius: 99,
     padding: 4,
     marginBottom: 16,
@@ -138,13 +146,11 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     alignItems: 'center',
   },
-  tabAktif: {
-    backgroundColor: WARNA.utama,
-  },
+  // Style tabAktif tidak lagi diperlukan karena warna diatur dinamis
   teksTab: {
     fontSize: 13,
     fontWeight: '600',
-    color: WARNA.teksUtama,
+    color: WARNA.TEKS_UTAMA,
   },
   teksTabAktif: {
     color: 'white',
@@ -155,7 +161,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: WARNA.border,
+    borderBottomColor: WARNA.BORDER,
   },
   itemInfo: {
     flexDirection: 'row',
@@ -168,7 +174,7 @@ const styles = StyleSheet.create({
   itemNama: {
     fontSize: 14,
     fontWeight: '600',
-    color: WARNA.teksUtama,
+    color: WARNA.TEKS_UTAMA,
   },
   itemJumlahContainer: {
     alignItems: 'flex-end',
@@ -176,13 +182,13 @@ const styles = StyleSheet.create({
   itemJumlah: {
     fontSize: 14,
     fontWeight: '700',
-    color: WARNA.teksUtama,
+    color: WARNA.TEKS_UTAMA,
     marginBottom: 4,
   },
   persentaseBarContainer: {
     height: 4,
-    width: 60, // Sesuaikan lebar bar
-    backgroundColor: WARNA.bg,
+    width: 60,
+    backgroundColor: WARNA.BG,
     borderRadius: 2,
   },
   persentaseBar: {

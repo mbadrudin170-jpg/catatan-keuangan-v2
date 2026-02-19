@@ -1,11 +1,17 @@
-
 // screens/statistik/FilterPeriode.tsx
-import React from 'react';
-import { View, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { Feather } from '@expo/vector-icons';
-import { FilterPeriode as FilterPeriodeTipe } from './data';
-import { getLabelPeriode } from './util';
+import React from 'react';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { WARNA } from './konstanta';
+import { useStatistik } from './StatistikContext'; // DIUBAH
+import type { FilterPeriode as FilterPeriodeTipe } from './tipe';
+import { getLabelPeriode } from './util';
 
 // ─────────────────────────────────────────────
 // CHIP PERIODE
@@ -21,9 +27,7 @@ const ChipPeriode = ({ label, aktif, onTekan }: ChipPeriodeProps) => (
     style={[styles.chip, aktif && styles.chipAktif]}
     onPress={onTekan}
   >
-    <Text style={[styles.teksChip, aktif && styles.teksChipAktif]}>
-      {label}
-    </Text>
+    <Text style={[styles.teksChip, aktif && styles.teksChipAktif]}>{label}</Text>
   </TouchableOpacity>
 );
 
@@ -40,38 +44,37 @@ interface NavigasiPeriodeProps {
 const NavigasiPeriode = ({ label, onKiri, onKanan, bisaKanan }: NavigasiPeriodeProps) => (
   <View style={styles.navigasiContainer}>
     <TouchableOpacity onPress={onKiri} style={styles.tombolNavigasi}>
-      <Feather name="chevron-left" size={24} color={WARNA.teksSekunder} />
+      <Feather name="chevron-left" size={24} color={WARNA.TEKS_SEKUNDER} />
     </TouchableOpacity>
     <Text style={styles.labelPeriode}>{label}</Text>
     <TouchableOpacity onPress={onKanan} disabled={!bisaKanan} style={styles.tombolNavigasi}>
-      <Feather name="chevron-right" size={24} color={bisaKanan ? WARNA.teksSekunder : WARNA.teksNonaktif} />
+      <Feather
+        name="chevron-right"
+        size={24}
+        color={bisaKanan ? WARNA.TEKS_SEKUNDER : WARNA.TEKS_NONAKTIF}
+      />
     </TouchableOpacity>
   </View>
 );
 
-
 // ─────────────────────────────────────────────
-// FILTER PERIODE
+// FILTER PERIODE - Tanpa Props, menggunakan Context
 // ─────────────────────────────────────────────
-interface FilterPeriodeProps {
-  periode: FilterPeriodeTipe;
-  offsetPeriode: number;
-  onPeriodeChange: (periode: FilterPeriodeTipe) => void;
-  onOffsetPeriodeChange: (offset: number) => void;
-}
+export const FilterPeriode = () => {
+  // Ambil state dan fungsi dari context
+  const { periode, setPeriode, offsetPeriode, setOffsetPeriode } = useStatistik();
 
-export const FilterPeriode = ({ periode, offsetPeriode, onPeriodeChange, onOffsetPeriodeChange }: FilterPeriodeProps) => {
-  const geserKiri = () => onOffsetPeriodeChange(offsetPeriode - 1);
+  const geserKiri = () => setOffsetPeriode(offsetPeriode - 1);
   const geserKanan = () => {
-    if (offsetPeriode < 0) onOffsetPeriodeChange(offsetPeriode + 1);
+    if (offsetPeriode < 0) setOffsetPeriode(offsetPeriode + 1);
   };
   const bisaKanan = offsetPeriode < 0;
 
   const labelPeriodeAktif = getLabelPeriode(periode, offsetPeriode);
 
   const onUbahPeriode = (p: FilterPeriodeTipe) => {
-    onPeriodeChange(p);
-    onOffsetPeriodeChange(0); // reset ke periode sekarang
+    setPeriode(p);
+    setOffsetPeriode(0); // reset ke periode sekarang
   };
 
   return (
@@ -82,12 +85,12 @@ export const FilterPeriode = ({ periode, offsetPeriode, onPeriodeChange, onOffse
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scrollPeriodeContent}
         >
-          {(['harian', 'mingguan', 'bulanan', 'tahunan', 'semua', 'kalender'] as FilterPeriodeTipe[]).map((p) => (
+          {config.listTipeFilter.map((p) => (
             <ChipPeriode
               key={p}
               label={p.charAt(0).toUpperCase() + p.slice(1)}
               aktif={periode === p}
-              onTekan={() => onUbahPeriode(p as FilterPeriodeTipe)}
+              onTekan={() => onUbahPeriode(p)}
             />
           ))}
         </ScrollView>
@@ -116,18 +119,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 99,
-    backgroundColor: WARNA.surface,
+    backgroundColor: WARNA.SURFACE,
     borderWidth: 1,
-    borderColor: WARNA.border,
+    borderColor: WARNA.BORDER,
   },
   chipAktif: {
-    backgroundColor: WARNA.utama,
-    borderColor: WARNA.utama,
+    backgroundColor: WARNA.UTAMA,
+    borderColor: WARNA.UTAMA,
   },
   teksChip: {
     fontSize: 14,
     fontWeight: '600',
-    color: WARNA.teksUtama,
+    color: WARNA.TEKS_UTAMA,
   },
   teksChipAktif: {
     color: 'white',
@@ -145,8 +148,17 @@ const styles = StyleSheet.create({
   labelPeriode: {
     fontSize: 15,
     fontWeight: '600',
-    color: WARNA.teksUtama,
+    color: WARNA.TEKS_UTAMA,
     width: 180,
     textAlign: 'center',
   },
 });
+
+const config = {
+  listTipeFilter: [
+    'harian',
+    'mingguan',
+    'bulanan',
+    'tahunan',
+  ] as FilterPeriodeTipe[],
+};

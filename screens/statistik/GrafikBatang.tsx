@@ -2,8 +2,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Dimensions, StyleSheet, Text, View } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
-import { DataGrafikBatang } from './data';
 import { WARNA } from './konstanta';
+import type { DataGrafikBatang } from './tipe'; // DIUBAH
 
 interface GrafikBatangProps {
   data: DataGrafikBatang[];
@@ -19,20 +19,20 @@ export const GrafikBatang = ({ data }: GrafikBatangProps) => {
       duration: 800,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
   // Format angka ke Rupiah (tanpa desimal)
   const formatRupiah = (value: number) => {
     return 'Rp ' + value.toLocaleString('id-ID');
   };
 
-  const chartData = {
+  const dataGrafik = {
     labels: data.map((d) => d.label),
     datasets: [
       {
         data: data.map((d) => d.pemasukan),
         color: (opacity = 1) =>
-          WARNA.hijau +
+          WARNA.HIJAU +
           Math.round(opacity * 255)
             .toString(16)
             .padStart(2, '0'),
@@ -40,7 +40,7 @@ export const GrafikBatang = ({ data }: GrafikBatangProps) => {
       {
         data: data.map((d) => d.pengeluaran),
         color: (opacity = 1) =>
-          WARNA.merah +
+          WARNA.MERAH +
           Math.round(opacity * 255)
             .toString(16)
             .padStart(2, '0'),
@@ -49,10 +49,10 @@ export const GrafikBatang = ({ data }: GrafikBatangProps) => {
   };
 
   return (
-    <Animated.View style={[styles.wrapper, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.pembungkus, { opacity: fadeAnim }]}>
       <BarChart
-        data={chartData}
-        width={screenWidth - 60}
+        data={dataGrafik}
+        width={screenWidth - 72} // Disesuaikan dengan padding parent
         height={240}
         fromZero
         yAxisLabel="Rp "
@@ -62,38 +62,38 @@ export const GrafikBatang = ({ data }: GrafikBatangProps) => {
         showBarTops={false}
         withInnerLines={true}
         chartConfig={{
-          backgroundColor: WARNA.surface,
-          backgroundGradientFrom: WARNA.surface,
-          backgroundGradientTo: WARNA.surface,
+          backgroundColor: WARNA.SURFACE,
+          backgroundGradientFrom: WARNA.SURFACE,
+          backgroundGradientTo: WARNA.SURFACE,
           decimalPlaces: 0,
           color: (opacity = 1) => `rgba(15, 23, 42, ${opacity})`,
           labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
           barPercentage: 0.7,
           fillShadowGradientOpacity: 1,
           propsForBackgroundLines: {
-            stroke: WARNA.border,
+            stroke: WARNA.BORDER,
             strokeDasharray: '5, 5',
           },
           propsForLabels: {
             fontSize: 11,
           },
-          formatTopBarValue: (value) => formatRupiah(value), // optional
+          formatTopBarValue: (value) => formatRupiah(value),
           style: {
             borderRadius: 24,
           },
         }}
-        style={styles.chartStyle}
+        style={styles.gayaGrafik}
       />
 
       {/* Legenda */}
-      <View style={styles.legendContainer}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: WARNA.hijau }]} />
-          <Text style={styles.legendText}>Pemasukan</Text>
+      <View style={styles.wadahLegenda}>
+        <View style={styles.itemLegenda}>
+          <View style={[styles.titikLegenda, { backgroundColor: WARNA.HIJAU }]} />
+          <Text style={styles.teksLegenda}>Pemasukan</Text>
         </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: WARNA.merah }]} />
-          <Text style={styles.legendText}>Pengeluaran</Text>
+        <View style={styles.itemLegenda}>
+          <View style={[styles.titikLegenda, { backgroundColor: WARNA.MERAH }]} />
+          <Text style={styles.teksLegenda}>Pengeluaran</Text>
         </View>
       </View>
     </Animated.View>
@@ -101,44 +101,44 @@ export const GrafikBatang = ({ data }: GrafikBatangProps) => {
 };
 
 const styles = StyleSheet.create({
-  wrapper: {
-    backgroundColor: WARNA.surface,
+  pembungkus: {
+    backgroundColor: WARNA.SURFACE,
     borderRadius: 24,
     paddingVertical: 20,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: WARNA.border,
+    borderColor: WARNA.BORDER,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 2,
-    marginHorizontal: 16,
-    marginVertical: 8,
+    // Margin dihilangkan dari sini, akan diatur oleh parent
   },
-  chartStyle: {
+  gayaGrafik: {
     borderRadius: 24,
     marginBottom: 12,
+    // Grafik akan mengisi ruang yang diberikan oleh parent
   },
-  legendContainer: {
+  wadahLegenda: {
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 8,
   },
-  legendItem: {
+  itemLegenda: {
     flexDirection: 'row',
     alignItems: 'center',
     marginHorizontal: 16,
   },
-  legendDot: {
+  titikLegenda: {
     width: 12,
     height: 12,
     borderRadius: 6,
     marginRight: 6,
   },
-  legendText: {
+  teksLegenda: {
     fontSize: 13,
-    color: WARNA.teksSekunder || '#64748B',
+    color: WARNA.TEKS_SEKUNDER || '#64748B',
     fontWeight: '500',
   },
 });

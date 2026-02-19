@@ -14,15 +14,15 @@ export const DonutChart = ({ pemasukan, pengeluaran }: DonutChartProps) => {
     {
       name: 'Pemasukan',
       population: pemasukan,
-      color: WARNA.hijau,
-      legendFontColor: WARNA.teksUtama,
+      color: WARNA.HIJAU,
+      legendFontColor: WARNA.TEKS_UTAMA,
       legendFontSize: 12,
     },
     {
       name: 'Pengeluaran',
       population: pengeluaran,
-      color: WARNA.merah,
-      legendFontColor: WARNA.teksUtama,
+      color: WARNA.MERAH,
+      legendFontColor: WARNA.TEKS_UTAMA,
       legendFontSize: 12,
     },
   ];
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   teksLegenda: {
-    color: WARNA.teksUtama,
+    color: WARNA.TEKS_UTAMA,
     fontSize: 12,
   },
 });

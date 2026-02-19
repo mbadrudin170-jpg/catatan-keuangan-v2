@@ -1,9 +1,10 @@
 // ~/catatan-keuangan-v2/screens/detail-dompet/TombolHapusDetailDompet.tsx
 
+import React, { type JSX } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useDetailDompetContext } from './logikaDetailDompet';
 
-export default function TombolHapusDetailDompet() {
+export default function TombolHapusDetailDompet(): JSX.Element {
   const { onHapus } = useDetailDompetContext();
 
   return (

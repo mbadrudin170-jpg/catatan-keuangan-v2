@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useDompet } from '@/context/DompetContext';
-import { Dompet } from '@/database/tipe';
+import type { Dompet } from '@/database/tipe';
 import ModalTipeDompet from './modal/ModalTipeDompet';
 
 // Terima properti `dompet` untuk mode edit
@@ -16,11 +16,11 @@ export default function InputFormDompet({ dompet }: { dompet?: Dompet | null }) 
   useEffect(() => {
     if (dompet) {
       setDataForm({
-        namaDompet: dompet.nama,
+        namaDompet: dompet.nama || '',
         // Format saldo dari angka ke string dengan titik
         saldoAwal: dompet.saldo.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
-        tipe: dompet.tipe,
-        ikon: dompet.ikon, // tambahkan ikon
+        tipe: dompet.tipe || '',
+        ikon: dompet.ikon || '', // tambahkan ikon
       });
     }
     // Tambahkan [dompet, setDataForm] sebagai dependensi

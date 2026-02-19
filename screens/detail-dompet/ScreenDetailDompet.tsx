@@ -1,6 +1,6 @@
 // ~/catatan-keuangan-v2/screens/detail-dompet/ScreenDetailDompet.tsx
 
-import React from 'react';
+import React, { type JSX } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import HeaderDetailDompet from '@/screens/detail-dompet/HeaderDetailDompet';
@@ -8,7 +8,7 @@ import KontenDetailDompet from '@/screens/detail-dompet/KontenDetailDompet';
 import TombolHapusDetailDompet from './TombolHapusDetailDompet';
 import { DetailDompetProvider, useDetailDompet } from './logikaDetailDompet';
 
-function KontenHalaman() {
+function KontenHalaman(): JSX.Element {
   const logika = useDetailDompet();
 
   if (logika.memuat) {
@@ -34,7 +34,7 @@ function KontenHalaman() {
   );
 }
 
-export default function DetailDompetHalaman() {
+export default function DetailDompetHalaman(): JSX.Element {
   return <KontenHalaman />;
 }
 

@@ -1,4 +1,6 @@
 import Dompetscreen from '@/screens/dompet/Dompetscreen';
-export default function Dompet() {
+import React from 'react';
+
+export default function Dompet(): React.ReactNode {
   return <Dompetscreen />;
 }

@@ -1,6 +1,16 @@
 // database/sqlite.ts
 import * as SQLite from 'expo-sqlite';
 
+// Definisikan tipe untuk kolom dari PRAGMA table_info
+interface PragmaKolomInfo {
+  cid: number;
+  name: string;
+  type: string;
+  notnull: number;
+  dflt_value: string | number | null;
+  pk: number;
+}
+
 // Membuka database secara sinkron
 const db = SQLite.openDatabaseSync('catatanKeuangan.db');
 
@@ -9,25 +19,25 @@ const db = SQLite.openDatabaseSync('catatanKeuangan.db');
  * INI PENTING: Jangan hapus fungsi ini. Ini untuk memastikan pengguna lama
  * mendapatkan skema database terbaru tanpa kehilangan data.
  */
-const migrasiSkema = async () => {
+const migrasiSkema = async (): Promise<void> => {
   try {
     // Migrasi untuk tabel 'dompet'
-    const kolomDompet = await db.getAllAsync('PRAGMA table_info(dompet);');
-    const namaKolomDompet = kolomDompet.map((col: any) => col.name);
+    const kolomDompet = await db.getAllAsync<PragmaKolomInfo>('PRAGMA table_info(dompet);');
+    const namaKolomDompet = kolomDompet.map((kolom) => kolom.name);
 
     if (!namaKolomDompet.includes('tipe')) {
-      console.log('MIGRASI: Menambahkan kolom "tipe" ke tabel dompet...');
+      console.warn('MIGRASI: Menambahkan kolom "tipe" ke tabel dompet...');
       await db.execAsync('ALTER TABLE dompet ADD COLUMN tipe TEXT;');
     }
 
     if (!namaKolomDompet.includes('ikon')) {
-      console.log('MIGRASI: Menambahkan kolom "ikon" ke tabel dompet...');
+      console.warn('MIGRASI: Menambahkan kolom "ikon" ke tabel dompet...');
       await db.execAsync('ALTER TABLE dompet ADD COLUMN ikon TEXT;');
     }
   } catch {
     // Jika tabel belum ada, PRAGMA akan error. Ini aman untuk diabaikan
     // karena CREATE TABLE akan membuat tabel baru dengan skema yang benar.
-    console.log('Tabel belum ada, akan dibuat oleh CREATE TABLE.');
+    console.warn('Tabel belum ada, akan dibuat oleh CREATE TABLE.');
   }
 };
 
@@ -67,13 +77,9 @@ export const inisialisasiDB = async (): Promise<void> => {
       );
     `);
 
-    console.log('Perintah CREATE TABLE IF NOT EXISTS selesai dijalankan.');
-
     // Jalankan migrasi. Untuk pengguna baru, ini tidak akan melakukan apa-apa.
     // Untuk pengguna lama, ini akan menambahkan kolom yang hilang dengan aman.
     await migrasiSkema();
-
-    console.log('Inisialisasi dan migrasi database berhasil.');
   } catch (error) {
     console.error('Gagal melakukan inisialisasi database:', error);
     throw error;

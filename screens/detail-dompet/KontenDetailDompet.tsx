@@ -1,12 +1,12 @@
 // screens/detail-dompet/KontenDetailDompet.tsx
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react';
+import React, { type JSX } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { formatAngka } from '@/utils/format/FormatAngka';
 import { useDetailDompetContext } from './logikaDetailDompet';
 
-export default function KontenDetailDompet() {
+export default function KontenDetailDompet(): JSX.Element | null {
   const { dompet } = useDetailDompetContext();
 
   // Jika dompet belum ada (misal masih loading), jangan tampilkan apapun untuk mencegah error
@@ -20,7 +20,11 @@ export default function KontenDetailDompet() {
       <View style={gaya.kartuInfo}>
         <View style={gaya.grupIkonNama}>
           <View style={[gaya.ikonWadah, { backgroundColor: warna.latarIkon }]}>
-            <Ionicons name={(dompet.ikon as any) || 'wallet'} size={32} color={warna.primer} />
+            <Ionicons
+              name={(dompet.ikon as keyof typeof Ionicons.glyphMap) || 'wallet'}
+              size={32}
+              color={warna.primer}
+            />
           </View>
           <Text style={gaya.teksNamaDompet}>{dompet.nama}</Text>
         </View>

@@ -1,115 +1,48 @@
 // screens/statistik/HalamanStatistik.tsx
-import {
-  ambilSemuaDompet,
-  ambilSemuaKategori,
-  ambilSemuaTransaksi,
-  dapatkanStatistik,
-} from '@/database/operasi';
-import { Dompet, Kategori, TipeTransaksi, Transaksi } from '@/database/tipe';
-import { useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  DataGrafikBatang,
-  FilterPeriode as FilterPeriodeTipe,
-  RingkasanKategori as RingkasanKategoriTipe,
-} from './data';
 import { FilterPeriode } from './FilterPeriode';
 import { HeaderStatistik } from './HeaderStatistik';
 import { WARNA } from './konstanta';
 import { RingkasanDompet } from './RingkasanDompet';
 import { RingkasanKategori } from './RingkasanKategori';
 import { RingkasanKeuangan } from './RingkasanKeuangan';
+import { StatistikProvider } from './StatistikContext';
 import { TransaksiTerakhir } from './TransaksiTerakhir';
 
-// ─────────────────────────────────────────────
-// KOMPONEN UTAMA
-// ─────────────────────────────────────────────
-export const HalamanStatistik = () => {
-  const [periode, setPeriode] = useState<FilterPeriodeTipe>('bulanan');
-  const [offsetPeriode, setOffsetPeriode] = useState(0);
-  const [kategori, setKategori] = useState<Kategori[]>([]);
-  const [dompet, setDompet] = useState<Dompet[]>([]);
-  const [transaksi, setTransaksi] = useState<Transaksi[]>([]);
-  const [statistik, setStatistik] = useState<{
-    totalPemasukan: number;
-    totalPengeluaran: number;
-    ringkasanPengeluaran: RingkasanKategoriTipe[];
-    ringkasanPemasukan: RingkasanKategoriTipe[];
-    dataGrafik: DataGrafikBatang[];
-  } | null>(null);
-  const [tabKategori, setTabKategori] = useState<TipeTransaksi>('pengeluaran');
-
-  const muatData = useCallback(async () => {
-    const [k, d, t, s] = await Promise.all([
-      ambilSemuaKategori(),
-      ambilSemuaDompet(),
-      ambilSemuaTransaksi(),
-      dapatkanStatistik(periode, offsetPeriode),
-    ]);
-    setKategori(k);
-    setDompet(d);
-    setTransaksi(t);
-    setStatistik(s);
-  }, [periode, offsetPeriode]);
-
-  useFocusEffect(
-    useCallback(() => {
-      muatData();
-    }, [muatData])
-  );
-
+// Komponen Konten dipisah agar bisa mengakses context dari Provider
+const KontenStatistik = () => {
+  // Tidak ada lagi data yang perlu diambil di sini.
+  // Semua komponen anak mengambil datanya sendiri dari context.
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.wadah}>
       <HeaderStatistik />
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <FilterPeriode
-          periode={periode}
-          offsetPeriode={offsetPeriode}
-          onPeriodeChange={setPeriode}
-          onOffsetPeriodeChange={setOffsetPeriode}
-        />
-
-        {statistik && (
-          <RingkasanKeuangan
-            totalPemasukan={statistik.totalPemasukan}
-            totalPengeluaran={statistik.totalPengeluaran}
-            dataGrafik={statistik.dataGrafik}
-          />
-        )}
-
-        {statistik && (
-          <RingkasanKategori
-            tabAktif={tabKategori}
-            onTabChange={setTabKategori}
-            ringkasanAktif={
-              tabKategori === 'pemasukan'
-                ? statistik.ringkasanPemasukan
-                : statistik.ringkasanPengeluaran
-            }
-            onPilihKategori={(k) => console.log('Pilih kategori:', k)} // Navigasi ke halaman detail
-          />
-        )}
-
-        <RingkasanDompet dompet={dompet} />
-
-        <TransaksiTerakhir transaksi={transaksi} kategori={kategori} dompet={dompet} />
+      <ScrollView contentContainerStyle={styles.wadahKonten}>
+        {/* Semua komponen di bawah ini sekarang mengambil data dari context */}
+        <FilterPeriode />
+        <RingkasanKeuangan />
+        <RingkasanKategori />
+        <RingkasanDompet />
+        <TransaksiTerakhir />
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-// ─────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────
+// Komponen utama sekarang hanya bertugas menyediakan Context
+export const HalamanStatistik = () => (
+  <StatistikProvider>
+    <KontenStatistik />
+  </StatistikProvider>
+);
+
 const styles = StyleSheet.create({
-  container: {
+  wadah: {
     flex: 1,
-    backgroundColor: WARNA.bg,
+    backgroundColor: WARNA.BG,
   },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+  wadahKonten: {
+    paddingBottom: 24, // Memberi ruang di bagian bawah
   },
 });

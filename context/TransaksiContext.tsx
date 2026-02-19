@@ -1,7 +1,11 @@
 // context/TransaksiContext.tsx
-import { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
-import React, { createContext, ReactNode, useContext, useState } from 'react';
-import { Transaksi } from '../database/tipe';
+import {
+  DateTimePickerAndroid,
+  type DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
+import type { JSX, ReactNode } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import type { Transaksi } from '../database/tipe';
 
 interface TransaksiContextType {
   transaksi: Transaksi;
@@ -15,7 +19,7 @@ interface TransaksiContextType {
   tutupModalDompet: () => void;
   bukaModalKategori: () => void;
   tutupModalKategori: () => void;
-  gantiTanggal: (event: any, tanggalTerpilih?: Date) => void;
+  gantiTanggal: (event: DateTimePickerEvent, tanggalTerpilih?: Date) => void;
   tampilkanPemilihTanggal: () => void;
   tampilkanPemilihWaktu: () => void;
 }
@@ -26,7 +30,7 @@ interface TransaksiProviderProps {
   children: ReactNode;
 }
 
-export const TransaksiProvider = ({ children }: TransaksiProviderProps) => {
+export const TransaksiProvider = ({ children }: TransaksiProviderProps): JSX.Element => {
   const [transaksi, setTransaksi] = useState<Transaksi>({
     id: Date.now(),
     jumlah: 0,
@@ -38,31 +42,31 @@ export const TransaksiProvider = ({ children }: TransaksiProviderProps) => {
 
   const [daftarTransaksi, setDaftarTransaksi] = useState<Transaksi[]>([]);
 
-  const tambahTransaksi = (transaksiBaru: Transaksi) => {
+  const tambahTransaksi = (transaksiBaru: Transaksi): void => {
     const transaksiDenganId = { ...transaksiBaru, id: Date.now() };
-    setDaftarTransaksi(daftarLama => [...daftarLama, transaksiDenganId]);
+    setDaftarTransaksi((daftarLama) => [...daftarLama, transaksiDenganId]);
   };
 
   // <-- BARU: Implementasi fungsi untuk menghapus transaksi
-  const hapusSatuTransaksi = async (id: number) => {
-    setDaftarTransaksi(daftarLama => daftarLama.filter(item => item.id !== id));
+  const hapusSatuTransaksi = async (id: number): Promise<void> => {
+    setDaftarTransaksi((daftarLama) => daftarLama.filter((item) => item.id !== id));
   };
 
   const [modalDompetTerlihat, setModalDompetTerlihat] = useState(false);
   const [modalKategoriTerlihat, setModalKategoriTerlihat] = useState(false);
 
-  const bukaModalDompet = () => setModalDompetTerlihat(true);
-  const tutupModalDompet = () => setModalDompetTerlihat(false);
+  const bukaModalDompet = (): void => setModalDompetTerlihat(true);
+  const tutupModalDompet = (): void => setModalDompetTerlihat(false);
 
-  const bukaModalKategori = () => setModalKategoriTerlihat(true);
-  const tutupModalKategori = () => setModalKategoriTerlihat(false);
+  const bukaModalKategori = (): void => setModalKategoriTerlihat(true);
+  const tutupModalKategori = (): void => setModalKategoriTerlihat(false);
 
-  const gantiTanggal = (event: any, tanggalTerpilih?: Date) => {
+  const gantiTanggal = (event: DateTimePickerEvent, tanggalTerpilih?: Date): void => {
     const tanggalObj = tanggalTerpilih || new Date(transaksi.tanggal);
     setTransaksi((prev) => ({ ...prev, tanggal: tanggalObj.toISOString() }));
   };
 
-  const tampilkanMode = (modeSaatIni: 'date' | 'time') => {
+  const tampilkanMode = (modeSaatIni: 'date' | 'time'): void => {
     DateTimePickerAndroid.open({
       value: new Date(transaksi.tanggal),
       onChange: gantiTanggal,
@@ -71,8 +75,8 @@ export const TransaksiProvider = ({ children }: TransaksiProviderProps) => {
     });
   };
 
-  const tampilkanPemilihTanggal = () => tampilkanMode('date');
-  const tampilkanPemilihWaktu = () => tampilkanMode('time');
+  const tampilkanPemilihTanggal = (): void => tampilkanMode('date');
+  const tampilkanPemilihWaktu = (): void => tampilkanMode('time');
 
   const nilai = {
     transaksi,
@@ -94,7 +98,7 @@ export const TransaksiProvider = ({ children }: TransaksiProviderProps) => {
   return <TransaksiContext.Provider value={nilai}>{children}</TransaksiContext.Provider>;
 };
 
-export const useTransaksi = () => {
+export const useTransaksi = (): TransaksiContextType => {
   const context = useContext(TransaksiContext);
   if (context === undefined) {
     throw new Error('useTransaksi harus digunakan di dalam TransaksiProvider');

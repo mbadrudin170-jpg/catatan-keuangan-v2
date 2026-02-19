@@ -1,12 +1,12 @@
 // screens/detail-dompet/HeaderDetailDompet.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
+import React, { type JSX } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useDetailDompetContext } from './logikaDetailDompet';
 
-export default function HeaderDetailDompet() {
+export default function HeaderDetailDompet(): JSX.Element | null {
   const { dompet } = useDetailDompetContext();
 
   // Jika dompet belum ada (misal masih loading), jangan tampilkan apapun untuk mencegah error

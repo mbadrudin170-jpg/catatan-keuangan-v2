@@ -28,8 +28,6 @@ export default function FormTransaksiScreen() {
   // Membuat fungsi yang akan menangani perubahan tipe dari komponen anak
   const handleTipeChange = (tipe: TipeTransaksi) => {
     aturTipeTransaksi(tipe);
-    // Di sini kita bisa melihat perubahan di konsol untuk debugging
-    console.log('Tipe transaksi di form utama sekarang:', tipe);
   };
 
   return (

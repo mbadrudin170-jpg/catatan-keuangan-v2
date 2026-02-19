@@ -1,8 +1,9 @@
 // screens/detail-transaksi/HeaderDetailTransaksi.tsx
 import { Ionicons } from '@expo/vector-icons';
+import React, { type JSX } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-export default function HeaderDetailTransaksi() {
+export default function HeaderDetailTransaksi(): JSX.Element {
   return (
     <View style={styles.container}>
       <Pressable style={styles.tombolIkon}>

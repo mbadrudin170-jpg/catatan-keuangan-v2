@@ -1,11 +1,11 @@
-// ~/catatan-keuangan-v2/screens/detail-dompet/logikaDetailDompet.ts
+// screens/detail-dompet/logikaDetailDompet.ts
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { useDompet } from '@/context/DompetContext';
-import { Dompet } from '@/database/tipe';
+import type { Dompet } from '@/database/tipe';
 
 // Tipe untuk nilai yang akan disediakan oleh Context
 interface TipeDetailDompetContext {
@@ -18,26 +18,29 @@ interface TipeDetailDompetContext {
 const DetailDompetContext = createContext<TipeDetailDompetContext | null>(null);
 
 // 2. Hook untuk memuat logika utama
-export function useDetailDompet() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+export function useDetailDompet(): TipeDetailDompetContext {
+  const { id: idString } = useLocalSearchParams<{ id: string }>();
   const { muatDompetTunggal, hapusDompet } = useDompet();
   const router = useRouter();
   const [dompet, setDompet] = useState<Dompet | null>(null);
   const [memuat, setMemuat] = useState(true);
 
+  const idNumerik = idString ? parseInt(idString, 10) : NaN;
+
   useEffect(() => {
-    if (id) {
+    if (!isNaN(idNumerik)) {
       setMemuat(true);
-      const dataDompet = muatDompetTunggal(id);
+      const dataDompet = muatDompetTunggal(idNumerik);
       setDompet(dataDompet);
       setMemuat(false);
     } else {
+      // Jika ID tidak valid, berhenti memuat
       setMemuat(false);
     }
-  }, [id, muatDompetTunggal]);
+  }, [idNumerik, muatDompetTunggal]);
 
-  const onHapus = () => {
-    if (!id) return;
+  const onHapus = (): void => {
+    if (isNaN(idNumerik)) return;
 
     Alert.alert(
       'Hapus Dompet',
@@ -50,10 +53,9 @@ export function useDetailDompet() {
         {
           text: 'Hapus',
           style: 'destructive',
-          // Menggunakan async/await untuk menangani Promise dengan benar
-          onPress: async () => {
+          onPress: async (): Promise<void> => {
             try {
-              await hapusDompet(id);
+              await hapusDompet(idNumerik);
               router.back(); // Kembali jika berhasil
             } catch (error) {
               console.error('Gagal saat mencoba menghapus dompet:', error);
@@ -69,7 +71,7 @@ export function useDetailDompet() {
 }
 
 // 3. Hook untuk komponen anak agar bisa mengakses Context
-export function useDetailDompetContext() {
+export function useDetailDompetContext(): TipeDetailDompetContext {
   const konteks = useContext(DetailDompetContext);
   if (!konteks) {
     throw new Error('useDetailDompetContext harus digunakan di dalam DetailDompetProvider');

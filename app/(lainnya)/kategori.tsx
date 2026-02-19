@@ -1,4 +1,5 @@
 import KategoriScreen from '@/screens/kategori/KategoriScreen';
-export default function kategori() {
+import type { JSX } from 'react';
+export default function kategori(): JSX.Element {
   return <KategoriScreen />;
 }

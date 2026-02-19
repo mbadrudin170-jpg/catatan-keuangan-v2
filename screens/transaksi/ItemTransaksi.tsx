@@ -2,7 +2,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useDompet } from '../../context/DompetContext';
 import { useKategori } from '../../context/KategoriContext';
-import { Transaksi } from '../../database/tipe';
+import type { Transaksi } from '../../database/tipe';
 import { formatAngka } from '../../utils/format/FormatAngka';
 
 interface Props {

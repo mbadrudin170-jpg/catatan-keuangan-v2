@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
-import { Dompet } from '@/database/tipe'; // Impor tipe Dompet untuk keamanan tipe
+import type { Dompet } from '@/database/tipe'; // Impor tipe Dompet untuk keamanan tipe
 import { formatAngka } from '@/utils/format/FormatAngka';
 import { useLogikaDompet } from '@/screens/dompet/logikaDompet';
 
@@ -34,7 +34,7 @@ export default function ListDompet() {
     >
       <View style={gaya.infoKiri}>
         <View style={gaya.ikonWadah}>
-          <Ionicons name={(item.ikon as any) || 'wallet'} size={24} color={warna.primer} />
+          <Ionicons name={(item.ikon as React.ComponentProps<typeof Ionicons>['name']) || 'wallet'} size={24} color={warna.primer} />
         </View>
         <Text style={gaya.teksNama}>{item.nama}</Text>
       </View>

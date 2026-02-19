@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useKategori } from '../../../context/KategoriContext';
 import { useTransaksi } from '../../../context/TransaksiContext';
-import { Kategori, Subkategori } from '../../../database/tipe';
+import type { Kategori, Subkategori } from '../../../database/tipe';
 
 interface Props {
   terlihat: boolean;

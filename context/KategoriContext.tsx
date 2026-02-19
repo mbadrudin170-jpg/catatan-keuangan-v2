@@ -1,15 +1,10 @@
 // context/KategoriContext.tsx
-import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import type { JSX, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Impor tipe terpusat yang sudah diperbaiki
-import { Kategori, Subkategori, TipeTransaksi } from '../database/tipe';
+import type { Kategori, Subkategori, TipeTransaksi } from '../database/tipe';
 
 const KUNCI_PENYIMPANAN = 'kategori_dan_subkategori_storage_v4'; // Versi diubah untuk menghindari konflik data lama
 
@@ -32,7 +27,7 @@ const KategoriContext = createContext<KategoriContextType | undefined>(
   undefined
 );
 
-export const useKategori = () => {
+export const useKategori = (): KategoriContextType => {
   const context = useContext(KategoriContext);
   if (!context) {
     throw new Error('useKategori harus digunakan di dalam KategoriProvider');
@@ -69,11 +64,11 @@ const DATA_AWAL: Kategori[] = [
 ];
 
 // --- Provider (diperbaiki) ---
-export function KategoriProvider({ children }: { children: ReactNode }) {
+export function KategoriProvider({ children }: { children: ReactNode }): JSX.Element {
   const [semuaKategori, setSemuaKategori] = useState<Kategori[]>([]);
   const [tipeAktif, setTipeAktif] = useState<TipeTransaksi>('pengeluaran'); // huruf kecil
 
-  const muatKategori = async () => {
+  const muatKategori = async (): Promise<void> => {
     try {
       const dataTersimpan = await AsyncStorage.getItem(KUNCI_PENYIMPANAN);
       const data = dataTersimpan ? JSON.parse(dataTersimpan) : DATA_AWAL;
@@ -84,7 +79,7 @@ export function KategoriProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const simpanKategori = async (data: Kategori[]) => {
+  const simpanKategori = async (data: Kategori[]): Promise<void> => {
     try {
       await AsyncStorage.setItem(KUNCI_PENYIMPANAN, JSON.stringify(data));
     } catch (e) {
@@ -93,10 +88,10 @@ export function KategoriProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    muatKategori();
+    void muatKategori();
   }, []);
 
-  const tambahKategori = async (nama: string, ikon: string) => {
+  const tambahKategori = async (nama: string, ikon: string): Promise<void> => {
     const kategoriBaru: Kategori = {
       id: Date.now(), // number, bukan string
       nama,
@@ -109,13 +104,13 @@ export function KategoriProvider({ children }: { children: ReactNode }) {
     await simpanKategori(dataBaru);
   };
 
-  const hapusKategori = async (idKategori: number) => {
+  const hapusKategori = async (idKategori: number): Promise<void> => {
     const dataBaru = semuaKategori.filter((k) => k.id !== idKategori);
     setSemuaKategori(dataBaru);
     await simpanKategori(dataBaru);
   };
 
-  const perbaruiKategori = async (idKategori: number, namaBaru: string, ikonBaru: string) => {
+  const perbaruiKategori = async (idKategori: number, namaBaru: string, ikonBaru: string): Promise<void> => {
     const dataBaru = semuaKategori.map((k) =>
       k.id === idKategori ? { ...k, nama: namaBaru, ikon: ikonBaru } : k
     );
@@ -123,7 +118,7 @@ export function KategoriProvider({ children }: { children: ReactNode }) {
     await simpanKategori(dataBaru);
   };
 
-  const tambahSubkategori = async (idKategori: number, namaSubkategori: string) => {
+  const tambahSubkategori = async (idKategori: number, namaSubkategori: string): Promise<void> => {
     const subkategoriBaru: Subkategori = {
       id: Date.now(), // number, bukan string
       nama: namaSubkategori,
@@ -137,7 +132,7 @@ export function KategoriProvider({ children }: { children: ReactNode }) {
     await simpanKategori(dataBaru);
   };
 
-  const hapusSubkategori = async (idKategori: number, idSubkategori: number) => {
+  const hapusSubkategori = async (idKategori: number, idSubkategori: number): Promise<void> => {
     const dataBaru = semuaKategori.map((k) => {
       if (k.id === idKategori) {
         const subkategoriDiperbarui = (k.subkategori || []).filter(
@@ -155,7 +150,7 @@ export function KategoriProvider({ children }: { children: ReactNode }) {
     idKategori: number,
     idSubkategori: number,
     namaBaru: string
-  ) => {
+  ): Promise<void> => {
     const dataBaru = semuaKategori.map((k) => {
       if (k.id === idKategori) {
         const subkategoriDiperbarui = (k.subkategori || []).map((sub: Subkategori) => // tipe eksplisit ditambahkan

@@ -7,7 +7,7 @@ import ListKategori from './ListKategori';
 import ListSubKategori from './ListSubKategori';
 import TombolSimpan from './TombolSimpan';
 import TombolTipe from './TombolTipe';
-import { Kategori } from '../../database/tipe'; // Impor tipe Kategori
+import type { Kategori } from '../../database/tipe'; // Impor tipe Kategori
 
 export default function FormKategoriScreen() {
   const [kategoriTerpilih, setKategoriTerpilih] = useState<Kategori | null>(null);

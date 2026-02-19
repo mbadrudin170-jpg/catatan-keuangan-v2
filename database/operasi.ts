@@ -1,7 +1,42 @@
 // database/operasi.ts
+import {
+  endOfMonth,
+  endOfWeek,
+  endOfYear,
+  format,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+  sub,
+} from 'date-fns';
+
+import type { RingkasanKategori } from '@/screens/statistik/tipe';
 import db from './sqlite';
-import { Kategori, Dompet, Transaksi } from './tipe';
-import { sub, format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfYear, endOfYear } from 'date-fns';
+import type { Dompet, Kategori, Transaksi, TipeTransaksi } from './tipe';
+
+// Tipe untuk hasil mentah dari query statistik
+interface HasilQueryStatistik {
+  id: number;
+  tipe: TipeTransaksi;
+  total: number;
+  kategori_nama: string;
+  kategori_ikon: string;
+}
+
+// Tipe untuk hasil statistik yang sudah diproses
+export interface DataGrafik {
+  label: string;
+  pemasukan: number;
+  pengeluaran: number;
+}
+
+export interface HasilStatistik {
+  totalPemasukan: number;
+  totalPengeluaran: number;
+  ringkasanPemasukan: RingkasanKategori[];
+  ringkasanPengeluaran: RingkasanKategori[];
+  dataGrafik: DataGrafik[];
+}
 
 // ─────────────────────────────────────────────
 // OPERASI KATEGORI
@@ -27,7 +62,10 @@ export const ambilSemuaTransaksi = async (): Promise<Transaksi[]> => {
 // ─────────────────────────────────────────────
 // OPERASI STATISTIK
 // ─────────────────────────────────────────────
-const getTanggalRange = (periode: string, offset: number) => {
+const getTanggalRange = (
+  periode: string,
+  offset: number
+): { start: string | null; end: string | null } => {
   const now = new Date();
   let start, end;
 
@@ -58,13 +96,16 @@ const getTanggalRange = (periode: string, offset: number) => {
   return { start, end };
 };
 
-
-export const dapatkanStatistik = async (periode: string, offset: number) => {
+export const dapatkanStatistik = async (
+  periode: string,
+  offset: number
+): Promise<HasilStatistik> => {
   const { start, end } = getTanggalRange(periode, offset);
   const whereClause = start && end ? `WHERE t.tanggal BETWEEN '${start}' AND '${end}'` : '';
 
   const query = `
     SELECT
+      k.id,
       k.tipe,
       SUM(t.jumlah) as total,
       k.nama as kategori_nama,
@@ -72,29 +113,35 @@ export const dapatkanStatistik = async (periode: string, offset: number) => {
     FROM transaksi t
     JOIN kategori k ON t.kategori_id = k.id
     ${whereClause}
-    GROUP BY k.tipe, k.nama, k.ikon
+    GROUP BY k.id, k.tipe, k.nama, k.ikon
   `;
 
-  const results: any[] = await db.getAllAsync(query);
+  const results = await db.getAllAsync<HasilQueryStatistik>(query);
 
   let totalPemasukan = 0;
   let totalPengeluaran = 0;
-  const ringkasanPemasukan: any[] = [];
-  const ringkasanPengeluaran: any[] = [];
+  const ringkasanPemasukan: RingkasanKategori[] = [];
+  const ringkasanPengeluaran: RingkasanKategori[] = [];
 
-  results.forEach(row => {
+  results.forEach((row) => {
+    const itemRingkasan: RingkasanKategori = {
+      id: row.id,
+      nama: row.kategori_nama,
+      ikon: row.kategori_ikon,
+      total: row.total,
+    };
     if (row.tipe === 'pemasukan') {
       totalPemasukan += row.total;
-      ringkasanPemasukan.push({ nama: row.kategori_nama, ikon: row.kategori_ikon, jumlah: row.total });
+      ringkasanPemasukan.push(itemRingkasan);
     } else {
       totalPengeluaran += row.total;
-      ringkasanPengeluaran.push({ nama: row.kategori_nama, ikon: row.kategori_ikon, jumlah: row.total });
+      ringkasanPengeluaran.push(itemRingkasan);
     }
   });
 
   // Untuk dataGrafik, kita perlu query terpisah per hari/bulan tergantung periode
   // Ini hanyalah contoh sederhana, perlu disesuaikan
-  const dataGrafik = [
+  const dataGrafik: DataGrafik[] = [
     { label: 'Sen', pemasukan: 300, pengeluaran: 500 },
     { label: 'Sel', pemasukan: 500, pengeluaran: 200 },
     { label: 'Rab', pemasukan: 800, pengeluaran: 700 },
