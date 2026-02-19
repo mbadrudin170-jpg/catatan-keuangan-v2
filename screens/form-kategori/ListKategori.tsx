@@ -40,8 +40,7 @@ export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
     setModalTerlihat(false);
   };
 
-  // --- DIPERBAIKI ---
-  const handleTambah = () => {
+  const handleTambah = async () => {
     const namaKategori = inputKategoriBaru.trim();
     if (namaKategori === '') return;
 
@@ -54,13 +53,16 @@ export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
       return;
     }
 
-    // Menambahkan ikon default karena tidak ada input untuk itu di UI ini
-    tambahKategori(namaKategori, 'pricetag-outline'); 
-    setInputKategoriBaru('');
-    setSedangMenambah(false);
+    try {
+      await tambahKategori(namaKategori, 'pricetag-outline');
+      setInputKategoriBaru('');
+      setSedangMenambah(false);
+    } catch (error) {
+      console.error('Gagal menambah kategori:', error);
+      Alert.alert('Error', 'Gagal menambahkan kategori baru.');
+    }
   };
 
-  // Logika ini sudah benar karena `hapusKategori` mengharapkan `number`
   const handleHapus = () => {
     if (!kategoriTerpilih) return;
     Alert.alert('Hapus Kategori', `Yakin ingin menghapus "${kategoriTerpilih.nama}"?`, [
@@ -68,8 +70,15 @@ export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
       {
         text: 'Hapus',
         style: 'destructive',
-        onPress: () => {
-          hapusKategori(kategoriTerpilih.id); // kategoriTerpilih.id adalah number
+        onPress: async () => {
+          try {
+            if (kategoriTerpilih) {
+              await hapusKategori(kategoriTerpilih.id);
+            }
+          } catch (error) {
+            console.error('Gagal menghapus kategori:', error);
+            Alert.alert('Error', 'Gagal menghapus kategori.');
+          }
         },
       },
     ]);
@@ -153,21 +162,20 @@ export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
         >
           <FlatList
             data={daftarKategori}
-            // --- DIPERBAIKI ---
-            keyExtractor={(item) => item.id.toString()} // Konversi number ke string
+            keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <Pressable
                 style={({ pressed }) => [
                   gaya.itemModal,
                   pressed && gaya.itemModalDitekan,
-                  item.id === kategoriTerpilih?.id && gaya.itemModalAktif, // Perbandingan number
+                  item.id === kategoriTerpilih?.id && gaya.itemModalAktif,
                 ]}
                 onPress={() => handlePilih(item)}
               >
                 <Text
                   style={[
                     gaya.teksItemModal,
-                    item.id === kategoriTerpilih?.id && gaya.teksItemModalAktif, // Perbandingan number
+                    item.id === kategoriTerpilih?.id && gaya.teksItemModalAktif,
                   ]}
                 >
                   {item.nama}
@@ -189,7 +197,6 @@ export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
   );
 }
 
-// Gaya tidak berubah, jadi saya biarkan seperti adanya.
 const gaya = StyleSheet.create({
   pembungkus: {
     padding: 20,

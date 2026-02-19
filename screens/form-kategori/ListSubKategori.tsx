@@ -15,18 +15,16 @@ export default function ListSubKategori({ kategoriTerpilih }: Props) {
 
   const [sedangMenambah, setSedangMenambah] = useState(false);
   const [inputBaru, setInputBaru] = useState('');
-  // --- DIPERBAIKI: State untuk ID sekarang adalah number ---
   const [idEdit, setIdEdit] = useState<number | null>(null);
   const [teksEdit, setTeksEdit] = useState('');
 
-  // Logika ini sudah benar, mencari kategori berdasarkan ID number
   const kategoriSaatIni = kategoriTerpilih
     ? daftarKategori.find((k) => k.id === kategoriTerpilih.id)
     : null;
 
   const daftarSub = kategoriSaatIni?.subkategori || [];
 
-  const handleTambah = () => {
+  const handleTambah = async () => {
     const inputDibersihkan = inputBaru.trim();
     if (inputDibersihkan === '' || !kategoriSaatIni) return;
 
@@ -41,10 +39,14 @@ export default function ListSubKategori({ kategoriTerpilih }: Props) {
       );
       return;
     }
-    // `tambahSubkategori` sekarang menerima ID number
-    tambahSubkategori(kategoriSaatIni.id, inputDibersihkan);
-    setInputBaru('');
-    setSedangMenambah(false);
+    try {
+      await tambahSubkategori(kategoriSaatIni.id, inputDibersihkan);
+      setInputBaru('');
+      setSedangMenambah(false);
+    } catch (error) {
+      console.error('Gagal menambah sub-kategori:', error);
+      Alert.alert('Error', 'Gagal menambahkan sub-kategori baru.');
+    }
   };
 
   const handleBatalTambah = () => {
@@ -52,7 +54,6 @@ export default function ListSubKategori({ kategoriTerpilih }: Props) {
     setSedangMenambah(false);
   };
 
-  // --- DIPERBAIKI: Parameter ID sekarang adalah number ---
   const handleMulaiEdit = (id: number, nama: string) => {
     setIdEdit(id);
     setTeksEdit(nama);
@@ -63,7 +64,7 @@ export default function ListSubKategori({ kategoriTerpilih }: Props) {
     setTeksEdit('');
   };
 
-  const handleSimpanEdit = () => {
+  const handleSimpanEdit = async () => {
     const teksEditDibersihkan = teksEdit.trim();
     if (teksEditDibersihkan === '' || idEdit === null || !kategoriSaatIni) return;
 
@@ -76,12 +77,15 @@ export default function ListSubKategori({ kategoriTerpilih }: Props) {
       return;
     }
 
-    // `perbaruiSubkategori` sekarang menerima ID number
-    perbaruiSubkategori(kategoriSaatIni.id, idEdit, teksEditDibersihkan);
-    handleBatalEdit();
+    try {
+      await perbaruiSubkategori(kategoriSaatIni.id, idEdit, teksEditDibersihkan);
+      handleBatalEdit();
+    } catch (error) {
+      console.error('Gagal memperbarui sub-kategori:', error);
+      Alert.alert('Error', 'Gagal memperbarui sub-kategori.');
+    }
   };
 
-  // --- DIPERBAIKI: Parameter ID sekarang adalah number ---
   const handleHapus = (idSub: number) => {
     if (!kategoriSaatIni) return;
     const sub = daftarSub.find((s: Subkategori) => s.id === idSub);
@@ -92,8 +96,16 @@ export default function ListSubKategori({ kategoriTerpilih }: Props) {
       {
         text: 'Hapus',
         style: 'destructive',
-        // `hapusSubkategori` sekarang menerima ID number
-        onPress: () => hapusSubkategori(kategoriSaatIni.id, idSub),
+        onPress: async () => {
+          try {
+            if (kategoriSaatIni) {
+              await hapusSubkategori(kategoriSaatIni.id, idSub);
+            }
+          } catch (error) {
+            console.error('Gagal menghapus sub-kategori:', error);
+            Alert.alert('Error', 'Gagal menghapus sub-kategori.');
+          }
+        },
       },
     ]);
   };
@@ -149,7 +161,6 @@ export default function ListSubKategori({ kategoriTerpilih }: Props) {
       <FlatList
         data={daftarSub}
         extraData={daftarSub}
-        // --- DIPERBAIKI: Konversi ID number ke string ---
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <View style={gaya.penampungItem}>
@@ -177,13 +188,13 @@ export default function ListSubKategori({ kategoriTerpilih }: Props) {
               ) : (
                 <>
                   <Pressable
-                    onPress={() => handleMulaiEdit(item.id, item.nama)} // id adalah number
+                    onPress={() => handleMulaiEdit(item.id, item.nama)}
                     style={({ pressed }) => [gaya.aksiIcon, pressed && gaya.iconAksiTekan]}
                   >
                     <Ionicons name="create-outline" size={20} color="#0B74FF" />
                   </Pressable>
                   <Pressable
-                    onPress={() => handleHapus(item.id)} // id adalah number
+                    onPress={() => handleHapus(item.id)}
                     style={({ pressed }) => [gaya.aksiIcon, pressed && gaya.iconAksiTekan]}
                   >
                     <Ionicons name="trash-outline" size={20} color="#EF4444" />
@@ -198,7 +209,6 @@ export default function ListSubKategori({ kategoriTerpilih }: Props) {
     </View>
   );
 }
-// Gaya tidak berubah, jadi saya biarkan seperti adanya.
 const gaya = StyleSheet.create({
   pembungkus: {
     flex: 1,

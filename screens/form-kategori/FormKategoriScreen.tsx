@@ -1,6 +1,6 @@
 // screens/form-kategori/FormKategoriScreen.tsx
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HeaderFormKategori from './HeaderFormKategori';
 import ListKategori from './ListKategori';
@@ -13,7 +13,7 @@ export default function FormKategoriScreen() {
   const [kategoriTerpilih, setKategoriTerpilih] = useState<Kategori | null>(null);
 
   const handleSimpan = () => {
-    alert('Tombol Simpan Ditekan!');
+    Alert.alert('Simpan', 'Tombol Simpan Ditekan!');
   };
 
   return (

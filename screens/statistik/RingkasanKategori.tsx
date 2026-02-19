@@ -73,7 +73,7 @@ export const RingkasanKategori = () => {
 
   const ringkasanAktif = tabKategori === 'pemasukan' ? ringkasanPemasukan : ringkasanPengeluaran;
 
-  const onPilihKategori = (kategori: RingkasanKategoriTipe) => {
+  const onPilihKategori = (_kategori: RingkasanKategoriTipe) => {
     // Aksi ini bisa digunakan untuk navigasi ke detail kategori
   };
 

@@ -1,18 +1,10 @@
 // context/DompetContext.tsx
 import type { JSX, ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Alert } from 'react-native';
 
 import db from '../database/sqlite';
 import type { Dompet } from '../database/tipe';
-
-// Tipe untuk data mentah dari database, pastikan sesuai skema
-interface DompetDariDB {
-  id: number;
-  nama: string;
-  saldo: number;
-  tipe: string | null;
-  ikon: string | null;
-}
 
 // Menggunakan kembali tipe ini untuk form edit juga
 export interface DataFormDompet {
@@ -74,7 +66,7 @@ export function DompetProvider({ children }: { children: ReactNode }): JSX.Eleme
 
   const simpanDompetBaru = async (): Promise<void> => {
     if (!dataForm.namaDompet.trim()) {
-      alert('Nama dompet tidak boleh kosong.');
+      Alert.alert('Validasi Gagal', 'Nama dompet tidak boleh kosong.');
       throw new Error('Nama dompet tidak boleh kosong.');
     }
     const saldoNumerik = parseFloat(dataForm.saldoAwal.replace(/[^0-9]/g, '')) || 0;
@@ -95,7 +87,7 @@ export function DompetProvider({ children }: { children: ReactNode }): JSX.Eleme
 
   const perbaruiDompet = async (id: number): Promise<void> => {
     if (!dataForm.namaDompet.trim()) {
-      alert('Nama dompet tidak boleh kosong.');
+      Alert.alert('Validasi Gagal', 'Nama dompet tidak boleh kosong.');
       throw new Error('Nama dompet tidak boleh kosong.');
     }
     const saldoNumerik = parseFloat(dataForm.saldoAwal.replace(/[^0-9]/g, '')) || 0;
