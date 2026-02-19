@@ -1,39 +1,27 @@
 // screens/form-dompet/InputFormDompet.tsx
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { useDompet } from '@/context/DompetContext';
-import type { Dompet } from '@/database/tipe';
+import { useDompet, type FormDompet } from '@/context/DompetContext'; // DIUBAH
 import ModalTipeDompet from './modal/ModalTipeDompet';
 
-// Terima properti `dompet` untuk mode edit
-export default function InputFormDompet({ dompet }: { dompet?: Dompet | null }) {
-  // Ambil semua yang diperlukan dari context
-  const { dataForm, setDataForm, bukaModalTipe } = useDompet();
+// DIHAPUS: Komponen ini tidak lagi menerima props dompet
+export default function InputFormDompet() {
+  // DIUBAH: Menggunakan nama baru dari context
+  const { formDompet, setFormDompet, bukaModalTipe } = useDompet();
 
-  // Gunakan useEffect untuk mengisi form saat mode edit
-  useEffect(() => {
-    if (dompet) {
-      setDataForm({
-        namaDompet: dompet.nama || '',
-        // Format saldo dari angka ke string dengan titik
-        saldoAwal: dompet.saldo.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
-        tipe: dompet.tipe || '',
-        ikon: dompet.ikon || '', // tambahkan ikon
-      });
-    }
-    // Tambahkan [dompet, setDataForm] sebagai dependensi
-  }, [dompet, setDataForm]);
+  // DIHAPUS: useEffect untuk mengisi form telah dipindahkan ke level layar
 
   const handleNamaChange = (nama: string) => {
-    setDataForm((dataSebelumnya) => ({ ...dataSebelumnya, namaDompet: nama }));
+    // DIUBAH: Menggunakan properti 'nama' dan tipe eksplisit
+    setFormDompet((dataSebelumnya: FormDompet) => ({ ...dataSebelumnya, nama }));
   };
 
   const handleSaldoChange = (saldo: string) => {
     const saldoTanpaTitik = saldo.replace(/[^\d]/g, '');
     const saldoTerformat = saldoTanpaTitik.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    setDataForm((dataSebelumnya) => ({ ...dataSebelumnya, saldoAwal: saldoTerformat }));
+    // DIUBAH: Menggunakan properti 'saldo' dan tipe eksplisit
+    setFormDompet((dataSebelumnya: FormDompet) => ({ ...dataSebelumnya, saldo: saldoTerformat }));
   };
 
   return (
@@ -41,10 +29,9 @@ export default function InputFormDompet({ dompet }: { dompet?: Dompet | null }) 
       {/* Tipe Dompet */}
       <View style={gaya.grupInput}>
         <Text style={gaya.label}>Tipe</Text>
-        {/* Gunakan fungsi bukaModalTipe dari context */}
         <Pressable style={gaya.inputPilihan} onPress={bukaModalTipe}>
-          {/* Tampilkan tipe yang dipilih dari context, atau placeholder jika kosong */}
-          <Text style={gaya.teksInputPilihan}>{dataForm.tipe || 'Pilih Tipe'}</Text>
+          {/* DIUBAH: Menggunakan formDompet.tipe */}
+          <Text style={gaya.teksInputPilihan}>{formDompet.tipe || 'Pilih Tipe'}</Text>
           <Ionicons name="chevron-down" size={22} color={warna.teksSekunder} />
         </Pressable>
       </View>
@@ -56,7 +43,7 @@ export default function InputFormDompet({ dompet }: { dompet?: Dompet | null }) 
           style={gaya.inputTeks}
           placeholder="Cth: Dompet Utama"
           placeholderTextColor="#94a3b8"
-          value={dataForm.namaDompet}
+          value={formDompet.nama} // DIUBAH
           onChangeText={handleNamaChange}
         />
       </View>
@@ -71,18 +58,18 @@ export default function InputFormDompet({ dompet }: { dompet?: Dompet | null }) 
             placeholder="0"
             placeholderTextColor="#94a3b8"
             keyboardType="numeric"
-            value={dataForm.saldoAwal}
+            value={formDompet.saldo} // DIUBAH
             onChangeText={handleSaldoChange}
           />
         </View>
       </View>
 
-      {/* Panggil ModalTipeDompet tanpa props */}
       <ModalTipeDompet />
     </View>
   );
 }
 
+// ... (gaya tidak berubah)
 const warna = {
   border: '#e2e8f0',
   teksUtama: '#0f172a',

@@ -1,16 +1,19 @@
 // screens/form-kategori/FormKategoriScreen.tsx
 import React, { useState } from 'react';
-import { StyleSheet, View, Alert } from 'react-native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useKategori } from '@/context/KategoriContext'; // DIIMPOR
+import type { Kategori } from '@/database/tipe';
 import HeaderFormKategori from './HeaderFormKategori';
 import ListKategori from './ListKategori';
 import ListSubKategori from './ListSubKategori';
 import TombolSimpan from './TombolSimpan';
 import TombolTipe from './TombolTipe';
-import type { Kategori } from '../../database/tipe'; // Impor tipe Kategori
 
 export default function FormKategoriScreen() {
   const [kategoriTerpilih, setKategoriTerpilih] = useState<Kategori | null>(null);
+  // DIUBAH: Dapatkan tipe aktif dari context untuk diberikan ke komponen anak
+  const { tipeAktif } = useKategori();
 
   const handleSimpan = () => {
     Alert.alert('Simpan', 'Tombol Simpan Ditekan!');
@@ -20,12 +23,18 @@ export default function FormKategoriScreen() {
     <SafeAreaView style={gaya.container}>
       <HeaderFormKategori />
       <View style={gaya.kontenUtama}>
+        {/* TombolTipe akan mengubah `tipeAktif` di dalam context */}
         <TombolTipe />
-        {/* ListKategori sekarang menerima fungsi untuk mengangkat state ke atas */}
-        <ListKategori 
-          onKategoriSelect={setKategoriTerpilih} 
-        />
-        {/* ListSubKategori menerima kategori yang dipilih sebagai prop */}
+
+        {/* 
+          DIUBAH: 
+          - ListKategori sekarang hanya muncul jika tipenya bukan 'transfer'.
+          - Prop `tipe` yang dibutuhkan oleh ListKategori sekarang dipenuhi.
+        */}
+        {tipeAktif !== 'transfer' && (
+          <ListKategori onKategoriSelect={setKategoriTerpilih} tipe={tipeAktif} />
+        )}
+
         <ListSubKategori kategoriTerpilih={kategoriTerpilih} />
         <TombolSimpan onPress={handleSimpan} />
       </View>

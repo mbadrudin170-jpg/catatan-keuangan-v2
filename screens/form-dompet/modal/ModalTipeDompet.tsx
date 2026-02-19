@@ -1,10 +1,9 @@
 // screens/form-dompet/modal/ModalTipeDompet.tsx
 import { Ionicons } from '@expo/vector-icons';
-import React from 'react'; // Impor React untuk mengakses tipe
+import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import type { DataFormDompet } from '../../../context/DompetContext';
-import { useDompet } from '../../../context/DompetContext';
+import { useDompet, type FormDompet } from '@/context/DompetContext'; // DIUBAH
 
 const daftarTipeDompet = [
   { id: 1, nama: 'Dompet Digital', ikon: 'wallet-outline' },
@@ -15,10 +14,12 @@ const daftarTipeDompet = [
 ];
 
 export default function ModalTipeDompet() {
-  const { modalTipeTerlihat, tutupModalTipe, setDataForm, dataForm } = useDompet();
+  // DIUBAH: Menggunakan nama baru dari context
+  const { modalTipeTerlihat, tutupModalTipe, setFormDompet, formDompet } = useDompet();
 
   const handlePilihTipe = (tipe: { nama: string; ikon: string }) => {
-    setDataForm((dataSebelumnya: DataFormDompet) => ({
+    // DIUBAH: Menggunakan setFormDompet dengan tipe eksplisit
+    setFormDompet((dataSebelumnya: FormDompet) => ({
       ...dataSebelumnya,
       tipe: tipe.nama,
       ikon: tipe.ikon,
@@ -45,26 +46,25 @@ export default function ModalTipeDompet() {
 
         <View style={gaya.daftarPilihan}>
           {daftarTipeDompet.map((item) => {
-            const terpilih = dataForm.tipe === item.nama;
+            // DIUBAH: Menggunakan formDompet.tipe
+            const terpilih = formDompet.tipe === item.nama;
             return (
               <Pressable
                 key={item.id}
                 style={[
                   gaya.itemPilihan,
-                  terpilih && gaya.itemPilihanTerpilih, // Terapkan style jika terpilih
+                  terpilih && gaya.itemPilihanTerpilih,
                 ]}
                 onPress={() => handlePilihTipe(item)}
               >
                 <Ionicons
                   name={item.ikon as React.ComponentProps<typeof Ionicons>['name']}
                   size={22}
-                  // Ubah warna ikon jika terpilih
                   color={terpilih ? warna.primer : warna.teksSekunder}
                 />
                 <Text
                   style={[
                     gaya.teksItemPilihan,
-                    // Ubah warna dan ketebalan teks jika terpilih
                     terpilih && gaya.teksItemPilihanTerpilih,
                   ]}
                 >
@@ -79,6 +79,7 @@ export default function ModalTipeDompet() {
   );
 }
 
+// ... (gaya tidak berubah)
 const warna = {
   latar: '#ffffff',
   backdrop: 'rgba(0, 0, 0, 0.4)',

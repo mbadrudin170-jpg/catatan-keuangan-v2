@@ -2,10 +2,10 @@
 import * as NavigationBar from 'expo-navigation-bar';
 import { SplashScreen, Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import type { JSX } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import type { JSX } from 'react';
 
 import { DompetProvider } from '@/context/DompetContext';
 import { KategoriProvider } from '@/context/KategoriContext';
@@ -25,9 +25,8 @@ export default function RootLayout(): JSX.Element | null {
 
         if (Platform.OS === 'android') {
           await NavigationBar.setButtonStyleAsync('dark');
-          await NavigationBar.setBackgroundColorAsync('#FFFFFF');
         }
-      } catch (e) {
+      } catch {
         // Gagal melakukan setup aplikasi dari _layout
       } finally {
         setDbInisialisasi(true);

@@ -3,16 +3,16 @@ import type { JSX, ReactNode } from 'react';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 // Impor tipe terpusat
-import type { Kategori, Subkategori, TipeTransaksi } from '@/database/tipe';
+import type { Kategori, TipeTransaksi } from '@/database/tipe';
 // Impor operasi database
 import {
-  tambahKategori as dbTambahKategori,
-  dapatkanSemuaKategori,
+  ambilSemuaKategori,
   hapusKategori as dbHapusKategori,
-  perbaruiKategori as dbPerbaruiKategori,
-  tambahSubkategori as dbTambahSubkategori,
   hapusSubkategori as dbHapusSubkategori,
+  perbaruiKategori as dbPerbaruiKategori,
   perbaruiSubkategori as dbPerbaruiSubkategori,
+  tambahKategori as dbTambahKategori,
+  tambahSubkategori as dbTambahSubkategori,
 } from '@/database/operasi';
 
 // --- Definisi Tipe Konteks ---
@@ -20,19 +20,22 @@ interface KategoriContextType {
   daftarKategori: Kategori[];
   tipeAktif: TipeTransaksi;
   setTipeAktif: (tipe: TipeTransaksi) => void;
-  tambahKategori: (nama: string, ikon: string) => Promise<void>;
+  // DIUBAH: Fungsi tambahKategori sekarang membutuhkan tipe secara eksplisit
+  tambahKategori: (nama: string, ikon: string, tipe: 'pemasukan' | 'pengeluaran') => Promise<void>;
   hapusKategori: (idKategori: number) => Promise<void>;
   perbaruiKategori: (idKategori: number, namaBaru: string, ikonBaru: string) => Promise<void>;
   tambahSubkategori: (idKategori: number, namaSubkategori: string) => Promise<void>;
   hapusSubkategori: (idKategori: number, idSubkategori: number) => Promise<void>;
-  perbaruiSubkategori: (idKategori: number, idSubkategori: number, namaBaru: string) => Promise<void>;
+  perbaruiSubkategori: (
+    idKategori: number,
+    idSubkategori: number,
+    namaBaru: string
+  ) => Promise<void>;
   muatKategori: () => Promise<void>;
 }
 
 // --- Konteks ---
-const KategoriContext = createContext<KategoriContextType | undefined>(
-  undefined
-);
+const KategoriContext = createContext<KategoriContextType | undefined>(undefined);
 
 export const useKategori = (): KategoriContextType => {
   const context = useContext(KategoriContext);
@@ -49,7 +52,7 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
 
   const muatKategori = async (): Promise<void> => {
     try {
-      const data = await dapatkanSemuaKategori();
+      const data = await ambilSemuaKategori();
       setSemuaKategori(data);
     } catch (e) {
       console.error('Gagal memuat kategori dari database:', e);
@@ -60,12 +63,19 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
     void muatKategori();
   }, []);
 
-  const tambahKategori = async (nama: string, ikon: string): Promise<void> => {
+  // DIUBAH: Implementasi baru tidak lagi bergantung pada `tipeAktif` dari state.
+  const tambahKategori = async (
+    nama: string,
+    ikon: string,
+    tipe: 'pemasukan' | 'pengeluaran'
+  ): Promise<void> => {
     try {
-      await dbTambahKategori(nama, ikon, tipeAktif);
+      // `tipe` sekarang datang dari argumen fungsi.
+      await dbTambahKategori(nama, ikon, tipe);
       await muatKategori(); // Muat ulang data setelah menambah
     } catch (error) {
       console.error('Gagal menambah kategori:', error);
+      throw error; // Lemparkan lagi error agar bisa ditangkap di UI
     }
   };
 
@@ -75,38 +85,49 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
       await muatKategori(); // Muat ulang data setelah menghapus
     } catch (error) {
       console.error('Gagal menghapus kategori:', error);
+      throw error;
     }
   };
 
-  const perbaruiKategori = async (idKategori: number, namaBaru: string, ikonBaru: string): Promise<void> => {
+  const perbaruiKategori = async (
+    idKategori: number,
+    namaBaru: string,
+    ikonBaru: string
+  ): Promise<void> => {
     try {
       await dbPerbaruiKategori(idKategori, namaBaru, ikonBaru);
       await muatKategori(); // Muat ulang data setelah memperbarui
     } catch (error) {
       console.error('Gagal memperbarui kategori:', error);
+      throw error;
     }
   };
 
   const tambahSubkategori = async (idKategori: number, namaSubkategori: string): Promise<void> => {
     try {
-      await dbTambahSubkategori(idKategori, namaSubkategori);
+      await dbTambahSubkategori(namaSubkategori, idKategori);
       await muatKategori(); // Muat ulang data
     } catch (error) {
       console.error('Gagal menambah subkategori:', error);
+      throw error;
     }
   };
 
-  const hapusSubkategori = async (idKategori: number, idSubkategori: number): Promise<void> => {
+  const hapusSubkategori = async (
+    idKategori: number, // idKategori tidak digunakan di DB-op, tapi ada untuk konsistensi tipe
+    idSubkategori: number
+  ): Promise<void> => {
     try {
       await dbHapusSubkategori(idSubkategori);
       await muatKategori(); // Muat ulang data
     } catch (error) {
       console.error('Gagal menghapus subkategori:', error);
+      throw error;
     }
   };
 
   const perbaruiSubkategori = async (
-    idKategori: number,
+    idKategori: number, // idKategori tidak digunakan di DB-op
     idSubkategori: number,
     namaBaru: string
   ): Promise<void> => {
@@ -115,12 +136,11 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
       await muatKategori(); // Muat ulang data
     } catch (error) {
       console.error('Gagal memperbarui subkategori:', error);
+      throw error;
     }
   };
 
-  const daftarKategoriYangDifilter = semuaKategori.filter(
-    (k) => k.tipe === tipeAktif
-  );
+  const daftarKategoriYangDifilter = semuaKategori.filter((k) => k.tipe === tipeAktif);
 
   return (
     <KategoriContext.Provider
@@ -135,7 +155,8 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
         hapusSubkategori,
         perbaruiSubkategori,
         muatKategori,
-      }}>
+      }}
+    >
       {children}
     </KategoriContext.Provider>
   );

@@ -9,6 +9,7 @@ export default function DetailLayout(): JSX.Element {
       }}
     >
       <Stack.Screen name="dompet/[id]" />
+      <Stack.Screen name="transaksi/[id]" />
     </Stack>
   );
 }

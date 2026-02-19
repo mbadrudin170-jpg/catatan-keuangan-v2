@@ -57,6 +57,13 @@ export const inisialisasiDB = async (): Promise<void> => {
         tipe TEXT NOT NULL CHECK(tipe IN ('pemasukan', 'pengeluaran'))
       );
 
+      CREATE TABLE IF NOT EXISTS subkategori (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nama TEXT NOT NULL,
+        kategori_id INTEGER NOT NULL,
+        FOREIGN KEY (kategori_id) REFERENCES kategori (id) ON DELETE CASCADE
+      );
+
       CREATE TABLE IF NOT EXISTS dompet (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nama TEXT NOT NULL UNIQUE,
@@ -72,8 +79,10 @@ export const inisialisasiDB = async (): Promise<void> => {
         tanggal TEXT NOT NULL,
         kategori_id INTEGER,
         dompet_id INTEGER,
+        subkategori_id INTEGER, -- Tambah kolom ini
         FOREIGN KEY (kategori_id) REFERENCES kategori (id) ON DELETE SET NULL,
-        FOREIGN KEY (dompet_id) REFERENCES dompet (id) ON DELETE CASCADE
+        FOREIGN KEY (dompet_id) REFERENCES dompet (id) ON DELETE CASCADE,
+        FOREIGN KEY (subkategori_id) REFERENCES subkategori(id) ON DELETE SET NULL
       );
     `);
 

@@ -1,49 +1,52 @@
 // screens/form-dompet/ScreenFormDompet.tsx
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useDompet } from '@/context/DompetContext';
-import type { Dompet } from '@/database/tipe';
 import HeaderFormDompet from './HeaderFormDompet';
 import InputFormDompet from './InputFormDompet';
 import TombolSimpan from './TombolSimpan';
 
 export default function HalamanFormDompet() {
   const { id: idString } = useLocalSearchParams<{ id?: string }>();
-  const { muatDompetTunggal, setDataForm } = useDompet();
-  const [dompetEdit, setDompetEdit] = useState<Dompet | null>(null);
+  const { muatDompetUntukForm, setFormDompet } = useDompet();
 
   const idNumerik = idString ? parseInt(idString, 10) : undefined;
 
-  // Efek untuk memuat data saat mode edit
+  // DIUBAH: Logika efek disederhanakan setelah perbaikan di context
   useEffect(() => {
     if (idNumerik) {
-      const dataDompet = muatDompetTunggal(idNumerik);
-      setDompetEdit(dataDompet);
+      // Mode Edit: Muat data dompet ke dalam form context
+      void muatDompetUntukForm(idNumerik);
+    } else {
+      // Mode Tambah: Pastikan form bersih saat layar dibuka
+      setFormDompet({
+        nama: '',
+        saldo: '',
+        tipe: '',
+        ikon: '',
+      });
     }
-  }, [idNumerik, muatDompetTunggal]);
 
-  // Efek untuk membersihkan form saat komponen dilepas (unmount)
-  useEffect(() => {
+    // Fungsi cleanup sekarang hanya reset form jika diperlukan
     return () => {
-      setDataForm({
-        namaDompet: '',
-        saldoAwal: '',
+      setFormDompet({
+        nama: '',
+        saldo: '',
         tipe: '',
         ikon: '',
       });
     };
-  }, [setDataForm]);
+    // Dependensi: Cukup `idNumerik`. Fungsi context sekarang stabil.
+  }, [idNumerik, muatDompetUntukForm, setFormDompet]); // DIUBAH: Dependensi diperbarui
 
   return (
     <SafeAreaView style={gaya.wadahAman}>
       <HeaderFormDompet />
       <ScrollView contentContainerStyle={gaya.kontenScroll}>
-        {/* Teruskan data dompet yang akan diedit ke komponen input */}
-        <InputFormDompet dompet={dompetEdit} />
-        {/* Teruskan ID yang akan diedit ke tombol simpan */}
+        <InputFormDompet />
         <TombolSimpan idEdit={idNumerik} />
       </ScrollView>
     </SafeAreaView>

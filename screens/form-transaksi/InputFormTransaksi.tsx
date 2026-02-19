@@ -1,12 +1,13 @@
 // screens/form-transaksi/InputFormTransaksi.tsx
-import { useDompet } from '@/context/DompetContext'; // <-- BARU: Butuh untuk mendapatkan nama dompet
-import { useKategori } from '@/context/KategoriContext'; // <-- BARU: Butuh untuk mendapatkan nama kategori
-import { useTransaksi } from '@/context/TransaksiContext';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+
+import { useDompet } from '@/context/DompetContext';
+import { useKategori } from '@/context/KategoriContext';
+import { useTransaksi } from '@/context/TransaksiContext';
 
 export default function InputFormTransaksi() {
   const {
@@ -21,11 +22,13 @@ export default function InputFormTransaksi() {
   const { daftarKategori } = useKategori();
   const { daftarDompet } = useDompet();
 
-  // --- BARU: Fungsi untuk mendapatkan nama dari ID ---
+  const semuaSubkategori = daftarKategori.flatMap((k) => k.subkategori);
   const namaKategori =
-    daftarKategori.find((k) => k.id === transaksi.kategori_id)?.nama || 'Pilih Kategori';
+    semuaSubkategori.find((s) => s.id === transaksi.kategori_id)?.nama || 'Pilih Kategori';
+
   const namaDompet = daftarDompet.find((d) => d.id === transaksi.dompet_id)?.nama || 'Pilih Dompet';
-  // --- END BARU ---
+  const namaDompetTujuan =
+    daftarDompet.find((d) => d.id === transaksi.dompet_tujuan_id)?.nama || 'Pilih Dompet Tujuan';
 
   return (
     <View style={gaya.penampung}>
@@ -34,7 +37,7 @@ export default function InputFormTransaksi() {
         <Text style={gaya.label}>Jumlah</Text>
         <TextInput
           style={gaya.input}
-          value={transaksi.jumlah.toString()} // Ubah ke string
+          value={transaksi.jumlah ? transaksi.jumlah.toString() : ''}
           onChangeText={(teks) => setTransaksi((t) => ({ ...t, jumlah: Number(teks) || 0 }))}
           placeholder="Rp 0"
           keyboardType="numeric"
@@ -64,17 +67,26 @@ export default function InputFormTransaksi() {
         </Pressable>
       </View>
 
-      {/* Pemilih Kategori */}
-      <Pressable style={gaya.grupInput} onPress={bukaModalKategori}>
-        <Text style={gaya.label}>Kategori</Text>
-        <Text style={gaya.nilaiPemilih}>{namaKategori}</Text>
-      </Pressable>
-
-      {/* Pemilih Dompet */}
+      {/* Pemilih Dompet Asal */}
       <Pressable style={gaya.grupInput} onPress={bukaModalDompet}>
-        <Text style={gaya.label}>Dompet</Text>
+        <Text style={gaya.label}>Dari Dompet</Text>
         <Text style={gaya.nilaiPemilih}>{namaDompet}</Text>
       </Pressable>
+
+      {/* DIUBAH: Komentar diubah ke format JSX yang benar */}
+      {transaksi.tipe === 'transfer' ? (
+        <Pressable style={gaya.grupInput} onPress={bukaModalDompet}>
+          {/* Jika tipe adalah transfer, tampilkan pemilih Dompet Tujuan */}
+          <Text style={gaya.label}>Dompet Tujuan</Text>
+          <Text style={gaya.nilaiPemilih}>{namaDompetTujuan}</Text>
+        </Pressable>
+      ) : (
+        <Pressable style={gaya.grupInput} onPress={bukaModalKategori}>
+          {/* Jika bukan transfer, tampilkan pemilih Kategori */}
+          <Text style={gaya.label}>Kategori</Text>
+          <Text style={gaya.nilaiPemilih}>{namaKategori}</Text>
+        </Pressable>
+      )}
     </View>
   );
 }

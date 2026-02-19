@@ -1,9 +1,11 @@
 // screens/transaksi/ItemTransaksi.tsx
-import { StyleSheet, Text, View } from 'react-native';
-import { useDompet } from '../../context/DompetContext';
-import { useKategori } from '../../context/KategoriContext';
-import type { Transaksi } from '../../database/tipe';
-import { formatAngka } from '../../utils/format/FormatAngka';
+import { router } from 'expo-router';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { useDompet } from '@/context/DompetContext';
+import { useKategori } from '@/context/KategoriContext';
+import type { Transaksi } from '@/database/tipe';
+import { formatAngka } from '@/utils/format/FormatAngka';
 
 interface Props {
   item: Transaksi;
@@ -13,33 +15,36 @@ export default function ItemTransaksi({ item }: Props) {
   const { daftarKategori } = useKategori();
   const { daftarDompet } = useDompet();
 
-  // --- DIPERBAIKI: Cari objek kategori dan dompet berdasarkan ID ---
-  const kategori = daftarKategori.find((k) => k.id === item.kategori_id);
+  const semuaSubkategori = daftarKategori.flatMap((k) => k.subkategori);
+  const subkategori = semuaSubkategori.find((s) => s.id === item.kategori_id);
+  const kategoriInduk = daftarKategori.find((k) => k.id === subkategori?.kategori_id);
   const dompet = daftarDompet.find((d) => d.id === item.dompet_id);
 
-  const namaKategori = kategori?.nama || 'Lainnya';
+  const namaKategori = subkategori?.nama || 'Lainnya';
   const namaDompet = dompet?.nama || '-';
 
-  // --- DIPERBAIKI: Tentukan warna & tanda berdasarkan tipe kategori ---
-  const isPemasukkan = kategori?.tipe === 'pemasukan';
+  const isPemasukkan = kategoriInduk?.tipe === 'pemasukan';
   const warnaNominal = { color: isPemasukkan ? '#10b981' : '#ef4444' };
   const tanda = isPemasukkan ? '+' : '-';
 
+  // Fungsi untuk menangani navigasi ke halaman detail
+  const bukaDetail = () => {
+    router.push(`/transaksi/${item.id}`);
+  };
+
   return (
-    <View style={gaya.wadah}>
+    // DIUBAH: Komponen sekarang bisa ditekan dan akan menavigasi pengguna
+    <Pressable style={gaya.wadah} onPress={bukaDetail}>
       <View style={gaya.infoKiri}>
-        {/* --- DIPERBAIKI: Gunakan `keterangan` bukan `nama` --- */}
         <Text style={gaya.teksNama} numberOfLines={1}>
           {item.keterangan}
         </Text>
-        {/* --- DIPERBAIKI: Tampilkan nama kategori dan dompet --- */}
         <Text style={gaya.teksKategori}>{`${namaKategori} · ${namaDompet}`}</Text>
       </View>
-      {/* --- DIPERBAIKI: Gunakan `jumlah` dan format yang benar --- */}
       <Text style={[gaya.teksNominal, warnaNominal]}>
         {tanda} {formatAngka(item.jumlah)}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 

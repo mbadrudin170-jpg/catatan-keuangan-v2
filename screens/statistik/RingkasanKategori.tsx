@@ -1,7 +1,7 @@
 // screens/statistik/RingkasanKategori.tsx
 import type { TipeTransaksi } from '@/database/tipe';
 import React from 'react';
-import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // DIUBAH
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { WARNA } from './konstanta';
 import { useStatistik } from './StatistikContext';
 import type { RingkasanKategori as RingkasanKategoriTipe } from './tipe';
@@ -29,7 +29,7 @@ const ItemKategori = ({ ringkasan, persentase, onTekan }: ItemKategoriProps) => 
             styles.persentaseBar,
             {
               width: `${persentase}%`,
-              backgroundColor: WARNA.BIRU, // Warna bisa disesuaikan
+              backgroundColor: WARNA.BIRU,
             },
           ]}
         />
@@ -42,8 +42,9 @@ const ItemKategori = ({ ringkasan, persentase, onTekan }: ItemKategoriProps) => 
 // TAB TIPE - DIPERBARUI
 // ─────────────────────────────────────────────
 interface TabTipeProps {
-  aktif: TipeTransaksi;
-  onUbah: (tipe: TipeTransaksi) => void;
+  // DIUBAH: Tipe dispesifikkan karena komponen ini hanya untuk pemasukan/pengeluaran
+  aktif: 'pemasukan' | 'pengeluaran';
+  onUbah: (tipe: 'pemasukan' | 'pengeluaran') => void;
 }
 
 const TabTipe = ({ aktif, onUbah }: TabTipeProps) => (
@@ -82,6 +83,7 @@ export const RingkasanKategori = () => {
   return (
     <View style={styles.seksi}>
       <Text style={styles.judulSeksi}>Berdasarkan Kategori</Text>
+      {/* Perubahan di sini tidak error karena setTabKategori sudah sesuai tipenya */}
       <TabTipe aktif={tabKategori} onUbah={setTabKategori} />
       {ringkasanAktif.length === 0 ? (
         <View style={styles.kosong}>
@@ -146,7 +148,6 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     alignItems: 'center',
   },
-  // Style tabAktif tidak lagi diperlukan karena warna diatur dinamis
   teksTab: {
     fontSize: 13,
     fontWeight: '600',

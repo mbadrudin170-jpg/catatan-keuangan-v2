@@ -1,9 +1,10 @@
 // screens/form-transaksi/modal/ModalPilihKategori.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useKategori } from '../../../context/KategoriContext';
-import { useTransaksi } from '../../../context/TransaksiContext';
-import type { Kategori, Subkategori } from '../../../database/tipe';
+
+import { useKategori } from '@/context/KategoriContext';
+import { useTransaksi } from '@/context/TransaksiContext';
+import type { Kategori, Subkategori } from '@/database/tipe';
 
 interface Props {
   terlihat: boolean;
@@ -15,22 +16,41 @@ export default function ModalPilihKategori({ terlihat, saatTutup }: Props) {
   const { daftarKategori } = useKategori();
   const [kategoriAktif, setKategoriAktif] = useState<Kategori | null>(null);
 
-  useEffect(() => {
-    if (terlihat && daftarKategori.length > 0 && !kategoriAktif) {
-      const kategoriAwal = daftarKategori.find(k => k.id === transaksi.kategori_id) || daftarKategori[0];
-      setKategoriAktif(kategoriAwal);
+  const kategoriTersaring = useMemo(() => {
+    if (transaksi.tipe === 'transfer') {
+      return [];
     }
+    return daftarKategori.filter((k) => k.tipe === transaksi.tipe);
+  }, [daftarKategori, transaksi.tipe]);
+
+  // DIUBAH: Logika efek dipecah menjadi dua untuk kejelasan dan keandalan.
+
+  // Efek 1: Menangani logika saat modal DIBUKA.
+  useEffect(() => {
+    // Hanya berjalan saat modal menjadi terlihat DAN ada kategori untuk ditampilkan.
+    if (terlihat && kategoriTersaring.length > 0) {
+      // Coba cari kategori induk dari subkategori yang mungkin sudah dipilih.
+      const kategoriIndukSaatIni = kategoriTersaring.find((k) =>
+        k.subkategori.some((s) => s.id === transaksi.kategori_id)
+      );
+
+      // Jika ditemukan, jadikan itu aktif (mempertahankan pilihan saat buka/tutup).
+      // Jika tidak (karena ganti tipe atau buka pertama kali), jadikan item PERTAMA
+      // dari daftar yang valid sebagai yang aktif.
+      setKategoriAktif(kategoriIndukSaatIni || kategoriTersaring[0]);
+    }
+  }, [terlihat, kategoriTersaring]); // Hanya bergantung pada visibilitas dan data yang disaring.
+
+  // Efek 2: Menangani logika saat modal DITUTUP (pembersihan).
+  useEffect(() => {
     if (!terlihat) {
       setKategoriAktif(null);
     }
-  }, [terlihat, daftarKategori, kategoriAktif, transaksi.kategori_id]);
+  }, [terlihat]); // Hanya bergantung pada visibilitas.
 
-  // --- DIPERBAIKI: Menggunakan objek Subkategori dan mengatur kategori_id ---
   const handlePilihSubkategori = (subkategori: Subkategori) => {
     setTransaksi((transaksiLama) => ({
       ...transaksiLama,
-      // Seharusnya ini adalah ID unik global, tapi untuk sekarang kita gunakan ID subkategori.
-      // Ini mungkin perlu perbaikan di masa depan jika ID subkategori tidak unik.
       kategori_id: subkategori.id,
     }));
     saatTutup();
@@ -49,8 +69,7 @@ export default function ModalPilihKategori({ terlihat, saatTutup }: Props) {
           <View style={gaya.kolomKategori}>
             <Text style={gaya.judulKolom}>Kategori</Text>
             <FlatList
-              data={daftarKategori}
-              // --- DIPERBAIKI: keyExtractor ke string ---
+              data={kategoriTersaring}
               keyExtractor={(item) => item.id.toString()}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={gaya.paddingList}
@@ -73,18 +92,14 @@ export default function ModalPilihKategori({ terlihat, saatTutup }: Props) {
             <Text style={gaya.judulKolom}>Sub Kategori</Text>
             <FlatList
               data={subkategoriSaatIni}
-              // --- DIPERBAIKI: keyExtractor ke string ---
               keyExtractor={(item) => item.id.toString()}
               showsVerticalScrollIndicator={false}
               contentContainerStyle={gaya.paddingList}
               renderItem={({ item }) => {
-                // --- DIPERBAIKI: Logika pengecekan item aktif ---
                 const adalahAktif = transaksi.kategori_id === item.id;
-
                 return (
                   <Pressable
                     style={[gaya.item, adalahAktif && gaya.itemAktif]}
-                    // --- DIPERBAIKI: Meneruskan seluruh objek item ---
                     onPress={() => handlePilihSubkategori(item)}
                   >
                     <Text style={[gaya.teksItem, adalahAktif && gaya.teksItemAktif]}>
@@ -96,7 +111,9 @@ export default function ModalPilihKategori({ terlihat, saatTutup }: Props) {
               ListEmptyComponent={
                 <View style={gaya.penampungKosong}>
                   <Text style={gaya.teksKosong}>
-                    {daftarKategori.length > 0 ? 'Tidak ada subkategori' : 'Tidak ada kategori'}
+                    {kategoriTersaring.length > 0
+                      ? 'Tidak ada subkategori'
+                      : 'Pilih tipe transaksi dahulu'}
                   </Text>
                 </View>
               }
@@ -108,8 +125,7 @@ export default function ModalPilihKategori({ terlihat, saatTutup }: Props) {
   );
 }
 
-
-// Gaya tidak berubah, jadi saya biarkan seperti adanya.
+// Gaya tidak diubah
 const warna = {
   primer: '#4F46E5',
   teksUtama: '#0f172a',

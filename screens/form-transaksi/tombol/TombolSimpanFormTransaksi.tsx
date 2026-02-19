@@ -1,34 +1,57 @@
 // screens/form-transaksi/tombol/TombolSimpanFormTransaksi.tsx
+import { useTransaksi } from '@/context/TransaksiContext';
+import { useRouter } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useRouter } from 'expo-router'; // <-- BARU: Impor router
-import { useTransaksi } from '../../../context/TransaksiContext';
 
 export default function TombolSimpanFormTransaksi() {
-  const router = useRouter(); // <-- BARU: Inisialisasi router
+  const router = useRouter();
   const { transaksi, setTransaksi, tambahTransaksi } = useTransaksi();
 
-  const apakahTombolNonaktif =
-    !transaksi.keterangan ||
-    transaksi.jumlah === 0 ||
-    transaksi.dompet_id === 0 ||
-    transaksi.kategori_id === null;
+  // --- LOGIKA VALIDASI BARU ---
+  const apakahTombolNonaktif = (() => {
+    // Validasi dasar untuk semua tipe
+    if (transaksi.jumlah <= 0 || !transaksi.dompet_id) {
+      return true;
+    }
+
+    // Validasi spesifik untuk tipe transfer
+    if (transaksi.tipe === 'transfer') {
+      // Harus ada dompet tujuan DAN dompet asal tidak boleh sama dengan dompet tujuan
+      if (!transaksi.dompet_tujuan_id || transaksi.dompet_id === transaksi.dompet_tujuan_id) {
+        return true;
+      }
+    } else {
+      // Validasi untuk pemasukan/pengeluaran
+      if (!transaksi.kategori_id) {
+        return true;
+      }
+    }
+
+    // Jika semua validasi lolos
+    return false;
+  })();
+  // --- AKHIR LOGIKA VALIDASI ---
 
   const handleSimpan = () => {
     if (apakahTombolNonaktif) return;
 
     tambahTransaksi(transaksi);
 
-    // Mengosongkan state setelah disimpan
+    // --- RESET FORM BARU ---
     setTransaksi({
       id: Date.now(),
       jumlah: 0,
       keterangan: '',
       tanggal: new Date().toISOString(),
+      tipe: 'pengeluaran', // Reset ke tipe default
       kategori_id: null,
       dompet_id: 0,
+      dompet_tujuan_id: null, // Reset dompet tujuan
+      subkategori_id: null,
     });
+    // --- AKHIR RESET FORM ---
 
-    router.back(); // <-- BARU: Kembali ke layar sebelumnya
+    router.back();
   };
 
   return (

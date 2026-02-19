@@ -1,43 +1,51 @@
 // screens/detail-dompet/logikaDetailDompet.ts
-
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { createContext, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
 import { useDompet } from '@/context/DompetContext';
+import { ambilSatuDompet } from '@/database/operasi'; // <-- BARU: Impor fungsi ambil data langsung
 import type { Dompet } from '@/database/tipe';
 
-// Tipe untuk nilai yang akan disediakan oleh Context
 interface TipeDetailDompetContext {
   dompet: Dompet | null;
   memuat: boolean;
   onHapus: () => void;
 }
 
-// 1. Membuat Context
 const DetailDompetContext = createContext<TipeDetailDompetContext | null>(null);
 
-// 2. Hook untuk memuat logika utama
 export function useDetailDompet(): TipeDetailDompetContext {
   const { id: idString } = useLocalSearchParams<{ id: string }>();
-  const { muatDompetTunggal, hapusDompet } = useDompet();
+  const { hapusDompet } = useDompet(); // <-- DIUBAH: Hanya butuh hapusDompet dari context
   const router = useRouter();
   const [dompet, setDompet] = useState<Dompet | null>(null);
   const [memuat, setMemuat] = useState(true);
 
   const idNumerik = idString ? parseInt(idString, 10) : NaN;
 
+  // DIUBAH: Menggunakan useEffect dengan async/await
   useEffect(() => {
-    if (!isNaN(idNumerik)) {
-      setMemuat(true);
-      const dataDompet = muatDompetTunggal(idNumerik);
-      setDompet(dataDompet);
+    if (isNaN(idNumerik)) {
       setMemuat(false);
-    } else {
-      // Jika ID tidak valid, berhenti memuat
-      setMemuat(false);
+      return;
     }
-  }, [idNumerik, muatDompetTunggal]);
+
+    const muatData = async (): Promise<void> => {
+      setMemuat(true);
+      try {
+        const dataDompet = await ambilSatuDompet(idNumerik);
+        setDompet(dataDompet);
+      } catch (error) {
+        console.error('Gagal memuat detail dompet:', error);
+        setDompet(null); // Atur ke null jika ada error
+      } finally {
+        setMemuat(false);
+      }
+    };
+
+    void muatData();
+  }, [idNumerik]);
 
   const onHapus = (): void => {
     if (isNaN(idNumerik)) return;
@@ -70,7 +78,6 @@ export function useDetailDompet(): TipeDetailDompetContext {
   return { dompet, memuat, onHapus };
 }
 
-// 3. Hook untuk komponen anak agar bisa mengakses Context
 export function useDetailDompetContext(): TipeDetailDompetContext {
   const konteks = useContext(DetailDompetContext);
   if (!konteks) {
@@ -79,5 +86,4 @@ export function useDetailDompetContext(): TipeDetailDompetContext {
   return konteks;
 }
 
-// 4. Mengekspor Provider agar bisa digunakan oleh komponen induk
 export const DetailDompetProvider = DetailDompetContext.Provider;

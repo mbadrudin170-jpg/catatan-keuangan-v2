@@ -1,27 +1,38 @@
 // screens/form-transaksi/tombol/TombolTipeFormTransaksi.tsx
-import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-type TipeTransaksi = 'Pemasukan' | 'Pengeluaran' | 'Transfer';
+import { useTransaksi } from '@/context/TransaksiContext';
 
-interface Props {
-  onTipeChange: (tipe: TipeTransaksi) => void;
-}
+type TipeTransaksi = 'pemasukan' | 'pengeluaran' | 'transfer';
 
-export default function TombolTipeFormTransaksi({ onTipeChange }: Props) {
-  const [tipeAktif, aturTipeAktif] = useState<TipeTransaksi>('Pengeluaran');
+// DIHAPUS: Prop `onTipeChange` tidak lagi diperlukan
 
-  const daftarTombol: TipeTransaksi[] = ['Pemasukan', 'Pengeluaran', 'Transfer'];
+export default function TombolTipeFormTransaksi() {
+  // DIUBAH: Komponen sekarang langsung menggunakan context untuk membaca dan mengubah state
+  const { transaksi, setTransaksi } = useTransaksi();
+  const tipeAktif = transaksi.tipe;
 
+  // DIHAPUS: `useState` lokal dihapus untuk menghilangkan duplikasi state
+
+  const daftarTombol: TipeTransaksi[] = ['pemasukan', 'pengeluaran', 'transfer'];
+
+  // DIUBAH: Logika untuk mengubah tipe transaksi dan me-reset nilai terkait
+  // sekarang terpusat di sini.
   const handlePilihTipe = (tipe: TipeTransaksi) => {
-    aturTipeAktif(tipe);
-    onTipeChange(tipe);
+    setTransaksi((transaksiLama) => ({
+      ...transaksiLama,
+      tipe: tipe,
+      // Reset kategori dan dompet tujuan setiap kali tipe diubah
+      kategori_id: null,
+      dompet_tujuan_id: null,
+    }));
   };
 
   return (
     <View style={gaya.wadah}>
       {daftarTombol.map((tipe) => {
         const warnaTipe = konfigurasiWarna[tipe];
+        // DIUBAH: `aktif` sekarang ditentukan oleh state dari context
         const aktif = tipeAktif === tipe;
 
         return (
@@ -46,7 +57,7 @@ export default function TombolTipeFormTransaksi({ onTipeChange }: Props) {
                 },
               ]}
             >
-              {tipe}
+              {tipe.charAt(0).toUpperCase() + tipe.slice(1)}
             </Text>
           </Pressable>
         );
@@ -55,6 +66,7 @@ export default function TombolTipeFormTransaksi({ onTipeChange }: Props) {
   );
 }
 
+// Konfigurasi warna tetap sama
 const konfigurasiWarna: Record<
   TipeTransaksi,
   {
@@ -65,21 +77,21 @@ const konfigurasiWarna: Record<
     border: string;
   }
 > = {
-  Pemasukan: {
+  pemasukan: {
     latarAktif: '#16a34a',
     latarNonAktif: '#f0fdf4',
     teksAktif: '#ffffff',
     teksNonAktif: '#166534',
     border: '#22c55e',
   },
-  Pengeluaran: {
+  pengeluaran: {
     latarAktif: '#dc2626',
     latarNonAktif: '#fef2f2',
     teksAktif: '#ffffff',
     teksNonAktif: '#7f1d1d',
     border: '#ef4444',
   },
-  Transfer: {
+  transfer: {
     latarAktif: '#2563eb',
     latarNonAktif: '#eff6ff',
     teksAktif: '#ffffff',
@@ -88,6 +100,7 @@ const konfigurasiWarna: Record<
   },
 };
 
+// Gaya tetap sama
 const gaya = StyleSheet.create({
   wadah: {
     flexDirection: 'row',

@@ -5,12 +5,15 @@ import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } 
 import { useKategori } from '../../context/KategoriContext';
 import type { Kategori } from '../../database/tipe';
 
+// DIUBAH: Menambahkan `tipe` sebagai prop
 interface ListKategoriProps {
   onKategoriSelect: (kategori: Kategori | null) => void;
+  tipe: 'pemasukan' | 'pengeluaran';
 }
 
-export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
-  // `tambahKategori` sekarang membutuhkan `nama` dan `ikon`
+// DIUBAH: Menerima `tipe` dari props
+export default function ListKategori({ onKategoriSelect, tipe }: ListKategoriProps) {
+  // `tambahKategori` sekarang membutuhkan `nama`, `ikon`, dan `tipe`
   const { daftarKategori, tambahKategori, hapusKategori } = useKategori();
 
   const [kategoriTerpilih, setKategoriTerpilih] = useState<Kategori | null>(null);
@@ -22,7 +25,6 @@ export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
   const [posisiModal, setPosisiModal] = useState({ top: 0, left: 0, width: 0 });
 
   useEffect(() => {
-    // Logika ini sudah benar karena membandingkan number dengan number (k.id === kategoriTerpilih.id)
     const isPilihanSaatIniValid = kategoriTerpilih
       ? daftarKategori.some((k) => k.id === kategoriTerpilih.id)
       : false;
@@ -54,7 +56,8 @@ export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
     }
 
     try {
-      await tambahKategori(namaKategori, 'pricetag-outline');
+      // DIUBAH: `tipe` sekarang dilewatkan secara eksplisit saat menambah kategori
+      await tambahKategori(namaKategori, 'pricetag-outline', tipe);
       setInputKategoriBaru('');
       setSedangMenambah(false);
     } catch (error) {
@@ -130,7 +133,11 @@ export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
         </View>
       ) : (
         <View>
-          <Pressable ref={pemicuRef as React.Ref<View>} onPress={tampilkanModal} style={gaya.pemicuDropdown}>
+          <Pressable
+            ref={pemicuRef as React.Ref<View>}
+            onPress={tampilkanModal}
+            style={gaya.pemicuDropdown}
+          >
             <Text style={gaya.teksDropdown}>{kategoriTerpilih?.nama || 'Pilih Kategori'}</Text>
             <Ionicons name="chevron-down" size={20} color="#6B7280" />
           </Pressable>

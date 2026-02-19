@@ -1,26 +1,32 @@
 // context/DompetContext.tsx
 import type { JSX, ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+// DIUBAH: Impor useCallback untuk stabilisasi fungsi
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 
-import db from '../database/sqlite';
-import type { Dompet } from '../database/tipe';
+import {
+  ambilSemuaDompet,
+  ambilSatuDompet,
+  tambahDompet as dbTambahDompet,
+  perbaruiDompet as dbPerbaruiDompet,
+  hapusDompet as dbHapusDompet,
+} from '@/database/operasi';
+import type { Dompet } from '@/database/tipe';
 
-// Menggunakan kembali tipe ini untuk form edit juga
-export interface DataFormDompet {
-  namaDompet: string;
-  saldoAwal: string; // Saldo direpresentasikan sebagai string di form
+export interface FormDompet {
+  nama: string;
+  saldo: string;
   tipe: string;
   ikon: string;
 }
 
 interface ContextDompetType {
-  dataForm: DataFormDompet;
-  setDataForm: React.Dispatch<React.SetStateAction<DataFormDompet>>;
+  formDompet: FormDompet;
+  setFormDompet: React.Dispatch<React.SetStateAction<FormDompet>>;
   daftarDompet: Dompet[];
   memuat: boolean;
-  muatDaftarDompet: () => void;
-  muatDompetTunggal: (id: number) => Dompet | null;
+  muatUlangDaftarDompet: () => Promise<void>;
+  muatDompetUntukForm: (id: number) => Promise<void>;
   simpanDompetBaru: () => Promise<void>;
   perbaruiDompet: (id: number) => Promise<void>;
   hapusDompet: (id: number) => Promise<void>;
@@ -32,9 +38,9 @@ interface ContextDompetType {
 const DompetContext = createContext<ContextDompetType | undefined>(undefined);
 
 export function DompetProvider({ children }: { children: ReactNode }): JSX.Element {
-  const [dataForm, setDataForm] = useState<DataFormDompet>({
-    namaDompet: '',
-    saldoAwal: '',
+  const [formDompet, setFormDompet] = useState<FormDompet>({
+    nama: '',
+    saldo: '',
     tipe: '',
     ikon: '',
   });
@@ -42,97 +48,110 @@ export function DompetProvider({ children }: { children: ReactNode }): JSX.Eleme
   const [modalTipeTerlihat, setModalTipeTerlihat] = useState(false);
   const [memuat, setMemuat] = useState(true);
 
-  const muatDaftarDompet = (): void => {
+  // DIUBAH: Bungkus dengan useCallback untuk mencegah pembuatan ulang fungsi
+  const muatUlangDaftarDompet = useCallback(async (): Promise<void> => {
     setMemuat(true);
     try {
-      const hasil = db.getAllSync<Dompet>('SELECT id, nama, saldo, tipe, ikon FROM dompet');
+      const hasil = await ambilSemuaDompet();
       setDaftarDompet(hasil);
     } catch (error) {
       console.error('Gagal memuat daftar dompet:', error);
     } finally {
       setMemuat(false);
     }
-  };
+  }, []); // Dependensi kosong karena tidak bergantung pada state/props dari provider
 
-  const muatDompetTunggal = (id: number): Dompet | null => {
+  // DIUBAH: Bungkus dengan useCallback
+  const muatDompetUntukForm = useCallback(async (id: number): Promise<void> => {
     try {
-      const hasil = db.getFirstSync<Dompet>('SELECT * FROM dompet WHERE id = ?', id);
-      return hasil ?? null;
+      const dompet = await ambilSatuDompet(id);
+      if (dompet) {
+        setFormDompet({
+          nama: dompet.nama,
+          saldo: String(dompet.saldo),
+          tipe: dompet.tipe ?? '',
+          ikon: dompet.ikon ?? '',
+        });
+      }
     } catch (error) {
       console.error(`Gagal memuat dompet dengan id ${id}:`, error);
-      return null;
     }
-  };
+  }, []); // Dependensi kosong karena setFormDompet dijamin stabil oleh React
 
-  const simpanDompetBaru = async (): Promise<void> => {
-    if (!dataForm.namaDompet.trim()) {
+  // DIUBAH: Bungkus dengan useCallback dan tambahkan dependensi
+  const simpanDompetBaru = useCallback(async (): Promise<void> => {
+    if (!formDompet.nama.trim()) {
       Alert.alert('Validasi Gagal', 'Nama dompet tidak boleh kosong.');
       throw new Error('Nama dompet tidak boleh kosong.');
     }
-    const saldoNumerik = parseFloat(dataForm.saldoAwal.replace(/[^0-9]/g, '')) || 0;
+    const saldoNumerik = parseFloat(formDompet.saldo.replace(/[^0-9]/g, '')) || 0;
     try {
-      db.runSync(
-        'INSERT INTO dompet (nama, saldo, tipe, ikon) VALUES (?, ?, ?, ?);',
-        dataForm.namaDompet.trim(),
+      await dbTambahDompet(
+        formDompet.nama.trim(),
         saldoNumerik,
-        dataForm.tipe,
-        dataForm.ikon
+        formDompet.tipe,
+        formDompet.ikon
       );
-      muatDaftarDompet();
+      await muatUlangDaftarDompet();
     } catch (error) {
       console.error('Gagal menyimpan dompet baru:', error);
       throw error;
     }
-  };
+    // Dependensi: fungsi ini bergantung pada `formDompet` dan `muatUlangDaftarDompet`
+  }, [formDompet, muatUlangDaftarDompet]);
 
-  const perbaruiDompet = async (id: number): Promise<void> => {
-    if (!dataForm.namaDompet.trim()) {
+  // DIUBAH: Bungkus dengan useCallback dan tambahkan dependensi
+  const perbaruiDompet = useCallback(async (id: number): Promise<void> => {
+    if (!formDompet.nama.trim()) {
       Alert.alert('Validasi Gagal', 'Nama dompet tidak boleh kosong.');
       throw new Error('Nama dompet tidak boleh kosong.');
     }
-    const saldoNumerik = parseFloat(dataForm.saldoAwal.replace(/[^0-9]/g, '')) || 0;
+    const saldoNumerik = parseFloat(formDompet.saldo.replace(/[^0-9]/g, '')) || 0;
     try {
-      db.runSync(
-        'UPDATE dompet SET nama = ?, saldo = ?, tipe = ?, ikon = ? WHERE id = ?;',
-        dataForm.namaDompet.trim(),
+      await dbPerbaruiDompet(
+        id,
+        formDompet.nama.trim(),
         saldoNumerik,
-        dataForm.tipe,
-        dataForm.ikon,
-        id
+        formDompet.tipe,
+        formDompet.ikon
       );
-      muatDaftarDompet();
+      await muatUlangDaftarDompet();
     } catch (error) {
       console.error(`Gagal memperbarui dompet dengan id ${id}:`, error);
       throw error;
     }
-  };
+    // Dependensi: fungsi ini bergantung pada `formDompet` dan `muatUlangDaftarDompet`
+  }, [formDompet, muatUlangDaftarDompet]);
 
-  const hapusDompet = async (id: number): Promise<void> => {
+  // DIUBAH: Bungkus dengan useCallback dan tambahkan dependensi
+  const hapusDompet = useCallback(async (id: number): Promise<void> => {
     try {
-      db.runSync('DELETE FROM dompet WHERE id = ?;', id);
-      muatDaftarDompet(); // Refresh daftar setelah menghapus
+      await dbHapusDompet(id);
+      await muatUlangDaftarDompet();
     } catch (error) {
       console.error(`Gagal menghapus dompet dengan id ${id}:`, error);
       throw error;
     }
-  };
+  }, [muatUlangDaftarDompet]);
 
-  const bukaModalTipe = (): void => setModalTipeTerlihat(true);
-  const tutupModalTipe = (): void => setModalTipeTerlihat(false);
+  // DIUBAH: Bungkus dengan useCallback untuk konsistensi
+  const bukaModalTipe = useCallback((): void => setModalTipeTerlihat(true), []);
+  const tutupModalTipe = useCallback((): void => setModalTipeTerlihat(false), []);
 
   useEffect(() => {
-    muatDaftarDompet();
-  }, []);
+    void muatUlangDaftarDompet();
+    // Dependensi di sini sudah benar karena muatUlangDaftarDompet sekarang stabil
+  }, [muatUlangDaftarDompet]);
 
   return (
     <DompetContext.Provider
       value={{
-        dataForm,
-        setDataForm,
+        formDompet,
+        setFormDompet,
         daftarDompet,
         memuat,
-        muatDaftarDompet,
-        muatDompetTunggal,
+        muatUlangDaftarDompet,
+        muatDompetUntukForm,
         simpanDompetBaru,
         perbaruiDompet,
         hapusDompet,
