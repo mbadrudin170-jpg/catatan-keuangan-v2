@@ -19,6 +19,11 @@ export interface FormDompet {
   ikon: string;
 }
 
+interface DompetProviderProps {
+  children: ReactNode;
+  initialDaftarDompet?: Dompet[];
+}
+
 interface ContextDompetType {
   formDompet: FormDompet;
   setFormDompet: React.Dispatch<React.SetStateAction<FormDompet>>;
@@ -39,16 +44,16 @@ interface ContextDompetType {
 
 const DompetContext = createContext<ContextDompetType | undefined>(undefined);
 
-export function DompetProvider({ children }: { children: ReactNode }): JSX.Element {
+export function DompetProvider({ children, initialDaftarDompet }: DompetProviderProps): JSX.Element {
   const [formDompet, setFormDompet] = useState<FormDompet>({
     nama: '',
     saldo: '',
     tipe: '',
     ikon: '',
   });
-  const [daftarDompet, setDaftarDompet] = useState<Dompet[]>([]);
+  const [daftarDompet, setDaftarDompet] = useState<Dompet[]>(initialDaftarDompet || []);
   const [modalTipeTerlihat, setModalTipeTerlihat] = useState(false);
-  const [memuat, setMemuat] = useState(true);
+  const [memuat, setMemuat] = useState(!initialDaftarDompet);
 
   const muatUlangDaftarDompet = useCallback(async (): Promise<void> => {
     setMemuat(true);
@@ -214,8 +219,10 @@ export function DompetProvider({ children }: { children: ReactNode }): JSX.Eleme
   const tutupModalTipe = useCallback((): void => setModalTipeTerlihat(false), []);
 
   useEffect(() => {
-    void muatUlangDaftarDompet();
-  }, [muatUlangDaftarDompet]);
+    if (!initialDaftarDompet) {
+      void muatUlangDaftarDompet();
+    }
+  }, [muatUlangDaftarDompet, initialDaftarDompet]);
 
   return (
     <DompetContext.Provider

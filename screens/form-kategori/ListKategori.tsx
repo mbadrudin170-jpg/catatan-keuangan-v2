@@ -1,19 +1,25 @@
 // screens/form-kategori/ListKategori.tsx
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
-import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useKategori } from '../../context/KategoriContext';
 import type { Kategori } from '../../database/tipe';
 
-// DIUBAH: Menambahkan `tipe` sebagai prop
 interface ListKategoriProps {
   onKategoriSelect: (kategori: Kategori | null) => void;
   tipe: 'pemasukan' | 'pengeluaran';
 }
 
-// DIUBAH: Menerima `tipe` dari props
 export default function ListKategori({ onKategoriSelect, tipe }: ListKategoriProps) {
-  // `tambahKategori` sekarang membutuhkan `nama`, `ikon`, dan `tipe`
   const { daftarKategori, tambahKategori, hapusKategori } = useKategori();
 
   const [kategoriTerpilih, setKategoriTerpilih] = useState<Kategori | null>(null);
@@ -24,17 +30,17 @@ export default function ListKategori({ onKategoriSelect, tipe }: ListKategoriPro
   const pemicuRef = useRef<View>(null);
   const [posisiModal, setPosisiModal] = useState({ top: 0, left: 0, width: 0 });
 
-  useEffect(() => {
-    const isPilihanSaatIniValid = kategoriTerpilih
-      ? daftarKategori.some((k) => k.id === kategoriTerpilih.id)
-      : false;
+  // DIPERBAIKI: Filter kategori berdasarkan tipe yang aktif
+  const kategoriDifilter = useMemo(
+    () => daftarKategori.filter((k) => k.tipe === tipe),
+    [daftarKategori, tipe]
+  );
 
-    if (!isPilihanSaatIniValid) {
-      const pilihanBaru = daftarKategori.length > 0 ? daftarKategori[0] : null;
-      setKategoriTerpilih(pilihanBaru);
-      onKategoriSelect(pilihanBaru);
-    }
-  }, [daftarKategori, onKategoriSelect, kategoriTerpilih]);
+  // DIPERBAIKI: Reset pilihan kategori saat tipe berubah
+  useEffect(() => {
+    setKategoriTerpilih(null);
+    onKategoriSelect(null);
+  }, [tipe, onKategoriSelect]);
 
   const handlePilih = (kategori: Kategori) => {
     setKategoriTerpilih(kategori);
@@ -46,17 +52,16 @@ export default function ListKategori({ onKategoriSelect, tipe }: ListKategoriPro
     const namaKategori = inputKategoriBaru.trim();
     if (namaKategori === '') return;
 
-    const sudahAda = daftarKategori.some(
+    const sudahAda = kategoriDifilter.some(
       (k) => k.nama.toLowerCase() === namaKategori.toLowerCase()
     );
 
     if (sudahAda) {
-      Alert.alert('Nama Duplikat', `Kategori "${namaKategori}" sudah ada.`);
+      Alert.alert('Nama Duplikat', `Kategori "${namaKategori}" sudah ada untuk tipe ini.`);
       return;
     }
 
     try {
-      // DIUBAH: `tipe` sekarang dilewatkan secara eksplisit saat menambah kategori
       await tambahKategori(namaKategori, 'pricetag-outline', tipe);
       setInputKategoriBaru('');
       setSedangMenambah(false);
@@ -77,6 +82,9 @@ export default function ListKategori({ onKategoriSelect, tipe }: ListKategoriPro
           try {
             if (kategoriTerpilih) {
               await hapusKategori(kategoriTerpilih.id);
+              // Reset pilihan setelah hapus
+              setKategoriTerpilih(null);
+              onKategoriSelect(null);
             }
           } catch (error) {
             console.error('Gagal menghapus kategori:', error);
@@ -168,7 +176,8 @@ export default function ListKategori({ onKategoriSelect, tipe }: ListKategoriPro
           ]}
         >
           <FlatList
-            data={daftarKategori}
+            // DIPERBAIKI: Gunakan daftar kategori yang sudah difilter
+            data={kategoriDifilter}
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => (
               <Pressable
@@ -194,7 +203,7 @@ export default function ListKategori({ onKategoriSelect, tipe }: ListKategoriPro
             )}
             ListEmptyComponent={
               <View style={gaya.kosongWrapper}>
-                <Text style={gaya.teksKosong}>Tidak ada kategori.</Text>
+                <Text style={gaya.teksKosong}>Tidak ada kategori untuk tipe ini.</Text>
               </View>
             }
           />

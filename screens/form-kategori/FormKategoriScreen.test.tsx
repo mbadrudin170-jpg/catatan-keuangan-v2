@@ -65,13 +65,12 @@ describe('FormKategoriScreen', () => {
 
   it('harus menampilkan Alert saat tombol simpan ditekan', () => {
     (useKategori as jest.Mock).mockReturnValue({ tipeAktif: 'pengeluaran' });
-    const spyAlert = jest.spyOn(Alert, 'alert');
 
     const { getByText } = render(<FormKategoriScreen />);
     const tombolSimpan = getByText('Simpan Mock');
 
     fireEvent.press(tombolSimpan);
 
-    expect(spyAlert).toHaveBeenCalledWith('Simpan', 'Tombol Simpan Ditekan!');
+    expect(Alert.alert).toHaveBeenCalledWith('Simpan', 'Tombol Simpan Ditekan!');
   });
 });

@@ -15,9 +15,6 @@ jest.mock('@/database/operasi', () => ({
   hapusDompet: jest.fn(),
 }));
 
-// Mock Alert agar tidak muncul saat testing
-jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-
 describe('DompetContext', () => {
   const dompetPalsu = {
     id: 1,

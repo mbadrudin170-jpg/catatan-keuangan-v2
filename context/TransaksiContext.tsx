@@ -1,14 +1,14 @@
 // context/TransaksiContext.tsx
-import type { Transaksi } from '@/database/tipe';
 import {
   DateTimePickerAndroid,
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import type { JSX, ReactNode } from 'react';
-import React, { createContext, useContext, useState } from 'react';
-import { Alert } from 'react-native'; // DIUBAH: Impor Alert untuk menampilkan pesan validasi.
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { Alert } from 'react-native';
 
-import { tambahSatuTransaksi as dbTambahTransaksi } from '@/database/operasi';
+import { ambilSemuaTransaksi, tambahSatuTransaksi as dbTambahTransaksi } from '@/database/operasi';
+import type { Transaksi } from '@/database/tipe';
 import { useDompet } from './DompetContext';
 
 type TipePilihanDompet = 'sumber' | 'tujuan';
@@ -17,6 +17,8 @@ interface TransaksiContextType {
   transaksi: Transaksi;
   setTransaksi: React.Dispatch<React.SetStateAction<Transaksi>>;
   daftarTransaksi: Transaksi[];
+  memuat: boolean;
+  muatUlangDaftarTransaksi: () => Promise<void>;
   tambahTransaksi: (transaksi: Transaksi) => Promise<void>;
   hapusSatuTransaksi: (id: number) => Promise<void>;
   modalDompetTerlihat: boolean;
@@ -35,9 +37,13 @@ const TransaksiContext = createContext<TransaksiContextType | undefined>(undefin
 
 interface TransaksiProviderProps {
   children: ReactNode;
+  initialDaftarTransaksi?: Transaksi[];
 }
 
-export const TransaksiProvider = ({ children }: TransaksiProviderProps): JSX.Element => {
+export const TransaksiProvider = ({
+  children,
+  initialDaftarTransaksi,
+}: TransaksiProviderProps): JSX.Element => {
   const { tambahPemasukan, tambahPengeluaran, tambahTransfer } = useDompet();
 
   const [transaksi, setTransaksi] = useState<Transaksi>({
@@ -47,25 +53,41 @@ export const TransaksiProvider = ({ children }: TransaksiProviderProps): JSX.Ele
     tanggal: new Date().toISOString(),
     tipe: 'pengeluaran',
     kategori_id: null,
-    dompet_id: 0, // Inisialisasi awal, akan divalidasi sebelum simpan
+    dompet_id: 0,
     dompet_tujuan_id: null,
     subkategori_id: null,
   });
 
-  const [daftarTransaksi, setDaftarTransaksi] = useState<Transaksi[]>([]);
+  const [daftarTransaksi, setDaftarTransaksi] = useState<Transaksi[]>(initialDaftarTransaksi || []);
+  const [memuat, setMemuat] = useState(!initialDaftarTransaksi);
+
+  const muatUlangDaftarTransaksi = useCallback(async (): Promise<void> => {
+    setMemuat(true);
+    try {
+      const hasil = await ambilSemuaTransaksi();
+      setDaftarTransaksi(hasil);
+    } catch (error) {
+      console.error('Gagal memuat daftar transaksi:', error);
+    } finally {
+      setMemuat(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!initialDaftarTransaksi) {
+      void muatUlangDaftarTransaksi();
+    }
+  }, [initialDaftarTransaksi, muatUlangDaftarTransaksi]);
 
   const tambahTransaksi = async (transaksiBaru: Transaksi): Promise<void> => {
-    // DIUBAH: Menambahkan lapisan validasi untuk mencegah data tidak valid masuk ke database.
     if (transaksiBaru.jumlah <= 0) {
       Alert.alert('Input Tidak Valid', 'Jumlah transaksi harus lebih dari nol.');
       throw new Error('Jumlah transaksi tidak valid.');
     }
-
     if (transaksiBaru.dompet_id === 0) {
       Alert.alert('Input Tidak Valid', 'Anda harus memilih dompet sumber.');
       throw new Error('Dompet sumber tidak dipilih.');
     }
-
     if (transaksiBaru.tipe === 'transfer') {
       if (!transaksiBaru.dompet_tujuan_id) {
         Alert.alert('Input Tidak Valid', 'Anda harus memilih dompet tujuan untuk transfer.');
@@ -79,7 +101,6 @@ export const TransaksiProvider = ({ children }: TransaksiProviderProps): JSX.Ele
 
     try {
       await dbTambahTransaksi(transaksiBaru);
-
       switch (transaksiBaru.tipe) {
         case 'pemasukan':
           await tambahPemasukan(transaksiBaru.dompet_id, transaksiBaru.jumlah);
@@ -88,7 +109,6 @@ export const TransaksiProvider = ({ children }: TransaksiProviderProps): JSX.Ele
           await tambahPengeluaran(transaksiBaru.dompet_id, transaksiBaru.jumlah);
           break;
         case 'transfer':
-          // Validasi di atas memastikan dompet_tujuan_id tidak akan null di sini
           await tambahTransfer(
             transaksiBaru.dompet_id,
             transaksiBaru.dompet_tujuan_id!,
@@ -96,12 +116,10 @@ export const TransaksiProvider = ({ children }: TransaksiProviderProps): JSX.Ele
           );
           break;
       }
-
-      const transaksiDenganId = { ...transaksiBaru, id: Date.now() };
-      setDaftarTransaksi((daftarLama) => [...daftarLama, transaksiDenganId]);
+      await muatUlangDaftarTransaksi();
     } catch (error) {
       console.error('Gagal menambah transaksi dan memperbarui saldo:', error);
-      throw error; // Lempar ulang error agar bisa ditangkap oleh pemanggil jika perlu
+      throw error;
     }
   };
 
@@ -147,6 +165,8 @@ export const TransaksiProvider = ({ children }: TransaksiProviderProps): JSX.Ele
     transaksi,
     setTransaksi,
     daftarTransaksi,
+    memuat,
+    muatUlangDaftarTransaksi,
     tambahTransaksi,
     hapusSatuTransaksi,
     modalDompetTerlihat,

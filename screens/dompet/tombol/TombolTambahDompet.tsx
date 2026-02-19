@@ -13,6 +13,7 @@ export default function TombolTambahDompet() {
     // Wadah ini memposisikan tombol di pojok kanan bawah
     <View style={gaya.wadah}>
       <Pressable
+        testID="tombol-tambah-dompet" // Ditambahkan untuk pengujian
         style={({ pressed }) => [
           gaya.tombol,
           { opacity: pressed ? 0.8 : 1 }, // Memberi efek visual saat tombol ditekan

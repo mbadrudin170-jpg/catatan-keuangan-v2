@@ -5,36 +5,35 @@ import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 export default function TombolTambahTransaksi() {
-  const navigasiKeFormTambah = () => {
-    // --- DIPERBAIKI: Menggunakan rute yang benar ---
-    router.push('/(form)/form-transaksi');
-  };
-
   return (
-    <Pressable style={styles.container} onPress={navigasiKeFormTambah}>
+    <Pressable
+      testID="tombol-tambah-transaksi" // Ditambahkan untuk pengujian
+      style={({ pressed }) => [gaya.tombol, pressed && gaya.tombolDitekan]}
+      onPress={() => router.push('/(form)/form-transaksi')}
+    >
       <Ionicons name="add" size={32} color="white" />
     </Pressable>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const gaya = StyleSheet.create({
+  tombol: {
     position: 'absolute',
     bottom: 30,
-    right: 30,
+    right: 20,
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#6200EE',
+    backgroundColor: '#3b82f6',
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 8,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    shadowRadius: 4,
+  },
+  tombolDitekan: {
+    opacity: 0.8,
   },
 });

@@ -1,10 +1,7 @@
 // context/KategoriContext.tsx
 import type { JSX, ReactNode } from 'react';
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
-// Impor tipe terpusat
-import type { Kategori, TipeTransaksi } from '@/database/tipe';
-// Impor operasi database
 import {
   ambilSemuaKategori,
   hapusKategori as dbHapusKategori,
@@ -14,27 +11,26 @@ import {
   tambahKategori as dbTambahKategori,
   tambahSubkategori as dbTambahSubkategori,
 } from '@/database/operasi';
+import type { Kategori, TipeTransaksi } from '@/database/tipe';
 
-// --- Definisi Tipe Konteks ---
 interface KategoriContextType {
   daftarKategori: Kategori[];
   tipeAktif: TipeTransaksi;
+  memuat: boolean;
   setTipeAktif: (tipe: TipeTransaksi) => void;
   tambahKategori: (nama: string, ikon: string, tipe: 'pemasukan' | 'pengeluaran') => Promise<void>;
   hapusKategori: (idKategori: number) => Promise<void>;
   perbaruiKategori: (idKategori: number, namaBaru: string, ikonBaru: string) => Promise<void>;
   tambahSubkategori: (idKategori: number, namaSubkategori: string) => Promise<void>;
-  // DIUBAH: Parameter `idKategori` diganti nama menjadi `_idKategori` karena tidak digunakan.
   hapusSubkategori: (_idKategori: number, idSubkategori: number) => Promise<void>;
   perbaruiSubkategori: (
-    _idKategori: number, // DIUBAH: Parameter diganti nama karena tidak digunakan.
+    _idKategori: number,
     idSubkategori: number,
     namaBaru: string
   ) => Promise<void>;
-  muatKategori: () => Promise<void>;
+  muatUlangDaftarKategori: () => Promise<void>;
 }
 
-// --- Konteks ---
 const KategoriContext = createContext<KategoriContextType | undefined>(undefined);
 
 export const useKategori = (): KategoriContextType => {
@@ -45,23 +41,33 @@ export const useKategori = (): KategoriContextType => {
   return context;
 };
 
-// --- Provider ---
-export function KategoriProvider({ children }: { children: ReactNode }): JSX.Element {
-  const [semuaKategori, setSemuaKategori] = useState<Kategori[]>([]);
-  const [tipeAktif, setTipeAktif] = useState<TipeTransaksi>('pengeluaran');
+interface KategoriProviderProps {
+  children: ReactNode;
+  initialDaftarKategori?: Kategori[];
+}
 
-  const muatKategori = async (): Promise<void> => {
+export function KategoriProvider({ children, initialDaftarKategori }: KategoriProviderProps): JSX.Element {
+  const [daftarKategori, setDaftarKategori] = useState<Kategori[]>(initialDaftarKategori || []);
+  const [tipeAktif, setTipeAktif] = useState<TipeTransaksi>('pengeluaran');
+  const [memuat, setMemuat] = useState(!initialDaftarKategori);
+
+  const muatUlangDaftarKategori = useCallback(async (): Promise<void> => {
+    setMemuat(true);
     try {
       const data = await ambilSemuaKategori();
-      setSemuaKategori(data);
+      setDaftarKategori(data);
     } catch (e) {
       console.error('Gagal memuat kategori dari database:', e);
+    } finally {
+      setMemuat(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    void muatKategori();
-  }, []);
+    if (!initialDaftarKategori) {
+      void muatUlangDaftarKategori();
+    }
+  }, [initialDaftarKategori, muatUlangDaftarKategori]);
 
   const tambahKategori = async (
     nama: string,
@@ -70,7 +76,7 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   ): Promise<void> => {
     try {
       await dbTambahKategori(nama, ikon, tipe);
-      await muatKategori();
+      await muatUlangDaftarKategori();
     } catch (error) {
       console.error('Gagal menambah kategori:', error);
       throw error;
@@ -80,7 +86,7 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   const hapusKategori = async (idKategori: number): Promise<void> => {
     try {
       await dbHapusKategori(idKategori);
-      await muatKategori();
+      await muatUlangDaftarKategori();
     } catch (error) {
       console.error('Gagal menghapus kategori:', error);
       throw error;
@@ -94,7 +100,7 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   ): Promise<void> => {
     try {
       await dbPerbaruiKategori(idKategori, namaBaru, ikonBaru);
-      await muatKategori();
+      await muatUlangDaftarKategori();
     } catch (error) {
       console.error('Gagal memperbarui kategori:', error);
       throw error;
@@ -104,20 +110,17 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   const tambahSubkategori = async (idKategori: number, namaSubkategori: string): Promise<void> => {
     try {
       await dbTambahSubkategori(namaSubkategori, idKategori);
-      await muatKategori();
+      await muatUlangDaftarKategori();
     } catch (error) {
       console.error('Gagal menambah subkategori:', error);
       throw error;
     }
   };
 
-  const hapusSubkategori = async (
-    _idKategori: number, // DIUBAH: Parameter tidak digunakan, jadi diberi underscore.
-    idSubkategori: number
-  ): Promise<void> => {
+  const hapusSubkategori = async (_idKategori: number, idSubkategori: number): Promise<void> => {
     try {
       await dbHapusSubkategori(idSubkategori);
-      await muatKategori();
+      await muatUlangDaftarKategori();
     } catch (error) {
       console.error('Gagal menghapus subkategori:', error);
       throw error;
@@ -125,13 +128,13 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   };
 
   const perbaruiSubkategori = async (
-    _idKategori: number, // DIUBAH: Parameter tidak digunakan, jadi diberi underscore.
+    _idKategori: number,
     idSubkategori: number,
     namaBaru: string
   ): Promise<void> => {
     try {
       await dbPerbaruiSubkategori(idSubkategori, namaBaru);
-      await muatKategori();
+      await muatUlangDaftarKategori();
     } catch (error) {
       console.error('Gagal memperbarui subkategori:', error);
       throw error;
@@ -141,8 +144,9 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   return (
     <KategoriContext.Provider
       value={{
-        daftarKategori: semuaKategori,
+        daftarKategori,
         tipeAktif,
+        memuat,
         setTipeAktif,
         tambahKategori,
         hapusKategori,
@@ -150,7 +154,7 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
         tambahSubkategori,
         hapusSubkategori,
         perbaruiSubkategori,
-        muatKategori,
+        muatUlangDaftarKategori,
       }}
     >
       {children}
