@@ -16,10 +16,22 @@ jest.mock('./logikaDetailDompet', () => ({
 }));
 
 // Mocking komponen anak untuk isolasi pengujian
-jest.mock('@/screens/detail-dompet/HeaderDetailDompet', () => () => <mock-HeaderDetailDompet />);
-jest.mock('@/screens/detail-dompet/KontenDetailDompet', () => () => <mock-KontenDetailDompet />);
-jest.mock('./RiwayatTransaksiPerDompet', () => () => <mock-RiwayatTransaksiPerDompet />);
-jest.mock('./TombolHapusDetailDompet', () => () => <mock-TombolHapusDetailDompet />);
+jest.mock('@/screens/detail-dompet/HeaderDetailDompet', () => () => {
+  const { Text } = require('react-native');
+  return <Text>mock-HeaderDetailDompet</Text>;
+});
+jest.mock('@/screens/detail-dompet/KontenDetailDompet', () => () => {
+  const { Text } = require('react-native');
+  return <Text>mock-KontenDetailDompet</Text>;
+});
+jest.mock('./RiwayatTransaksiPerDompet', () => () => {
+  const { Text } = require('react-native');
+  return <Text>mock-RiwayatTransaksiPerDompet</Text>;
+});
+jest.mock('./TombolHapusDetailDompet', () => () => {
+  const { Text } = require('react-native');
+  return <Text>mock-TombolHapusDetailDompet</Text>;
+});
 
 describe('DetailDompetHalaman', () => {
   beforeEach(() => {

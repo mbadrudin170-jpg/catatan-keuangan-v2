@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function DompetScreen() {
   return (
-    <SafeAreaView style={gaya.wadahUtama}>
+    <SafeAreaView style={gaya.wadahUtama} testID="dompet-screen-container">
       <HeaderDompet />
       <ListDompet />
       <TombolTambahDompet />

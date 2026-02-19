@@ -1,9 +1,9 @@
 // screens/form-kategori/FormKategoriScreen.tsx
+import { useKategori } from '@/context/KategoriContext'; // DIIMPOR
+import type { Kategori } from '@/database/tipe';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useKategori } from '@/context/KategoriContext'; // DIIMPOR
-import type { Kategori } from '@/database/tipe';
 import HeaderFormKategori from './HeaderFormKategori';
 import ListKategori from './ListKategori';
 import ListSubKategori from './ListSubKategori';
@@ -26,8 +26,8 @@ export default function FormKategoriScreen() {
         {/* TombolTipe akan mengubah `tipeAktif` di dalam context */}
         <TombolTipe />
 
-        {/* 
-          DIUBAH: 
+        {/*
+          DIUBAH:
           - ListKategori sekarang hanya muncul jika tipenya bukan 'transfer'.
           - Prop `tipe` yang dibutuhkan oleh ListKategori sekarang dipenuhi.
         */}

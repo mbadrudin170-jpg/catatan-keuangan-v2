@@ -16,7 +16,7 @@ function KontenHalaman(): JSX.Element {
   const { dompetId } = useLocalSearchParams<{ dompetId: string }>();
 
   if (logika.memuat) {
-    return <ActivityIndicator size="large" color="#3b82f6" style={gaya.pusat} />;
+    return <ActivityIndicator size="large" color="#3b82f6" style={gaya.pusat} testID="activity-indicator" />;
   }
 
   if (!logika.dompet) {

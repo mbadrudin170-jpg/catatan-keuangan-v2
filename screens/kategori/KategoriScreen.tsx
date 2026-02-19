@@ -10,7 +10,7 @@ export default function KategoriScreen() {
   return (
     <SafeAreaView style={gaya.wadah}>
       <HeaderKategori />
-      <View style={gaya.kontenUtama}>
+      <View style={gaya.kontenUtama} testID="konten-utama">
         <TombolTipe />
         <ListKategori />
       </View>

@@ -7,7 +7,7 @@ import TombolTambahTransaksi from './TombolTambahTransaksi';
 
 export default function TransaksiScreen() {
   return (
-    <SafeAreaView style={gaya.penampung}>
+    <SafeAreaView style={gaya.penampung} testID="transaksi-screen-container">
       <HeaderTransaksi />
       <DaftarTransaksi />
       <TombolTambahTransaksi />
