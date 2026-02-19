@@ -1,57 +1,56 @@
 // screens/form-transaksi/tombol/TombolSimpanFormTransaksi.tsx
 import { useTransaksi } from '@/context/TransaksiContext';
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export default function TombolSimpanFormTransaksi() {
   const router = useRouter();
   const { transaksi, setTransaksi, tambahTransaksi } = useTransaksi();
 
-  // --- LOGIKA VALIDASI BARU ---
   const apakahTombolNonaktif = (() => {
-    // Validasi dasar untuk semua tipe
     if (transaksi.jumlah <= 0 || !transaksi.dompet_id) {
       return true;
     }
-
-    // Validasi spesifik untuk tipe transfer
     if (transaksi.tipe === 'transfer') {
-      // Harus ada dompet tujuan DAN dompet asal tidak boleh sama dengan dompet tujuan
       if (!transaksi.dompet_tujuan_id || transaksi.dompet_id === transaksi.dompet_tujuan_id) {
         return true;
       }
     } else {
-      // Validasi untuk pemasukan/pengeluaran
       if (!transaksi.kategori_id) {
         return true;
       }
     }
-
-    // Jika semua validasi lolos
     return false;
   })();
-  // --- AKHIR LOGIKA VALIDASI ---
 
-  const handleSimpan = () => {
+  // DIUBAH: Logika handleSimpan dibuat async dan dibungkus try...catch
+  const handleSimpan = async () => {
     if (apakahTombolNonaktif) return;
 
-    tambahTransaksi(transaksi);
+    try {
+      // 1. Tunggu proses penyimpanan selesai
+      await tambahTransaksi(transaksi);
 
-    // --- RESET FORM BARU ---
-    setTransaksi({
-      id: Date.now(),
-      jumlah: 0,
-      keterangan: '',
-      tanggal: new Date().toISOString(),
-      tipe: 'pengeluaran', // Reset ke tipe default
-      kategori_id: null,
-      dompet_id: 0,
-      dompet_tujuan_id: null, // Reset dompet tujuan
-      subkategori_id: null,
-    });
-    // --- AKHIR RESET FORM ---
+      // 2. Jika berhasil, reset form ke kondisi awal
+      setTransaksi({
+        id: Date.now(),
+        jumlah: 0,
+        keterangan: '',
+        tanggal: new Date().toISOString(),
+        tipe: 'pengeluaran',
+        kategori_id: null,
+        dompet_id: 0,
+        dompet_tujuan_id: null,
+        subkategori_id: null,
+      });
 
-    router.back();
+      // 3. Navigasi kembali hanya setelah semua berhasil
+      router.back();
+    } catch (error: any) {
+      // 4. Jika ada error (dari validasi di context), tampilkan ke pengguna
+      console.error('Gagal menyimpan dari TombolSimpan:', error);
+      Alert.alert('Gagal Menyimpan', error.message || 'Terjadi kesalahan yang tidak diketahui.');
+    }
   };
 
   return (

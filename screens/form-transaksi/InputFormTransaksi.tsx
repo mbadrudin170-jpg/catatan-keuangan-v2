@@ -2,8 +2,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
-import React from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+// DIUBAH: Impor useEffect untuk logika reset otomatis
+import React, { useEffect, useRef } from 'react';
+import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useDompet } from '@/context/DompetContext';
 import { useKategori } from '@/context/KategoriContext';
@@ -21,6 +22,27 @@ export default function InputFormTransaksi() {
 
   const { daftarKategori } = useKategori();
   const { daftarDompet } = useDompet();
+
+  // DIUBAH: Tambahkan useEffect untuk me-reset state saat tipe transaksi berubah.
+  // Ini mencegah "state hantu" (misal: dompet_tujuan_id tersisa
+  // saat beralih dari transfer ke pengeluaran) yang bisa menyebabkan error FOREIGN KEY.
+  useEffect(() => {
+    if (transaksi.tipe === 'transfer') {
+      // Jika tipe baru adalah 'transfer', pastikan tidak ada sisa kategori.
+      // Hanya panggil set state jika perlu untuk menghindari render berulang.
+      if (transaksi.kategori_id !== null || transaksi.subkategori_id !== null) {
+        setTransaksi((t) => ({ ...t, kategori_id: null, subkategori_id: null }));
+      }
+    } else {
+      // Jika tipe baru adalah 'pemasukan' atau 'pengeluaran', pastikan tidak ada sisa dompet tujuan.
+      if (transaksi.dompet_tujuan_id !== null) {
+        setTransaksi((t) => ({ ...t, dompet_tujuan_id: null }));
+      }
+    }
+  }, [transaksi, setTransaksi]);
+
+  // Referensi untuk berpindah input
+  const referensiInputKeterangan = useRef<TextInput>(null);
 
   const semuaSubkategori = daftarKategori.flatMap((k) => k.subkategori);
   const namaKategori =
@@ -41,6 +63,9 @@ export default function InputFormTransaksi() {
           onChangeText={(teks) => setTransaksi((t) => ({ ...t, jumlah: Number(teks) || 0 }))}
           placeholder="Rp 0"
           keyboardType="numeric"
+          returnKeyType="next"
+          onSubmitEditing={() => referensiInputKeterangan.current?.focus()}
+          blurOnSubmit={false}
         />
       </View>
 
@@ -48,10 +73,13 @@ export default function InputFormTransaksi() {
       <View style={gaya.grupInput}>
         <Text style={gaya.label}>Keterangan</Text>
         <TextInput
+          ref={referensiInputKeterangan}
           style={gaya.input}
           value={transaksi.keterangan}
           onChangeText={(teks) => setTransaksi((t) => ({ ...t, keterangan: teks }))}
           placeholder="Contoh: Beli Kopi"
+          returnKeyType="done"
+          onSubmitEditing={() => Keyboard.dismiss()}
         />
       </View>
 
@@ -67,22 +95,21 @@ export default function InputFormTransaksi() {
         </Pressable>
       </View>
 
-      {/* Pemilih Dompet Asal */}
-      <Pressable style={gaya.grupInput} onPress={bukaModalDompet}>
+      {/* Dompet Sumber */}
+      <Pressable style={gaya.grupInput} onPress={() => bukaModalDompet('sumber')}>
         <Text style={gaya.label}>Dari Dompet</Text>
         <Text style={gaya.nilaiPemilih}>{namaDompet}</Text>
       </Pressable>
 
-      {/* DIUBAH: Komentar diubah ke format JSX yang benar */}
       {transaksi.tipe === 'transfer' ? (
-        <Pressable style={gaya.grupInput} onPress={bukaModalDompet}>
-          {/* Jika tipe adalah transfer, tampilkan pemilih Dompet Tujuan */}
+        /* Dompet Tujuan (Hanya muncul jika tipe transfer) */
+        <Pressable style={gaya.grupInput} onPress={() => bukaModalDompet('tujuan')}>
           <Text style={gaya.label}>Dompet Tujuan</Text>
           <Text style={gaya.nilaiPemilih}>{namaDompetTujuan}</Text>
         </Pressable>
       ) : (
+        /* Kategori (Muncul jika tipe pemasukan/pengeluaran) */
         <Pressable style={gaya.grupInput} onPress={bukaModalKategori}>
-          {/* Jika bukan transfer, tampilkan pemilih Kategori */}
           <Text style={gaya.label}>Kategori</Text>
           <Text style={gaya.nilaiPemilih}>{namaKategori}</Text>
         </Pressable>
@@ -109,6 +136,7 @@ const gaya = StyleSheet.create({
     borderColor: '#ddd',
     paddingVertical: 8,
     fontSize: 16,
+    color: '#000',
   },
   grupInputHorizontal: {
     flexDirection: 'row',

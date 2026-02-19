@@ -1,66 +1,69 @@
 // screens/form-transaksi/modal/ModalPilihKategori.tsx
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useKategori } from '@/context/KategoriContext';
 import { useTransaksi } from '@/context/TransaksiContext';
 import type { Kategori, Subkategori } from '@/database/tipe';
 
-interface Props {
-  terlihat: boolean;
-  saatTutup: () => void;
-}
-
-export default function ModalPilihKategori({ terlihat, saatTutup }: Props) {
-  const { transaksi, setTransaksi } = useTransaksi();
+// DIUBAH: Komponen tidak lagi menerima props, semua state diambil dari context.
+export default function ModalPilihKategori() {
+  const {
+    transaksi,
+    setTransaksi,
+    modalKategoriTerlihat,
+    tutupModalKategori,
+  } = useTransaksi();
   const { daftarKategori } = useKategori();
   const [kategoriAktif, setKategoriAktif] = useState<Kategori | null>(null);
 
+  // Memo untuk menyaring kategori berdasarkan tipe transaksi yang aktif.
   const kategoriTersaring = useMemo(() => {
-    if (transaksi.tipe === 'transfer') {
-      return [];
-    }
+    if (transaksi.tipe === 'transfer') return [];
     return daftarKategori.filter((k) => k.tipe === transaksi.tipe);
   }, [daftarKategori, transaksi.tipe]);
 
-  // DIUBAH: Logika efek dipecah menjadi dua untuk kejelasan dan keandalan.
-
-  // Efek 1: Menangani logika saat modal DIBUKA.
+  // DIUBAH: Logika efek disempurnakan untuk menangani perubahan tipe transaksi.
   useEffect(() => {
-    // Hanya berjalan saat modal menjadi terlihat DAN ada kategori untuk ditampilkan.
-    if (terlihat && kategoriTersaring.length > 0) {
-      // Coba cari kategori induk dari subkategori yang mungkin sudah dipilih.
+    if (!modalKategoriTerlihat) return;
+
+    const subkategoriMasihValid = kategoriTersaring.some((k) =>
+      k.subkategori.some((s) => s.id === transaksi.kategori_id)
+    );
+
+    // Jika subkategori yang dipilih sebelumnya tidak lagi valid (karena tipe berubah)
+    if (!subkategoriMasihValid) {
+      // Reset pilihan subkategori di state global
+      setTransaksi((prev) => ({ ...prev, kategori_id: null }));
+      // Atur kategori aktif ke item pertama dari daftar baru, jika ada.
+      setKategoriAktif(kategoriTersaring.length > 0 ? kategoriTersaring[0] : null);
+    } else {
+      // Jika masih valid, temukan dan atur kategori induknya sebagai yang aktif.
       const kategoriIndukSaatIni = kategoriTersaring.find((k) =>
         k.subkategori.some((s) => s.id === transaksi.kategori_id)
       );
-
-      // Jika ditemukan, jadikan itu aktif (mempertahankan pilihan saat buka/tutup).
-      // Jika tidak (karena ganti tipe atau buka pertama kali), jadikan item PERTAMA
-      // dari daftar yang valid sebagai yang aktif.
-      setKategoriAktif(kategoriIndukSaatIni || kategoriTersaring[0]);
+      setKategoriAktif(kategoriIndukSaatIni || null);
     }
-  }, [terlihat, kategoriTersaring]); // Hanya bergantung pada visibilitas dan data yang disaring.
-
-  // Efek 2: Menangani logika saat modal DITUTUP (pembersihan).
-  useEffect(() => {
-    if (!terlihat) {
-      setKategoriAktif(null);
-    }
-  }, [terlihat]); // Hanya bergantung pada visibilitas.
+  }, [modalKategoriTerlihat, kategoriTersaring]);
 
   const handlePilihSubkategori = (subkategori: Subkategori) => {
     setTransaksi((transaksiLama) => ({
       ...transaksiLama,
       kategori_id: subkategori.id,
     }));
-    saatTutup();
+    tutupModalKategori();
   };
 
   const subkategoriSaatIni = kategoriAktif?.subkategori || [];
 
   return (
-    <Modal animationType="slide" transparent={true} visible={terlihat} onRequestClose={saatTutup}>
-      <Pressable style={gaya.modalLatar} onPress={saatTutup}>
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={modalKategoriTerlihat}
+      onRequestClose={tutupModalKategori}
+    >
+      <Pressable style={gaya.modalLatar} onPress={tutupModalKategori}>
         <Pressable style={gaya.modalKonten}>
           <View style={gaya.handleContainer}>
             <View style={gaya.handle} />
@@ -125,7 +128,7 @@ export default function ModalPilihKategori({ terlihat, saatTutup }: Props) {
   );
 }
 
-// Gaya tidak diubah
+// Gaya tidak berubah
 const warna = {
   primer: '#4F46E5',
   teksUtama: '#0f172a',

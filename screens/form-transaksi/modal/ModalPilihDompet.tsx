@@ -1,31 +1,47 @@
 // screens/form-transaksi/modal/ModalPilihDompet.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useDompet } from '../../../context/DompetContext';
-import { useTransaksi } from '../../../context/TransaksiContext';
-import type { Dompet } from '../../../database/tipe';
+
+import { useDompet } from '@/context/DompetContext';
+import { useTransaksi } from '@/context/TransaksiContext';
+import type { Dompet } from '@/database/tipe';
 
 interface Props {
-  terlihat: boolean;
-  saatTutup: () => void;
+  // DIHAPUS: Prop 'terlihat' dan 'saatTutup' tidak lagi diperlukan karena
+  // state dikelola secara terpusat oleh TransaksiContext.
 }
 
-export default function ModalPilihDompet({ terlihat, saatTutup }: Props) {
-  const { setTransaksi } = useTransaksi();
+// DIUBAH: Komponen tidak lagi menerima props `terlihat` dan `saatTutup`.
+export default function ModalPilihDompet() {
+  // DIUBAH: Mengambil semua state dan fungsi yang relevan dari context.
+  const { transaksi, setTransaksi, modalDompetTerlihat, tutupModalDompet, tipePilihanDompet } = useTransaksi();
   const { daftarDompet } = useDompet();
 
-  // --- DIPERBAIKI: Fungsi ini sekarang menerima objek Dompet dan mengatur dompet_id ---
+  // DIUBAH: Logika daftar dompet yang akan ditampilkan dibuat lebih cerdas.
+  const daftarDompetTersedia = useMemo(() => {
+    // Jika modal dibuka untuk memilih dompet tujuan,
+    if (tipePilihanDompet === 'tujuan') {
+      // saring daftar dompet untuk MENGECUALIKAN dompet yang sudah dipilih sebagai sumber.
+      return daftarDompet.filter((d) => d.id !== transaksi.dompet_id);
+    }
+    // Jika tidak (misalnya untuk dompet sumber), tampilkan semua dompet.
+    return daftarDompet;
+  }, [tipePilihanDompet, daftarDompet, transaksi.dompet_id]);
+
+  // DIUBAH: Fungsi ini sekarang menangani kedua kasus (sumber dan tujuan).
   const handlePilihDompet = (dompet: Dompet) => {
     setTransaksi((transaksiLama) => ({
       ...transaksiLama,
-      dompet_id: dompet.id, // Menyimpan ID (number), bukan nama (string)
+      // Secara dinamis menentukan field mana yang akan diupdate berdasarkan `tipePilihanDompet`.
+      ...(tipePilihanDompet === 'sumber'
+        ? { dompet_id: dompet.id }
+        : { dompet_tujuan_id: dompet.id }),
     }));
-    saatTutup(); // Menutup modal setelah memilih
+    tutupModalDompet(); // Menutup modal setelah memilih
   };
 
   const renderItem = ({ item }: { item: Dompet }) => (
     <Pressable
-      // --- DIPERBAIKI: Meneruskan seluruh objek item ---
       onPress={() => handlePilihDompet(item)}
       android_ripple={{ color: 'rgba(0,0,0,0.06)' }}
       style={({ pressed }) => [gaya.item, pressed && gaya.itemTekan]}
@@ -42,26 +58,29 @@ export default function ModalPilihDompet({ terlihat, saatTutup }: Props) {
     </Pressable>
   );
 
+  // Menentukan judul modal secara dinamis
+  const judulModal = tipePilihanDompet === 'tujuan' ? 'Pilih Dompet Tujuan' : 'Pilih Dompet';
+
   return (
-    <Modal animationType="slide" transparent={true} visible={terlihat} onRequestClose={saatTutup}>
-      <Pressable style={gaya.modalLatar} onPress={saatTutup}>
+    // DIUBAH: Properti `visible` dan `onRequestClose` sekarang menggunakan state dari context.
+    <Modal animationType="slide" transparent={true} visible={modalDompetTerlihat} onRequestClose={tutupModalDompet}>
+      <Pressable style={gaya.modalLatar} onPress={tutupModalDompet}>
         <View style={gaya.modalKonten}>
           <View style={gaya.handleContainer}>
             <View style={gaya.handle} />
           </View>
 
-          <Text style={gaya.judul}>Pilih Dompet</Text>
+          <Text style={gaya.judul}>{judulModal}</Text>
 
           <FlatList
-            data={daftarDompet}
+            data={daftarDompetTersedia} // DIUBAH: Menggunakan daftar yang sudah disaring
             renderItem={renderItem}
-            // --- DIPERBAIKI: Konversi ID number ke string ---
             keyExtractor={(item) => item.id.toString()}
             contentContainerStyle={gaya.kontenList}
             showsVerticalScrollIndicator={false}
             ListEmptyComponent={
               <View style={gaya.kosong}>
-                <Text style={gaya.teksKosong}>Belum ada dompet tersedia</Text>
+                <Text style={gaya.teksKosong}>Tidak ada dompet tersedia</Text>
               </View>
             }
           />
@@ -71,7 +90,7 @@ export default function ModalPilihDompet({ terlihat, saatTutup }: Props) {
   );
 }
 
-// Gaya tidak berubah, jadi saya biarkan seperti adanya.
+// Gaya tidak berubah
 const warna = {
   primer: '#4F46E5',
   teksUtama: '#0f172a',

@@ -3,7 +3,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
-import type { Dompet } from '@/database/tipe'; // Impor tipe Dompet untuk keamanan tipe
+
+import type { Dompet } from '@/database/tipe';
 import { formatAngka } from '@/utils/format/FormatAngka';
 import { useLogikaDompet } from '@/screens/dompet/logikaDompet';
 
@@ -27,17 +28,19 @@ export default function ListDompet() {
   const renderItem = ({ item }: { item: Dompet }) => (
     <Pressable
       style={({ pressed }) => [gaya.itemWadah, pressed && { opacity: 0.8 }]}
-      onPress={() =>
-        // PERBAIKAN: Arahkan ke halaman detail dompet dinamis sesuai permintaan
-        router.push(`/dompet/${item.id}`)
-      }
+      onPress={() => router.push(`/dompet/${item.id}`)}
     >
       <View style={gaya.infoKiri}>
         <View style={gaya.ikonWadah}>
-          <Ionicons name={(item.ikon as React.ComponentProps<typeof Ionicons>['name']) || 'wallet'} size={24} color={warna.primer} />
+          <Ionicons
+            name={(item.ikon as React.ComponentProps<typeof Ionicons>['name']) || 'wallet'}
+            size={24}
+            color={warna.primer}
+          />
         </View>
         <Text style={gaya.teksNama}>{item.nama}</Text>
       </View>
+      {/* DIUBAH: Mengembalikan tampilan saldo dan menghapus komentar serta spasi penyebab error */}
       <Text style={gaya.teksSaldo}>{formatAngka(item.saldo)}</Text>
     </Pressable>
   );

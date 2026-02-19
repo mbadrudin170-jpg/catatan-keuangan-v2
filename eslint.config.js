@@ -16,12 +16,22 @@ export default tseslint.config(
   {
     rules: {
       'no-console': 'warn', // Peringatan jika ada console.log yang tertinggal
-      '@typescript-eslint/no-unused-vars': 'error', // Error jika ada variabel tidak terpakai
-      '@typescript-eslint/no-explicit-any': 'warn', // Hindari penggunaan 'any' berlebihan
+      
+      // DIUBAH: Aturan diperluas untuk mendeteksi parameter yang tidak digunakan.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          args: 'all', // Memeriksa semua parameter fungsi.
+          argsIgnorePattern: '^_', // Mengabaikan parameter yang diawali dengan _.
+          ignoreRestSiblings: true, // Mengabaikan sisa properti pada destrukturisasi objek.
+        },
+      ],
+      
+      '@typescript-eslint/no-explicit-any': 'warn', // Hindari penggunaan 'any' berlebihan.
     },
   },
 
-  // 4. Mengabaikan folder yang tidak perlu di-scan untuk menghemat RAM 4GB Anda
+  // 4. Mengabaikan folder yang tidak perlu di-scan
   {
     ignores: ['node_modules/', '.expo/', '.next/', 'dist/', 'babel.config.js', 'metro.config.js'],
   }

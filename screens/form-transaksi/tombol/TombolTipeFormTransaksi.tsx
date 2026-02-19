@@ -14,7 +14,14 @@ export default function TombolTipeFormTransaksi() {
 
   // DIHAPUS: `useState` lokal dihapus untuk menghilangkan duplikasi state
 
-  const daftarTombol: TipeTransaksi[] = ['pemasukan', 'pengeluaran', 'transfer'];
+  const daftarTombol: TipeTransaksi[] = ['pemasukan', 'pengeluaran', 'transfer']; {
+    /** ask:  kenapa saat berpindah tipe entah itu dari pemasukan ke pengeluaran atau pun sebalik nya kenapa contohnya dari saat dalam type pemasukan modal screens/form-transaksi/modal/ModalPilihKategori.tsx ini selalu menampilkan kosong
+   baca dahulu file PEDOMAN_KOLABORASI.md
+  ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu
+   selalu tulis kan jalur path file di paling atas setiap file
+   tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya
+   */
+  }
 
   // DIUBAH: Logika untuk mengubah tipe transaksi dan me-reset nilai terkait
   // sekarang terpusat di sini.

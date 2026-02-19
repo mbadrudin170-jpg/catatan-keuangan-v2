@@ -3,6 +3,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import React, { type JSX } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import HeaderDetailDompet from '@/screens/detail-dompet/HeaderDetailDompet';
 import KontenDetailDompet from '@/screens/detail-dompet/KontenDetailDompet';
@@ -27,18 +28,13 @@ function KontenHalaman(): JSX.Element {
   }
 
   return (
-    <DetailDompetProvider value={logika}> {/** ask:  bungkus dengan safe area context 
-     baca dahulu file PEDOMAN_KOLABORASI.md
-    ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu
-     selalu tulis kan jalur path file di paling atas setiap file
-     tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya
-     */}
-      <View style={gaya.wadah}>
+    <DetailDompetProvider value={logika}>
+      <SafeAreaView style={gaya.wadah}>
         <HeaderDetailDompet />
         <KontenDetailDompet />
         <RiwayatTransaksiPerDompet dompetId={Number(dompetId)} />
         <TombolHapusDetailDompet />
-      </View>
+      </SafeAreaView>
     </DetailDompetProvider>
   );
 }

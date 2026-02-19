@@ -1,18 +1,8 @@
 // database/operasi.ts
-import {
-  endOfMonth,
-  endOfWeek,
-  endOfYear,
-  format,
-  startOfMonth,
-  startOfWeek,
-  startOfYear,
-  sub,
-} from 'date-fns';
 
 import type { RingkasanKategori } from '@/screens/statistik/tipe';
 import db from './sqlite';
-import type { Dompet, Kategori, Subkategori, Transaksi, TipeTransaksi } from './tipe';
+import type { Dompet, Kategori, Subkategori, TipeTransaksi, Transaksi } from './tipe';
 
 // Tipe untuk hasil mentah dari query statistik
 interface HasilQueryStatistik {
@@ -69,25 +59,11 @@ export const tambahKategori = async (
   ikon: string,
   tipe: TipeTransaksi
 ): Promise<void> => {
-  await db.runAsync(
-    'INSERT INTO kategori (nama, ikon, tipe) VALUES (?, ?, ?);',
-    nama,
-    ikon,
-    tipe
-  );
+  await db.runAsync('INSERT INTO kategori (nama, ikon, tipe) VALUES (?, ?, ?);', nama, ikon, tipe);
 };
 
-export const perbaruiKategori = async (
-  id: number,
-  nama: string,
-  ikon: string
-): Promise<void> => {
-  await db.runAsync(
-    'UPDATE kategori SET nama = ?, ikon = ? WHERE id = ?;',
-    nama,
-    ikon,
-    id
-  );
+export const perbaruiKategori = async (id: number, nama: string, ikon: string): Promise<void> => {
+  await db.runAsync('UPDATE kategori SET nama = ?, ikon = ? WHERE id = ?;', nama, ikon, id);
 };
 
 export const hapusKategori = async (id: number): Promise<void> => {
@@ -166,6 +142,22 @@ export const hapusDompet = async (id: number): Promise<void> => {
 // ─────────────────────────────────────────────
 // OPERASI TRANSAKSI
 // ─────────────────────────────────────────────
+
+export const tambahSatuTransaksi = async (transaksi: Transaksi): Promise<void> => {
+  await db.runAsync(
+    'INSERT INTO transaksi (jumlah, keterangan, tanggal, tipe, kategori_id, dompet_id, dompet_tujuan_id, subkategori_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);',
+    transaksi.jumlah,
+    // DIUBAH: Menggunakan `?? null` untuk memastikan nilai `null` dikirim ke DB jika undefined.
+    transaksi.keterangan ?? null,
+    transaksi.tanggal,
+    transaksi.tipe,
+    transaksi.kategori_id ?? null,
+    transaksi.dompet_id,
+    transaksi.dompet_tujuan_id ?? null,
+    transaksi.subkategori_id ?? null
+  );
+};
+
 export const ambilSemuaTransaksi = async (): Promise<Transaksi[]> => {
   return await db.getAllAsync('SELECT * FROM transaksi ORDER BY tanggal DESC;');
 };

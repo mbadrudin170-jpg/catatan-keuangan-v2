@@ -49,9 +49,14 @@ export default function RootLayout(): JSX.Element | null {
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <SafeAreaProvider>
-        <TransaksiProvider>
+        {/*
+          DIUBAH: Urutan Provider diperbaiki.
+          DompetProvider sekarang membungkus KategoriProvider dan TransaksiProvider
+          karena TransaksiProvider memiliki dependensi terhadap DompetProvider (menggunakan useDompet).
+        */}
+        <DompetProvider>
           <KategoriProvider>
-            <DompetProvider>
+            <TransaksiProvider>
               <Stack initialRouteName="index" screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="index" />
                 <Stack.Screen name="(tabs)" />
@@ -62,9 +67,9 @@ export default function RootLayout(): JSX.Element | null {
                 <Stack.Screen name="(lainnya)" />
               </Stack>
               <StatusBar style="dark" />
-            </DompetProvider>
+            </TransaksiProvider>
           </KategoriProvider>
-        </TransaksiProvider>
+        </DompetProvider>
       </SafeAreaProvider>
     </View>
   );

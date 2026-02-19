@@ -2,7 +2,6 @@
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useTransaksi } from '@/context/TransaksiContext';
 import HeaderFormTransaksi from './HeaderFormTransaksi';
 import InputFormTransaksi from './InputFormTransaksi';
 import ModalPilihDompet from './modal/ModalPilihDompet';
@@ -11,19 +10,9 @@ import TombolsimpanFormTransaksi from './tombol/TombolSimpanFormTransaksi';
 import TombolTipeFormTransaksi from './tombol/TombolTipeFormTransaksi';
 
 export default function FormTransaksiScreen() {
-  const {
-    modalKategoriTerlihat,
-    tutupModalKategori,
-    modalDompetTerlihat,
-    tutupModalDompet,
-  } = useTransaksi();
-
-  // DIHAPUS: Fungsi `handleTipeChange` sudah dipindahkan ke komponen tombol
-
   return (
     <SafeAreaView style={gaya.penampung}>
       <HeaderFormTransaksi />
-      {/* DIUBAH: Prop onTipeChange dihapus karena tidak lagi diperlukan */}
       <TombolTipeFormTransaksi />
 
       <View style={gaya.areaKonten}>
@@ -33,8 +22,12 @@ export default function FormTransaksiScreen() {
       </View>
       <TombolsimpanFormTransaksi />
 
-      <ModalPilihKategori terlihat={modalKategoriTerlihat} saatTutup={tutupModalKategori} />
-      <ModalPilihDompet terlihat={modalDompetTerlihat} saatTutup={tutupModalDompet} />
+      {/*
+        DIUBAH: Props `terlihat` dan `saatTutup` telah dihapus.
+        Manajemen state modal sekarang sepenuhnya dikendalikan oleh context.
+      */}
+      <ModalPilihKategori />
+      <ModalPilihDompet />
     </SafeAreaView>
   );
 }

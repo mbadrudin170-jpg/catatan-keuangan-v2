@@ -20,14 +20,14 @@ interface KategoriContextType {
   daftarKategori: Kategori[];
   tipeAktif: TipeTransaksi;
   setTipeAktif: (tipe: TipeTransaksi) => void;
-  // DIUBAH: Fungsi tambahKategori sekarang membutuhkan tipe secara eksplisit
   tambahKategori: (nama: string, ikon: string, tipe: 'pemasukan' | 'pengeluaran') => Promise<void>;
   hapusKategori: (idKategori: number) => Promise<void>;
   perbaruiKategori: (idKategori: number, namaBaru: string, ikonBaru: string) => Promise<void>;
   tambahSubkategori: (idKategori: number, namaSubkategori: string) => Promise<void>;
-  hapusSubkategori: (idKategori: number, idSubkategori: number) => Promise<void>;
+  // DIUBAH: Parameter `idKategori` diganti nama menjadi `_idKategori` karena tidak digunakan.
+  hapusSubkategori: (_idKategori: number, idSubkategori: number) => Promise<void>;
   perbaruiSubkategori: (
-    idKategori: number,
+    _idKategori: number, // DIUBAH: Parameter diganti nama karena tidak digunakan.
     idSubkategori: number,
     namaBaru: string
   ) => Promise<void>;
@@ -63,26 +63,24 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
     void muatKategori();
   }, []);
 
-  // DIUBAH: Implementasi baru tidak lagi bergantung pada `tipeAktif` dari state.
   const tambahKategori = async (
     nama: string,
     ikon: string,
     tipe: 'pemasukan' | 'pengeluaran'
   ): Promise<void> => {
     try {
-      // `tipe` sekarang datang dari argumen fungsi.
       await dbTambahKategori(nama, ikon, tipe);
-      await muatKategori(); // Muat ulang data setelah menambah
+      await muatKategori();
     } catch (error) {
       console.error('Gagal menambah kategori:', error);
-      throw error; // Lemparkan lagi error agar bisa ditangkap di UI
+      throw error;
     }
   };
 
   const hapusKategori = async (idKategori: number): Promise<void> => {
     try {
       await dbHapusKategori(idKategori);
-      await muatKategori(); // Muat ulang data setelah menghapus
+      await muatKategori();
     } catch (error) {
       console.error('Gagal menghapus kategori:', error);
       throw error;
@@ -96,7 +94,7 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   ): Promise<void> => {
     try {
       await dbPerbaruiKategori(idKategori, namaBaru, ikonBaru);
-      await muatKategori(); // Muat ulang data setelah memperbarui
+      await muatKategori();
     } catch (error) {
       console.error('Gagal memperbarui kategori:', error);
       throw error;
@@ -106,7 +104,7 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   const tambahSubkategori = async (idKategori: number, namaSubkategori: string): Promise<void> => {
     try {
       await dbTambahSubkategori(namaSubkategori, idKategori);
-      await muatKategori(); // Muat ulang data
+      await muatKategori();
     } catch (error) {
       console.error('Gagal menambah subkategori:', error);
       throw error;
@@ -114,12 +112,12 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   };
 
   const hapusSubkategori = async (
-    idKategori: number, // idKategori tidak digunakan di DB-op, tapi ada untuk konsistensi tipe
+    _idKategori: number, // DIUBAH: Parameter tidak digunakan, jadi diberi underscore.
     idSubkategori: number
   ): Promise<void> => {
     try {
       await dbHapusSubkategori(idSubkategori);
-      await muatKategori(); // Muat ulang data
+      await muatKategori();
     } catch (error) {
       console.error('Gagal menghapus subkategori:', error);
       throw error;
@@ -127,25 +125,23 @@ export function KategoriProvider({ children }: { children: ReactNode }): JSX.Ele
   };
 
   const perbaruiSubkategori = async (
-    idKategori: number, // idKategori tidak digunakan di DB-op
+    _idKategori: number, // DIUBAH: Parameter tidak digunakan, jadi diberi underscore.
     idSubkategori: number,
     namaBaru: string
   ): Promise<void> => {
     try {
       await dbPerbaruiSubkategori(idSubkategori, namaBaru);
-      await muatKategori(); // Muat ulang data
+      await muatKategori();
     } catch (error) {
       console.error('Gagal memperbarui subkategori:', error);
       throw error;
     }
   };
 
-  const daftarKategoriYangDifilter = semuaKategori.filter((k) => k.tipe === tipeAktif);
-
   return (
     <KategoriContext.Provider
       value={{
-        daftarKategori: daftarKategoriYangDifilter,
+        daftarKategori: semuaKategori,
         tipeAktif,
         setTipeAktif,
         tambahKategori,
