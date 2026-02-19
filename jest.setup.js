@@ -1,27 +1,78 @@
+// mbadrudin170-jpg/catatan-keuangan-v2/catatan-keuangan-v2-7b2316d6ef61dbbc9b2fd4205999ee351fe261a6/jest.setup.js
+
 import 'react-native-gesture-handler/jestSetup';
 
 // Mock react-native-reanimated
 jest.mock('react-native-reanimated', () => {
   const Reanimated = require('react-native-reanimated/mock');
-
-  // The mock for `call` immediately calls the callback which is incorrect
-  // So we override it with a no-op
   Reanimated.default.call = () => {};
-
   return Reanimated;
 });
 
-// Mock react-native module to provide stable mocks for Alert and other native components
-jest.mock('react-native', () => ({
-  ...jest.requireActual('react-native'), // Gunakan implementasi asli untuk semua yang lain
-  Alert: {
-    alert: jest.fn(), // Timpa Alert.alert dengan mock function
-  },
-  NativeEventEmitter: jest.fn().mockImplementation(() => ({ // Timpa NativeEventEmitter
-    addListener: jest.fn(),
-    removeListeners: jest.fn(),
-  })),
-}));
+// Mock expo-icons untuk menghindari peringatan 'act(...)' dan mempercepat test
+jest.mock('@expo/vector-icons', () => {
+  const React = require('react');
+  const { Text } = require('react-native');
+  return {
+    Ionicons: ({ name, size, color, testID }) => (
+      <Text testID={testID} style={{ color, fontSize: size }}>
+        {name}
+      </Text>
+    ),
+    MaterialCommunityIcons: ({ name, size, color, testID }) => (
+      <Text testID={testID} style={{ color, fontSize: size }}>
+        {name}
+      </Text>
+    ),
+    MaterialIcons: ({ name, size, color, testID }) => (
+      <Text testID={testID} style={{ color, fontSize: size }}>
+        {name}
+      </Text>
+    ),
+  };
+});
+
+// Mock react-native-safe-area-context
+jest.mock('react-native-safe-area-context', () => {
+  const inset = { top: 0, right: 0, bottom: 0, left: 0 };
+  const React = require('react');
+  return {
+    SafeAreaProvider: ({ children }) => children,
+    SafeAreaView: ({ children, style, testID }) => {
+      const { View } = require('react-native');
+      return (
+        <View style={style} testID={testID}>
+          {children}
+        </View>
+      );
+    },
+    useSafeAreaInsets: () => inset,
+    initialWindowMetrics: {
+      frame: { x: 0, y: 0, width: 0, height: 0 },
+      insets: inset,
+    },
+  };
+});
+
+// Mock react-native module
+jest.mock('react-native', () => {
+  const actualReactNative = jest.requireActual('react-native');
+  return Object.setPrototypeOf(
+    {
+      Alert: { alert: jest.fn() },
+      NativeEventEmitter: jest.fn().mockImplementation(() => ({
+        addListener: jest.fn(),
+        removeListeners: jest.fn(),
+        removeAllListeners: jest.fn(),
+      })),
+      NativeModules: {
+        ...actualReactNative.NativeModules,
+        DevMenu: { show: jest.fn(), hide: jest.fn() },
+      },
+    },
+    actualReactNative
+  );
+});
 
 // Mock expo-sqlite
 jest.mock('expo-sqlite', () => {
@@ -31,20 +82,18 @@ jest.mock('expo-sqlite', () => {
     getAllAsync: jest.fn().mockResolvedValue([]),
     getFirstAsync: jest.fn().mockResolvedValue(null),
   };
-
-  return {
-    openDatabaseSync: jest.fn(() => mockDb),
-  };
+  return { openDatabaseSync: jest.fn(() => mockDb) };
 });
 
-// Mock async storage jika ada
+// Mock async storage
 jest.mock('@react-native-async-storage/async-storage', () => ({
   setItem: jest.fn(),
   getItem: jest.fn(),
   removeItem: jest.fn(),
+  clear: jest.fn(),
 }));
 
-// Mock untuk path alias @/
+// Mock database operations
 jest.mock(
   '@/database/operasi',
   () => ({
