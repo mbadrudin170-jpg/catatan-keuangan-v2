@@ -1,249 +1,330 @@
 // screens/form-kategori/ListSubKategori.tsx
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useKategori } from '../../context/KategoriContext';
+import { Kategori, Subkategori } from '../../database/tipe'; // Impor Subkategori
 
-export default function ListSubKategori() {
-  const {
-    daftarSubKategori, // Langsung gunakan data yang sudah difilter dari context
-    kategoriTerpilih,
-    idSubKategoriEdit,
-    namaSubKategoriEdit,
-    setNamaSubKategoriEdit,
-    perbaruiSubKategori,
-    setIdSubKategoriEdit,
-    hapusSubKategori,
-    tambahSubKategori,
-  } = useKategori();
+interface Props {
+  kategoriTerpilih: Kategori | null;
+}
+
+export default function ListSubKategori({ kategoriTerpilih }: Props) {
+  const { daftarKategori, tambahSubkategori, hapusSubkategori, perbaruiSubkategori } =
+    useKategori();
 
   const [sedangMenambah, setSedangMenambah] = useState(false);
-  const [subKategoriBaru, setSubKategoriBaru] = useState('');
+  const [inputBaru, setInputBaru] = useState('');
+  // --- DIPERBAIKI: State untuk ID sekarang adalah number ---
+  const [idEdit, setIdEdit] = useState<number | null>(null);
+  const [teksEdit, setTeksEdit] = useState('');
+
+  // Logika ini sudah benar, mencari kategori berdasarkan ID number
+  const kategoriSaatIni = kategoriTerpilih
+    ? daftarKategori.find((k) => k.id === kategoriTerpilih.id)
+    : null;
+
+  const daftarSub = kategoriSaatIni?.subkategori || [];
 
   const handleTambah = () => {
-    if (subKategoriBaru.trim() === '' || !kategoriTerpilih) return;
-    tambahSubKategori(subKategoriBaru);
-    setSubKategoriBaru('');
+    const inputDibersihkan = inputBaru.trim();
+    if (inputDibersihkan === '' || !kategoriSaatIni) return;
+
+    const sudahAda = daftarSub.some(
+      (sub: Subkategori) => sub.nama.toLowerCase() === inputDibersihkan.toLowerCase()
+    );
+
+    if (sudahAda) {
+      Alert.alert(
+        'Nama Duplikat',
+        `Sub-kategori "${inputDibersihkan}" sudah ada.`
+      );
+      return;
+    }
+    // `tambahSubkategori` sekarang menerima ID number
+    tambahSubkategori(kategoriSaatIni.id, inputDibersihkan);
+    setInputBaru('');
     setSedangMenambah(false);
   };
 
-  const handleMulaiEdit = (item: { id: string; nama: string }) => {
-    setIdSubKategoriEdit(item.id);
-    setNamaSubKategoriEdit(item.nama);
-    setSedangMenambah(false); // Tutup form tambah jika sedang aktif
+  const handleBatalTambah = () => {
+    setInputBaru('');
+    setSedangMenambah(false);
+  };
+
+  // --- DIPERBAIKI: Parameter ID sekarang adalah number ---
+  const handleMulaiEdit = (id: number, nama: string) => {
+    setIdEdit(id);
+    setTeksEdit(nama);
   };
 
   const handleBatalEdit = () => {
-    setIdSubKategoriEdit(null);
-    setNamaSubKategoriEdit('');
+    setIdEdit(null);
+    setTeksEdit('');
   };
 
   const handleSimpanEdit = () => {
-    perbaruiSubKategori(); // Logika sudah dihandle di context
-  }
+    const teksEditDibersihkan = teksEdit.trim();
+    if (teksEditDibersihkan === '' || idEdit === null || !kategoriSaatIni) return;
 
-  const renderItem = ({ item }: { item: { id: string; nama: string } }) => {
-    const sedangMengeditItemIni = item.id === idSubKategoriEdit;
+    const sudahAda = daftarSub.some(
+      (sub: Subkategori) => sub.nama.toLowerCase() === teksEditDibersihkan.toLowerCase() && sub.id !== idEdit
+    );
 
-    if (sedangMengeditItemIni) {
-      return (
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={namaSubKategoriEdit}
-            onChangeText={setNamaSubKategoriEdit}
-            autoFocus
-            placeholder="Edit nama..."
-          />
-          <View style={styles.inputActions}>
-            <Pressable style={[styles.actionIconBtn, styles.saveButton]} onPress={handleSimpanEdit}>
-              <Ionicons name="checkmark-outline" size={22} color="white" />
-            </Pressable>
-            <Pressable style={[styles.actionIconBtn, styles.cancelButton]} onPress={handleBatalEdit}>
-              <Ionicons name="close-outline" size={22} color="white" />
-            </Pressable>
-          </View>
-        </View>
-      );
+    if (sudahAda) {
+      Alert.alert('Nama Duplikat', `Nama "${teksEditDibersihkan}" sudah digunakan.`);
+      return;
     }
 
-    return (
-      <View style={styles.itemContainer}>
-        <Text style={styles.itemText}>{item.nama}</Text>
-        <View style={styles.itemActions}>
-          <Pressable style={styles.editBtn} onPress={() => handleMulaiEdit(item)} disabled={sedangMenambah || idSubKategoriEdit !== null}>
-            <Ionicons name="create-outline" size={20} color="#007BFF" />
-          </Pressable>
-          <Pressable style={styles.deleteBtn} onPress={() => hapusSubKategori(item.id)} disabled={sedangMenambah || idSubKategoriEdit !== null}>
-            <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-          </Pressable>
-        </View>
-      </View>
-    );
+    // `perbaruiSubkategori` sekarang menerima ID number
+    perbaruiSubkategori(kategoriSaatIni.id, idEdit, teksEditDibersihkan);
+    handleBatalEdit();
   };
 
+  // --- DIPERBAIKI: Parameter ID sekarang adalah number ---
+  const handleHapus = (idSub: number) => {
+    if (!kategoriSaatIni) return;
+    const sub = daftarSub.find((s: Subkategori) => s.id === idSub);
+    if (!sub) return;
+
+    Alert.alert('Hapus Sub-Kategori', `Yakin ingin menghapus "${sub.nama}"?`, [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Hapus',
+        style: 'destructive',
+        // `hapusSubkategori` sekarang menerima ID number
+        onPress: () => hapusSubkategori(kategoriSaatIni.id, idSub),
+      },
+    ]);
+  };
+
+  if (!kategoriSaatIni) {
+    return (
+      <View style={gaya.pembungkusKosong}>
+        <Text style={gaya.teksKosong}>Pilih sebuah kategori terlebih dahulu.</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.wrapper}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Sub-Kategori</Text>
-        {kategoriTerpilih && !sedangMenambah && idSubKategoriEdit === null && (
-          <Pressable style={styles.headerAddBtn} onPress={() => setSedangMenambah(true)}>
-            <Ionicons name="add-circle-outline" size={20} color="#007BFF" />
-            <Text style={styles.addButtonText}>Tambah</Text>
+    <View style={gaya.pembungkus}>
+      <View style={gaya.tajuk}>
+        <Text style={gaya.judul}>Sub-Kategori</Text>
+        {!sedangMenambah && (
+          <Pressable
+            style={({ pressed }) => [gaya.tombolAksiTajuk, pressed && gaya.tombolTekan]}
+            onPress={() => setSedangMenambah(true)}
+          >
+            <Ionicons name="add" size={16} color="#0B74FF" />
+            <Text style={gaya.teksAksiTajuk}>Tambah</Text>
           </Pressable>
         )}
       </View>
 
       {sedangMenambah && (
-        <View style={styles.inputContainer}>
+        <View style={gaya.penampungInput}>
           <TextInput
-            style={styles.input}
-            placeholder="Input sub-kategori baru..."
-            value={subKategoriBaru}
-            onChangeText={setSubKategoriBaru}
+            style={gaya.input}
+            placeholder={`Nama sub-kategori baru...`}
+            placeholderTextColor="#9CA3AF"
+            value={inputBaru}
+            onChangeText={setInputBaru}
             autoFocus
           />
-          <View style={styles.inputActions}>
-            <Pressable style={[styles.actionIconBtn, styles.saveButton]} onPress={handleTambah}>
-              <Ionicons name="checkmark-outline" size={22} color="white" />
-            </Pressable>
-            <Pressable style={[styles.actionIconBtn, styles.cancelButton]} onPress={() => setSedangMenambah(false)}>
-              <Ionicons name="close-outline" size={22} color="white" />
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={handleTambah}
+            style={({ pressed }) => [gaya.iconAksi, pressed && gaya.iconAksiTekan]}
+          >
+            <Ionicons name="checkmark-circle" size={34} color="#10B981" />
+          </Pressable>
+          <Pressable
+            onPress={handleBatalTambah}
+            style={({ pressed }) => [gaya.iconAksi, pressed && gaya.iconAksiTekan]}
+          >
+            <Ionicons name="close-circle" size={34} color="#EF4444" />
+          </Pressable>
         </View>
       )}
 
       <FlatList
-        data={daftarSubKategori}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={() => (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>
-              {!kategoriTerpilih
-                ? 'Pilih sebuah kategori terlebih dahulu.'
-                : 'Belum ada sub-kategori. Silakan tambahkan.'}
-            </Text>
+        data={daftarSub}
+        extraData={daftarSub}
+        // --- DIPERBAIKI: Konversi ID number ke string ---
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <View style={gaya.penampungItem}>
+            {idEdit === item.id ? (
+              <TextInput
+                value={teksEdit}
+                onChangeText={setTeksEdit}
+                style={gaya.inputEdit}
+                placeholder="Ubah nama..."
+                placeholderTextColor="#9CA3AF"
+                autoFocus
+                onBlur={handleBatalEdit}
+              />
+            ) : (
+              <Text style={gaya.teksItem}>{item.nama}</Text>
+            )}
+            <View style={gaya.aksiItem}>
+              {idEdit === item.id ? (
+                <Pressable
+                  onPress={handleSimpanEdit}
+                  style={({ pressed }) => [gaya.aksiIcon, pressed && gaya.iconAksiTekan]}
+                >
+                  <Ionicons name="save-outline" size={20} color="#10B981" />
+                </Pressable>
+              ) : (
+                <>
+                  <Pressable
+                    onPress={() => handleMulaiEdit(item.id, item.nama)} // id adalah number
+                    style={({ pressed }) => [gaya.aksiIcon, pressed && gaya.iconAksiTekan]}
+                  >
+                    <Ionicons name="create-outline" size={20} color="#0B74FF" />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleHapus(item.id)} // id adalah number
+                    style={({ pressed }) => [gaya.aksiIcon, pressed && gaya.iconAksiTekan]}
+                  >
+                    <Ionicons name="trash-outline" size={20} color="#EF4444" />
+                  </Pressable>
+                </>
+              )}
+            </View>
           </View>
         )}
+        ListEmptyComponent={<Text style={gaya.teksKosong}>Belum ada sub-kategori.</Text>}
       />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
+// Gaya tidak berubah, jadi saya biarkan seperti adanya.
+const gaya = StyleSheet.create({
+  pembungkus: {
     flex: 1,
-    paddingHorizontal: 20,
-    backgroundColor: '#FFFFFF',
-    paddingTop: 10,
+    backgroundColor: '#F6F7FB',
+    padding: 20,
   },
-  header: {
+  pembungkusKosong: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#F6F7FB',
+  },
+  tajuk: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  title: {
-    fontSize: 22, // Disesuaikan
+  judul: {
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#0F1724',
   },
-  headerAddBtn: {
+  tombolAksiTajuk: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E6F0FF',
+    shadowColor: '#0b1220',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  addButtonText: {
-    fontSize: 16,
-    color: '#007BFF',
+  tombolTekan: {
+    opacity: 0.9,
+    transform: [{ scale: 0.995 }],
+  },
+  teksAksiTajuk: {
+    color: '#0B74FF',
     fontWeight: '600',
+    fontSize: 14,
   },
-  inputContainer: {
+  penampungInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12, // Disesuaikan
-    gap: 10,
+    gap: 12,
+    marginBottom: 16,
+    backgroundColor: 'transparent',
   },
   input: {
     flex: 1,
     height: 48,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: '#E6EEF8',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    paddingHorizontal: 15,
-    backgroundColor: '#F9F9F9',
+    paddingHorizontal: 14,
     fontSize: 16,
+    color: '#0F1724',
+    shadowColor: '#0b1220',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  inputActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionIconBtn: {
-    width: 44,
+  inputEdit: {
+    flex: 1,
     height: 44,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E6EEF8',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    color: '#0F1724',
   },
-  saveButton: {
-    backgroundColor: '#34C759',
-  },
-  cancelButton: {
-    backgroundColor: '#FF3B30',
-  },
-  listContent: {
-    paddingBottom: 20,
-  },
-  itemContainer: {
+  penampungItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#EEE',
-    marginBottom: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF2F6',
+    backgroundColor: '#FFFFFF',
+    marginBottom: 8,
+    borderRadius: 10,
+    shadowColor: '#0b1220',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  itemText: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: '#333',
-    flex: 1, // Memastikan teks tidak terpotong
+  teksItem: {
+    flex: 1,
+    fontSize: 16,
+    color: '#0F1724',
   },
-  itemActions: {
+  aksiItem: {
     flexDirection: 'row',
     gap: 12,
-    borderLeftWidth: 1,
-    borderLeftColor: '#DDD',
-    paddingLeft: 12,
-    marginLeft: 10, // Memberi jarak antara teks dan tombol
+    marginLeft: 12,
   },
-  editBtn: {
-    padding: 4,
+  aksiIcon: {
+    padding: 6,
+    borderRadius: 8,
   },
-  deleteBtn: {
-    padding: 4,
+  iconAksi: {
+    padding: 6,
+    borderRadius: 8,
   },
-  emptyContainer: {
-    paddingTop: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
+  iconAksiTekan: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
   },
-  emptyText: {
-    fontSize: 16,
-    color: '#8E8E93',
+  teksKosong: {
     textAlign: 'center',
+    color: '#6B7280',
+    marginTop: 20,
+    fontSize: 15,
   },
 });

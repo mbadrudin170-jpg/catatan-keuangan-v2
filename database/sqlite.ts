@@ -1,20 +1,45 @@
 // database/sqlite.ts
 import * as SQLite from 'expo-sqlite';
 
-// Membuka database secara sinkron (rekomendasi terbaru Expo)
+// Membuka database secara sinkron
 const db = SQLite.openDatabaseSync('catatanKeuangan.db');
 
 /**
+ * Fungsi migrasi untuk memeriksa dan menambahkan kolom yang hilang.
+ * INI PENTING: Jangan hapus fungsi ini. Ini untuk memastikan pengguna lama
+ * mendapatkan skema database terbaru tanpa kehilangan data.
+ */
+const migrasiSkema = async () => {
+  try {
+    // Migrasi untuk tabel 'dompet'
+    const kolomDompet = await db.getAllAsync('PRAGMA table_info(dompet);');
+    const namaKolomDompet = kolomDompet.map((col: any) => col.name);
+
+    if (!namaKolomDompet.includes('tipe')) {
+      console.log('MIGRASI: Menambahkan kolom "tipe" ke tabel dompet...');
+      await db.execAsync('ALTER TABLE dompet ADD COLUMN tipe TEXT;');
+    }
+
+    if (!namaKolomDompet.includes('ikon')) {
+      console.log('MIGRASI: Menambahkan kolom "ikon" ke tabel dompet...');
+      await db.execAsync('ALTER TABLE dompet ADD COLUMN ikon TEXT;');
+    }
+  } catch {
+    // Jika tabel belum ada, PRAGMA akan error. Ini aman untuk diabaikan
+    // karena CREATE TABLE akan membuat tabel baru dengan skema yang benar.
+    console.log('Tabel belum ada, akan dibuat oleh CREATE TABLE.');
+  }
+};
+
+/**
  * Inisialisasi Database dan Tabel
- * Menggunakan execAsync untuk eksekusi skema SQL sekaligus
  */
 export const inisialisasiDB = async (): Promise<void> => {
   try {
-    // Aktifkan Foreign Key Support (Penting untuk relasi antar tabel)
     await db.execAsync('PRAGMA foreign_keys = ON;');
 
+    // Skema tabel terbaru. Kolom 'tipe' dan 'ikon' sudah ditambahkan di sini.
     await db.execAsync(`
-      -- Tabel Kategori
       CREATE TABLE IF NOT EXISTS kategori (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nama TEXT NOT NULL UNIQUE,
@@ -22,14 +47,14 @@ export const inisialisasiDB = async (): Promise<void> => {
         tipe TEXT NOT NULL CHECK(tipe IN ('pemasukan', 'pengeluaran'))
       );
 
-      -- Tabel Dompet
       CREATE TABLE IF NOT EXISTS dompet (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nama TEXT NOT NULL UNIQUE,
-        saldo REAL NOT NULL DEFAULT 0
+        saldo REAL NOT NULL DEFAULT 0,
+        tipe TEXT,
+        ikon TEXT
       );
 
-      -- Tabel Transaksi (Menghubungkan Kategori dan Dompet)
       CREATE TABLE IF NOT EXISTS transaksi (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         jumlah REAL NOT NULL,
@@ -42,12 +67,17 @@ export const inisialisasiDB = async (): Promise<void> => {
       );
     `);
 
-    console.log('Database & Tabel berhasil diinisialisasi (Modern API)');
+    console.log('Perintah CREATE TABLE IF NOT EXISTS selesai dijalankan.');
+
+    // Jalankan migrasi. Untuk pengguna baru, ini tidak akan melakukan apa-apa.
+    // Untuk pengguna lama, ini akan menambahkan kolom yang hilang dengan aman.
+    await migrasiSkema();
+
+    console.log('Inisialisasi dan migrasi database berhasil.');
   } catch (error) {
     console.error('Gagal melakukan inisialisasi database:', error);
-    throw error; // Meneruskan error agar bisa ditangani di UI
+    throw error;
   }
 };
 
-// Ekspor instance db untuk operasi CRUD di file lain
 export default db;

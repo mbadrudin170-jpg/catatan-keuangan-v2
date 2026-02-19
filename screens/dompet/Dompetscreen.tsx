@@ -1,13 +1,29 @@
-import { Pressable, Text, View } from 'react-native';
+// screens/dompet/Dompetscreen.tsx
+import HeaderDompet from '@/screens/dompet/HeaderDompet';
+import ListDompet from '@/screens/dompet/ListDompet';
+import TombolTambahDompet from '@/screens/dompet/tombol/TombolTambahDompet';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-export default function Dompetscreen() {
+
+export default function DompetScreen() {
   return (
-    <SafeAreaView>
-      <View>
-        <Pressable>
-          <Text></Text>
-        </Pressable>
-      </View>
+    <SafeAreaView style={gaya.wadahUtama}>
+      <HeaderDompet />
+      <ListDompet />
+      <TombolTambahDompet />
     </SafeAreaView>
   );
 }
+
+// Palet warna untuk layar ini
+const warna = {
+  latar: '#ffffff', // Warna latar putih bersih
+};
+
+// Kumpulan gaya untuk layar ini
+const gaya = StyleSheet.create({
+  wadahUtama: {
+    flex: 1, // Memastikan wadah mengisi seluruh layar
+    backgroundColor: warna.latar,
+  },
+});

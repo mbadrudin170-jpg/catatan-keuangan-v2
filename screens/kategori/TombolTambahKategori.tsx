@@ -7,7 +7,7 @@ export default function TombolTambahKategori() {
     <View style={styles.wadah}>
       <Pressable
         style={styles.tombol}
-        onPress={() => router.push('/form-kategori')}
+        onPress={() => router.push('/(form)/form-kategori')}
       >
         <Text style={styles.teksTombol}>Tambah / Edit</Text>
       </Pressable>

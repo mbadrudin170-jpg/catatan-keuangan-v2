@@ -1,0 +1,8 @@
+{
+  "Sisipkan Komentar Jalur Path": {
+    "scope": "typescript,typescriptreact,javascript,javascriptreact",
+    "prefix": "path",
+    "body": ["// ${TM_FILEPATH}"],
+    "description": "Menambahkan komentar jalur path file di baris paling atas."
+  }
+}

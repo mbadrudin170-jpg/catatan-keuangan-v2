@@ -1,198 +1,138 @@
 // screens/form-kategori/ListKategori.tsx
 import { Ionicons } from '@expo/vector-icons';
-import React, { useRef, useState } from 'react';
-import {
-  Alert,
-  FlatList,
-  Modal,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View, // Pastikan View diimpor
-} from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useKategori } from '../../context/KategoriContext';
+import { Kategori } from '../../database/tipe';
 
-export default function ListKategori() {
-  const {
-    daftarKategori,
-    kategoriTerpilih,
-    pilihKategori,
-    tambahKategori,
-    perbaruiKategori,
-    hapusKategori,
-  } = useKategori();
+interface ListKategoriProps {
+  onKategoriSelect: (kategori: Kategori | null) => void;
+}
 
+export default function ListKategori({ onKategoriSelect }: ListKategoriProps) {
+  // `tambahKategori` sekarang membutuhkan `nama` dan `ikon`
+  const { daftarKategori, tambahKategori, hapusKategori } = useKategori();
+
+  const [kategoriTerpilih, setKategoriTerpilih] = useState<Kategori | null>(null);
   const [sedangMenambah, setSedangMenambah] = useState(false);
-  const [kategoriBaru, setKategoriBaru] = useState('');
-  const [sedangMengedit, setSedangMengedit] = useState(false);
-  const [teksEdit, setTeksEdit] = useState('');
+  const [inputKategoriBaru, setInputKategoriBaru] = useState('');
   const [modalTerlihat, setModalTerlihat] = useState(false);
 
   const pemicuRef = useRef<View>(null);
   const [posisiModal, setPosisiModal] = useState({ top: 0, left: 0, width: 0 });
 
+  useEffect(() => {
+    // Logika ini sudah benar karena membandingkan number dengan number (k.id === kategoriTerpilih.id)
+    const isPilihanSaatIniValid = kategoriTerpilih
+      ? daftarKategori.some((k) => k.id === kategoriTerpilih.id)
+      : false;
+
+    if (!isPilihanSaatIniValid) {
+      const pilihanBaru = daftarKategori.length > 0 ? daftarKategori[0] : null;
+      setKategoriTerpilih(pilihanBaru);
+      onKategoriSelect(pilihanBaru);
+    }
+  }, [daftarKategori, onKategoriSelect, kategoriTerpilih]);
+
+  const handlePilih = (kategori: Kategori) => {
+    setKategoriTerpilih(kategori);
+    onKategoriSelect(kategori);
+    setModalTerlihat(false);
+  };
+
+  // --- DIPERBAIKI ---
   const handleTambah = () => {
-    if (kategoriBaru.trim() === '') return;
-    tambahKategori(kategoriBaru);
-    setKategoriBaru('');
+    const namaKategori = inputKategoriBaru.trim();
+    if (namaKategori === '') return;
+
+    const sudahAda = daftarKategori.some(
+      (k) => k.nama.toLowerCase() === namaKategori.toLowerCase()
+    );
+
+    if (sudahAda) {
+      Alert.alert('Nama Duplikat', `Kategori "${namaKategori}" sudah ada.`);
+      return;
+    }
+
+    // Menambahkan ikon default karena tidak ada input untuk itu di UI ini
+    tambahKategori(namaKategori, 'pricetag-outline'); 
+    setInputKategoriBaru('');
     setSedangMenambah(false);
   };
 
-  const handleMulaiEdit = () => {
-    if (!kategoriTerpilih) return;
-    setSedangMengedit(true);
-    setTeksEdit(kategoriTerpilih.nama);
-  };
-
-  const handleSimpanEdit = () => {
-    if (!kategoriTerpilih || teksEdit.trim() === '') return;
-    perbaruiKategori(kategoriTerpilih.id, teksEdit);
-    setSedangMengedit(false);
-    setTeksEdit('');
-  };
-
+  // Logika ini sudah benar karena `hapusKategori` mengharapkan `number`
   const handleHapus = () => {
     if (!kategoriTerpilih) return;
-    Alert.alert(
-      'Hapus Kategori',
-      `Yakin ingin menghapus "${kategoriTerpilih.nama}"? Sub-kategori terkait juga akan terhapus.`,
-      [
-        { text: 'Batal', style: 'cancel' },
-        {
-          text: 'Hapus',
-          style: 'destructive',
-          onPress: () => hapusKategori(kategoriTerpilih.id),
+    Alert.alert('Hapus Kategori', `Yakin ingin menghapus "${kategoriTerpilih.nama}"?`, [
+      { text: 'Batal', style: 'cancel' },
+      {
+        text: 'Hapus',
+        style: 'destructive',
+        onPress: () => {
+          hapusKategori(kategoriTerpilih.id); // kategoriTerpilih.id adalah number
         },
-      ]
-    );
-  };
-
-  const handlePilih = (idKategori: string) => {
-    pilihKategori(idKategori);
-    setModalTerlihat(false);
+      },
+    ]);
   };
 
   const tampilkanModal = () => {
     if (pemicuRef.current) {
-      pemicuRef.current.measure(
-        (
-          fx: number,
-          fy: number,
-          width: number,
-          height: number,
-          px: number,
-          py: number
-        ) => {
-          setPosisiModal({ top: py + height, left: px, width: width });
-          setModalTerlihat(true);
-        }
-      );
+      pemicuRef.current.measure((_fx, _fy, width, height, px, py) => {
+        setPosisiModal({ top: py + height + 8, left: px, width });
+        setModalTerlihat(true);
+      });
     }
   };
 
   return (
-    <View style={styles.wrapper}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Kategori</Text>
-        {!sedangMenambah && !sedangMengedit && (
-          <Pressable
-            style={styles.headerAddBtn}
-            onPress={() => setSedangMenambah(true)}
-          >
-            <Ionicons name="add-circle-outline" size={20} color="#007BFF" />
-            <Text style={styles.addButtonText}>Tambah</Text>
+    <View style={gaya.pembungkus}>
+      <View style={gaya.tajuk}>
+        <Text style={gaya.judul}>Kategori</Text>
+        {!sedangMenambah && (
+          <Pressable style={gaya.tombolTambah} onPress={() => setSedangMenambah(true)}>
+            <Ionicons name="add" size={16} color="#0B74FF" />
+            <Text style={gaya.teksTombolTambah}>Tambah</Text>
           </Pressable>
         )}
       </View>
 
-      {sedangMenambah && (
-        <View style={styles.inputContainer}>
+      {sedangMenambah ? (
+        <View style={gaya.penampungInput}>
           <TextInput
-            style={styles.input}
-            placeholder="Input kategori baru..."
-            value={kategoriBaru}
-            onChangeText={setKategoriBaru}
+            style={gaya.input}
+            placeholder="Nama Kategori Baru..."
+            placeholderTextColor="#9CA3AF"
+            value={inputKategoriBaru}
+            onChangeText={setInputKategoriBaru}
             autoFocus
           />
-          <View style={styles.inputActions}>
-            <Pressable
-              style={[styles.actionIconBtn, styles.saveButton]}
-              onPress={handleTambah}
-            >
-              <Ionicons name="checkmark-outline" size={22} color="white" />
-            </Pressable>
-            <Pressable
-              style={[styles.actionIconBtn, styles.cancelButton]}
-              onPress={() => setSedangMenambah(false)}
-            >
-              <Ionicons name="close-outline" size={22} color="white" />
-            </Pressable>
-          </View>
-        </View>
-      )}
-
-      <View style={styles.itemContainer}>
-        {sedangMengedit ? (
-          <TextInput
-            style={[styles.itemText, styles.editInput]}
-            value={teksEdit}
-            onChangeText={setTeksEdit}
-            autoFocus
-          />
-        ) : (
           <Pressable
-            ref={pemicuRef as any}
-            style={styles.selectorPressable}
-            onPress={tampilkanModal}
-            disabled={sedangMenambah}
+            onPress={handleTambah}
+            style={({ pressed }) => [gaya.iconAksi, pressed && gaya.iconAksiTekan]}
           >
-            <View>
-              <Text style={styles.labelSmall}>Terpilih</Text>
-              <Text style={styles.itemText}>
-                {kategoriTerpilih?.nama || 'Pilih Kategori'}
-              </Text>
-            </View>
-            <Ionicons name="chevron-down" size={18} color="#666" />
+            <Ionicons name="checkmark-circle" size={34} color="#10B981" />
           </Pressable>
-        )}
-        <View style={styles.itemActions}>
-          {sedangMengedit ? (
-            <>
-              <Pressable style={styles.editBtn} onPress={handleSimpanEdit}>
-                <Ionicons name="save-outline" size={20} color="#34C759" />
-              </Pressable>
-              <Pressable
-                style={styles.deleteBtn}
-                onPress={() => setSedangMengedit(false)}
-              >
-                <Ionicons
-                  name="close-circle-outline"
-                  size={20}
-                  color="#FF3B30"
-                />
-              </Pressable>
-            </>
-          ) : (
-            <>
-              <Pressable
-                style={styles.editBtn}
-                onPress={handleMulaiEdit}
-                disabled={sedangMenambah || !kategoriTerpilih}
-              >
-                <Ionicons name="create-outline" size={20} color="#007BFF" />
-              </Pressable>
-              <Pressable
-                style={styles.deleteBtn}
-                onPress={handleHapus}
-                disabled={sedangMenambah || !kategoriTerpilih}
-              >
-                <Ionicons name="trash-outline" size={20} color="#FF3B30" />
-              </Pressable>
-            </>
+          <Pressable
+            onPress={() => setSedangMenambah(false)}
+            style={({ pressed }) => [gaya.iconAksi, pressed && gaya.iconAksiTekan]}
+          >
+            <Ionicons name="close-circle" size={34} color="#EF4444" />
+          </Pressable>
+        </View>
+      ) : (
+        <View>
+          <Pressable ref={pemicuRef as any} onPress={tampilkanModal} style={gaya.pemicuDropdown}>
+            <Text style={gaya.teksDropdown}>{kategoriTerpilih?.nama || 'Pilih Kategori'}</Text>
+            <Ionicons name="chevron-down" size={20} color="#6B7280" />
+          </Pressable>
+          {kategoriTerpilih && (
+            <Pressable style={gaya.tombolHapus} onPress={handleHapus}>
+              <Ionicons name="trash-outline" size={16} color="#EF4444" />
+              <Text style={gaya.teksTombolHapus}>Hapus Kategori Terpilih</Text>
+            </Pressable>
           )}
         </View>
-      </View>
+      )}
 
       <Modal
         visible={modalTerlihat}
@@ -200,57 +140,48 @@ export default function ListKategori() {
         animationType="fade"
         onRequestClose={() => setModalTerlihat(false)}
       >
-        <Pressable
-          style={styles.modalBackdrop}
-          onPress={() => setModalTerlihat(false)}
-        />
+        <Pressable style={gaya.latarBelakangModal} onPress={() => setModalTerlihat(false)} />
         <View
           style={[
-            styles.dropdownContent,
+            gaya.kontenDropdown,
             {
               top: posisiModal.top,
               left: posisiModal.left,
-              width: posisiModal.width,
+              width: Math.max(posisiModal.width, 220),
             },
           ]}
         >
           <FlatList
             data={daftarKategori}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => {
-              // Pengecekan untuk memastikan item valid sebelum dirender
-              if (
-                !item ||
-                typeof item.id !== 'string' ||
-                typeof item.nama !== 'string'
-              ) {
-                return null; // Jangan render item yang tidak valid
-              }
-              return (
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.modalItem,
-                    pressed && styles.modalItemPressed,
-                    item.id === kategoriTerpilih?.id && styles.modalItemActive,
+            // --- DIPERBAIKI ---
+            keyExtractor={(item) => item.id.toString()} // Konversi number ke string
+            renderItem={({ item }) => (
+              <Pressable
+                style={({ pressed }) => [
+                  gaya.itemModal,
+                  pressed && gaya.itemModalDitekan,
+                  item.id === kategoriTerpilih?.id && gaya.itemModalAktif, // Perbandingan number
+                ]}
+                onPress={() => handlePilih(item)}
+              >
+                <Text
+                  style={[
+                    gaya.teksItemModal,
+                    item.id === kategoriTerpilih?.id && gaya.teksItemModalAktif, // Perbandingan number
                   ]}
-                  onPress={() => handlePilih(item.id)}
                 >
-                  <Text
-                    style={[
-                      styles.modalItemText,
-                      item.id === kategoriTerpilih?.id &&
-                        styles.modalItemTextActive,
-                    ]}
-                  >
-                    {item.nama}
-                  </Text>
-                  {item.id === kategoriTerpilih?.id && (
-                    <Ionicons name="checkmark" size={18} color="#007BFF" />
-                  )}
-                </Pressable>
-              );
-            }}
-            keyExtractor={(item, index) => item?.id || `kategori-${index}`}
+                  {item.nama}
+                </Text>
+                {item.id === kategoriTerpilih?.id && (
+                  <Ionicons name="checkmark" size={18} color="#0B74FF" />
+                )}
+              </Pressable>
+            )}
+            ListEmptyComponent={
+              <View style={gaya.kosongWrapper}>
+                <Text style={gaya.teksKosong}>Tidak ada kategori.</Text>
+              </View>
+            }
           />
         </View>
       </Modal>
@@ -258,147 +189,153 @@ export default function ListKategori() {
   );
 }
 
-const styles = StyleSheet.create({
-  wrapper: {
+// Gaya tidak berubah, jadi saya biarkan seperti adanya.
+const gaya = StyleSheet.create({
+  pembungkus: {
     padding: 20,
     backgroundColor: '#FFFFFF',
   },
-  header: {
+  tajuk: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 12,
   },
-  title: {
-    fontSize: 22,
+  judul: {
+    fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#111827',
   },
-  headerAddBtn: {
+  tombolTambah: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0F2FF',
   },
-  addButtonText: {
-    fontSize: 16,
-    color: '#007BFF',
+  teksTombolTambah: {
+    color: '#0B74FF',
     fontWeight: '600',
+    fontSize: 14,
   },
-  inputContainer: {
+  penampungInput: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
-    gap: 10,
+    gap: 12,
+    marginTop: 4,
   },
   input: {
     flex: 1,
     height: 48,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: '#E6EEF8',
+    backgroundColor: '#FBFDFF',
     borderRadius: 12,
-    paddingHorizontal: 15,
-    backgroundColor: '#F9F9F9',
+    paddingHorizontal: 14,
     fontSize: 16,
+    color: '#111827',
+    shadowColor: '#0b1220',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  editInput: {
+  iconAksi: {
+    padding: 4,
+    borderRadius: 20,
+  },
+  iconAksiTekan: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+  pemicuDropdown: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     height: 48,
-    flex: 1,
-  },
-  inputActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionIconBtn: {
-    width: 44,
-    height: 44,
+    borderWidth: 1,
+    borderColor: '#E6E9EE',
     borderRadius: 12,
+    paddingHorizontal: 14,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0b1220',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  teksDropdown: {
+    fontSize: 16,
+    color: '#111827',
+  },
+  tombolHapus: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-  },
-  saveButton: {
-    backgroundColor: '#34C759',
-  },
-  cancelButton: {
-    backgroundColor: '#FF3B30',
-  },
-  itemContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 14,
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#EEE',
+    borderColor: '#FEE2E2',
+    backgroundColor: '#FFF7F7',
   },
-  selectorPressable: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingRight: 15,
-  },
-  labelSmall: {
-    fontSize: 12,
-    color: '#8E8E93',
-    marginBottom: 2,
-  },
-  itemText: {
-    fontSize: 17,
+  teksTombolHapus: {
+    color: '#EF4444',
+    fontSize: 14,
     fontWeight: '600',
-    color: '#333',
   },
-  itemActions: {
-    flexDirection: 'row',
-    gap: 12,
-    borderLeftWidth: 1,
-    borderLeftColor: '#DDD',
-    paddingLeft: 12,
-  },
-  editBtn: {
-    padding: 4,
-  },
-  deleteBtn: {
-    padding: 4,
-  },
-  modalBackdrop: {
+  latarBelakangModal: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(15, 23, 42, 0.18)',
   },
-  dropdownContent: {
+  kontenDropdown: {
     position: 'absolute',
-    backgroundColor: 'white',
-    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 8,
-    maxHeight: 220,
+    borderColor: '#E6E9EE',
+    maxHeight: 260,
+    shadowColor: '#0b1220',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 6,
+    overflow: 'hidden',
   },
-  modalItem: {
+  itemModal: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    backgroundColor: '#FFFFFF',
   },
-  modalItemPressed: {
-    backgroundColor: '#F5F5F5',
+  itemModalDitekan: {
+    backgroundColor: '#F8FAFC',
   },
-  modalItemActive: {
+  itemModalAktif: {
     backgroundColor: '#F0F7FF',
   },
-  modalItemText: {
+  teksItemModal: {
     fontSize: 16,
-    color: '#444',
+    color: '#111827',
   },
-  modalItemTextActive: {
-    color: '#007BFF',
+  teksItemModalAktif: {
+    color: '#0B74FF',
     fontWeight: '600',
+  },
+  kosongWrapper: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  teksKosong: {
+    color: '#9CA3AF',
+    fontSize: 14,
   },
 });

@@ -1,0 +1,13 @@
+{
+  "Template Snippet Baru": {
+    "prefix": "snpt",
+    "body": [
+      "\"${1:Nama Snippet}\": {",
+      "\t\"prefix\": \"${2:prefix}\",",
+      "\t\"body\": [\n\t\t\"$3\"\n\t],",
+      "\t\"description\": \"${4:Deskripsi snippet}\"",
+      "}"
+    ],
+    "description": "Sisipkan template untuk membuat snippet baru"
+  }
+}

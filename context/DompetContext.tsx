@@ -1,120 +1,161 @@
 // context/DompetContext.tsx
-import React, {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
+import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
-// Impor koneksi database dan tipe data dari Expo SQLite
 import db from '../database/sqlite';
+import { Dompet } from '../database/tipe';
 
-// Definisikan tipe untuk objek dompet dari database
-// Nama properti disamakan dengan nama kolom di tabel untuk kemudahan
-export interface Dompet {
-  id: number;
-  nama: string;
-  saldo: number;
-}
-
-// Definisikan tipe untuk data yang dikelola di form
-interface DataForm {
+// Menggunakan kembali tipe ini untuk form edit juga
+export interface DataFormDompet {
   namaDompet: string;
-  saldoAwal: string;
+  saldoAwal: string; // Saldo direpresentasikan sebagai string di form
+  tipe: string;
+  ikon: string;
 }
 
-// Definisikan tipe untuk nilai yang akan disediakan oleh Context
 interface ContextDompetType {
-  dataForm: DataForm;
-  setDataForm: React.Dispatch<React.SetStateAction<DataForm>>;
+  dataForm: DataFormDompet;
+  setDataForm: React.Dispatch<React.SetStateAction<DataFormDompet>>;
   daftarDompet: Dompet[];
-  muatDaftarDompet: () => Promise<void>;
+  memuat: boolean;
+  muatDaftarDompet: () => void;
+  muatDompetTunggal: (id: string) => Dompet | null;
   simpanDompetBaru: () => Promise<void>;
+  perbaruiDompet: (id: string) => Promise<void>;
+  hapusDompet: (id: string) => Promise<void>; // Tambahkan ini
+  modalTipeTerlihat: boolean;
+  bukaModalTipe: () => void;
+  tutupModalTipe: () => void;
 }
 
-// Buat Context
 const DompetContext = createContext<ContextDompetType | undefined>(undefined);
 
-// Buat komponen Provider
 export function DompetProvider({ children }: { children: ReactNode }) {
-  // State untuk menampung data dari form input
-  const [dataForm, setDataForm] = useState<DataForm>({
+  const [dataForm, setDataForm] = useState<DataFormDompet>({
     namaDompet: '',
     saldoAwal: '',
+    tipe: '',
+    ikon: '',
   });
-
-  // State untuk menampung daftar dompet dari database
   const [daftarDompet, setDaftarDompet] = useState<Dompet[]>([]);
+  const [modalTipeTerlihat, setModalTipeTerlihat] = useState(false);
+  const [memuat, setMemuat] = useState(true);
 
-  // Fungsi untuk memuat semua dompet dari database
-  const muatDaftarDompet = async () => {
+  const muatDaftarDompet = () => {
+    setMemuat(true);
     try {
-      const semuaDompet = await db.getAllAsync<Dompet>(
-        'SELECT * FROM dompet ORDER BY nama ASC'
-      );
-      setDaftarDompet(semuaDompet);
-      console.log('Daftar dompet berhasil dimuat.');
+      const hasil: any[] = db.getAllSync('SELECT id, nama, saldo, tipe, ikon FROM dompet');
+      const dataDompet: Dompet[] = hasil.map((item) => ({
+        id: item.id.toString(),
+        nama: item.nama,
+        saldo: item.saldo,
+        tipe: item.tipe,
+        ikon: item.ikon,
+      }));
+      setDaftarDompet(dataDompet);
     } catch (error) {
       console.error('Gagal memuat daftar dompet:', error);
+    } finally {
+      setMemuat(false);
     }
   };
 
-  // Fungsi untuk menyimpan dompet baru ke database, berdasarkan data dari form
-  const simpanDompetBaru = async () => {
-    const { namaDompet, saldoAwal } = dataForm;
-
-    if (!namaDompet.trim()) {
-      alert('Nama dompet tidak boleh kosong.');
-      return;
-    }
-
-    // Ubah saldo dari string (misal: "10.000") menjadi angka
-    const saldoNumerik = parseFloat(saldoAwal.replace(/\./g, '')) || 0;
-
+  const muatDompetTunggal = (id: string): Dompet | null => {
     try {
-      await db.runAsync('INSERT INTO dompet (nama, saldo) VALUES (?, ?);', [
-        namaDompet.trim(),
+      const hasil: any = db.getFirstSync('SELECT * FROM dompet WHERE id = ?', id);
+      return hasil ? { ...hasil, id: hasil.id.toString() } : null;
+    } catch (error) {
+      console.error(`Gagal memuat dompet dengan id ${id}:`, error);
+      return null;
+    }
+  };
+
+  const simpanDompetBaru = async () => {
+    if (!dataForm.namaDompet.trim()) {
+      alert('Nama dompet tidak boleh kosong.');
+      throw new Error('Nama dompet tidak boleh kosong.');
+    }
+    const saldoNumerik = parseFloat(dataForm.saldoAwal.replace(/[^0-9]/g, '')) || 0;
+    try {
+      db.runSync(
+        'INSERT INTO dompet (nama, saldo, tipe, ikon) VALUES (?, ?, ?, ?);',
+        dataForm.namaDompet.trim(),
         saldoNumerik,
-      ]);
-      console.log(`Dompet "${namaDompet.trim()}" berhasil disimpan.`);
-
-      // Kosongkan form input setelah berhasil disimpan
-      setDataForm({ namaDompet: '', saldoAwal: '' });
-
-      // Muat ulang daftar dompet untuk menampilkan data terbaru secara real-time
-      await muatDaftarDompet();
+        dataForm.tipe,
+        dataForm.ikon
+      );
+      muatDaftarDompet();
     } catch (error) {
       console.error('Gagal menyimpan dompet baru:', error);
-      alert('Gagal menyimpan dompet. Mungkin nama dompet sudah ada?');
+      throw error;
     }
   };
 
-  // Muat daftar dompet saat provider pertama kali dirender
+  const perbaruiDompet = async (id: string) => {
+    if (!dataForm.namaDompet.trim()) {
+      alert('Nama dompet tidak boleh kosong.');
+      throw new Error('Nama dompet tidak boleh kosong.');
+    }
+    const saldoNumerik = parseFloat(dataForm.saldoAwal.replace(/[^0-9]/g, '')) || 0;
+    try {
+      db.runSync(
+        'UPDATE dompet SET nama = ?, saldo = ?, tipe = ?, ikon = ? WHERE id = ?;',
+        dataForm.namaDompet.trim(),
+        saldoNumerik,
+        dataForm.tipe,
+        dataForm.ikon,
+        id
+      );
+      muatDaftarDompet();
+    } catch (error) {
+      console.error(`Gagal memperbarui dompet dengan id ${id}:`, error);
+      throw error;
+    }
+  };
+
+  // Implementasi fungsi hapusDompet
+  const hapusDompet = async (id: string) => {
+    try {
+      db.runSync('DELETE FROM dompet WHERE id = ?;', id);
+      muatDaftarDompet(); // Refresh daftar setelah menghapus
+    } catch (error) {
+      console.error(`Gagal menghapus dompet dengan id ${id}:`, error);
+      throw error;
+    }
+  };
+
+  const bukaModalTipe = () => setModalTipeTerlihat(true);
+  const tutupModalTipe = () => setModalTipeTerlihat(false);
+
   useEffect(() => {
     muatDaftarDompet();
   }, []);
 
-  const value = {
-    dataForm,
-    setDataForm,
-    daftarDompet,
-    muatDaftarDompet,
-    simpanDompetBaru,
-  };
-
   return (
-    <DompetContext.Provider value={value}>{children}</DompetContext.Provider>
+    <DompetContext.Provider
+      value={{
+        dataForm,
+        setDataForm,
+        daftarDompet,
+        memuat,
+        muatDaftarDompet,
+        muatDompetTunggal,
+        simpanDompetBaru,
+        perbaruiDompet,
+        hapusDompet, // Sediakan fungsi hapus
+        modalTipeTerlihat,
+        bukaModalTipe,
+        tutupModalTipe,
+      }}
+    >
+      {children}
+    </DompetContext.Provider>
   );
 }
 
-// Buat custom hook untuk mempermudah penggunaan context
-export function useDompet() {
+export const useDompet = () => {
   const context = useContext(DompetContext);
   if (context === undefined) {
-    throw new Error(
-      'useDompet harus digunakan di dalam lingkup DompetProvider'
-    );
+    throw new Error('useDompet harus digunakan di dalam DompetProvider');
   }
   return context;
-}
+};
