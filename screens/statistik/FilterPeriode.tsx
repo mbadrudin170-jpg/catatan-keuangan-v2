@@ -1,15 +1,10 @@
 // screens/statistik/FilterPeriode.tsx
 import { Feather } from '@expo/vector-icons';
-import React from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { WARNA } from './konstanta';
-import { useStatistik } from './StatistikContext'; // DIUBAH
+import { useStatistik } from './StatistikContext';
 import type { FilterPeriode as FilterPeriodeTipe } from './tipe';
 import { getLabelPeriode } from './util';
 
@@ -23,17 +18,7 @@ interface ChipPeriodeProps {
 }
 
 const ChipPeriode = ({ label, aktif, onTekan }: ChipPeriodeProps) => (
-  {/** ask:  untuk const ChipPeriode = ({ label, aktif, onTekan }: ChipPeriodeProps) => (
-tolong tambahkan fungsi untuk menampilkan tanggal 
-   baca dahulu file  GEMINI.md
-  ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu
-   selalu tulis kan jalur path file di paling atas setiap file
-   tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya
-   */}
-  <TouchableOpacity
-    style={[styles.chip, aktif && styles.chipAktif]}
-    onPress={onTekan}
-  >
+  <TouchableOpacity style={[styles.chip, aktif && styles.chipAktif]} onPress={onTekan}>
     <Text style={[styles.teksChip, aktif && styles.teksChipAktif]}>{label}</Text>
   </TouchableOpacity>
 );
@@ -46,44 +31,88 @@ interface NavigasiPeriodeProps {
   onKiri: () => void;
   onKanan: () => void;
   bisaKanan: boolean;
+  periode: FilterPeriodeTipe;
 }
 
-const NavigasiPeriode = ({ label, onKiri, onKanan, bisaKanan }: NavigasiPeriodeProps) => (
-  <View style={styles.navigasiContainer}>
-    <TouchableOpacity onPress={onKiri} style={styles.tombolNavigasi}>
-      <Feather name="chevron-left" size={24} color={WARNA.TEKS_SEKUNDER} />
-    </TouchableOpacity>
-    <Text style={styles.labelPeriode}>{label}</Text>
-    <TouchableOpacity onPress={onKanan} disabled={!bisaKanan} style={styles.tombolNavigasi}>
-      <Feather
-        name="chevron-right"
-        size={24}
-        color={bisaKanan ? WARNA.TEKS_SEKUNDER : WARNA.TEKS_NONAKTIF}
-      />
-    </TouchableOpacity>
-  </View>
-);
+const NavigasiPeriode = ({
+  label,
+  onKiri,
+  onKanan,
+  bisaKanan,
+  periode,
+}: NavigasiPeriodeProps) => {
+  // Navigasi tidak ditampilkan untuk 'semua' atau 'pilih tanggal'
+  if (periode === 'semua' || periode === 'pilih tanggal') {
+    return null;
+  }
+  
+  return (
+    <View style={styles.navigasiContainer}>
+      <TouchableOpacity onPress={onKiri} style={styles.tombolNavigasi}>
+        <Feather name="chevron-left" size={24} color={WARNA.TEKS_SEKUNDER} />
+      </TouchableOpacity>
+      <Text style={styles.labelPeriode}>{label}</Text>
+      <TouchableOpacity onPress={onKanan} disabled={!bisaKanan} style={styles.tombolNavigasi}>
+        <Feather
+          name="chevron-right"
+          size={24}
+          color={bisaKanan ? WARNA.TEKS_SEKUNDER : WARNA.TEKS_NONAKTIF}
+        />
+      </TouchableOpacity>
+    </View>
+  );
+};
 
 // ─────────────────────────────────────────────
 // FILTER PERIODE - Tanpa Props, menggunakan Context
 // ─────────────────────────────────────────────
 export const FilterPeriode = () => {
-  // Ambil state dan fungsi dari context
-  const { periode, setPeriode, offsetPeriode, setOffsetPeriode } = useStatistik();
+  const {
+    periode,
+    setPeriode,
+    offsetPeriode,
+    setOffsetPeriode,
+    rentangTanggal,
+    setRentangTanggal,
+  } = useStatistik();
 
-  const geserKiri = () => setOffsetPeriode(offsetPeriode - 1);
+  const [pickerTerlihat, setPickerTerlihat] = useState(false);
+  const [pickerUntuk, setPickerUntuk] = useState<'mulai' | 'selesai'>('mulai');
+
+  const bukaPemilihTanggal = (untuk: 'mulai' | 'selesai') => {
+    setPickerUntuk(untuk);
+    setPickerTerlihat(true);
+  };
+
+  const onUbahTanggal = (event: DateTimePickerEvent, tanggal?: Date) => {
+    setPickerTerlihat(false);
+    if (event.type === 'set' && tanggal) {
+      const tanggalBaru = { ...rentangTanggal };
+      if (pickerUntuk === 'mulai') {
+        tanggalBaru.mulai = tanggal;
+      } else {
+        tanggalBaru.selesai = tanggal;
+      }
+      setRentangTanggal(tanggalBaru);
+    }
+  };
+
+  const geserKiri = () => {
+    setOffsetPeriode(offsetPeriode - 1);
+  };
   const geserKanan = () => {
-    if (offsetPeriode < 0) setOffsetPeriode(offsetPeriode + 1);
+    if (offsetPeriode < 0) {
+      setOffsetPeriode(offsetPeriode + 1);
+    }
   };
   const bisaKanan = offsetPeriode < 0;
 
-  const labelPeriodeAktif = getLabelPeriode(periode, offsetPeriode);
+  const labelPeriodeAktif = getLabelPeriode(periode, offsetPeriode, rentangTanggal);
 
   const onUbahPeriode = (p: FilterPeriodeTipe) => {
     setPeriode(p);
     setOffsetPeriode(0); // reset ke periode sekarang
   };
-
 
   return (
     <>
@@ -103,12 +132,35 @@ export const FilterPeriode = () => {
           ))}
         </ScrollView>
       </View>
+      
+      {periode === 'pilih tanggal' && (
+        <View style={styles.wadahPilihTanggal}>
+            <Text style={styles.labelPilihTanggal}>Pilih Rentang:</Text>
+            <TouchableOpacity onPress={() => bukaPemilihTanggal('mulai')} style={styles.inputTanggal}>
+                <Text>{rentangTanggal.mulai.toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'})}</Text>
+            </TouchableOpacity>
+            <Feather name="arrow-right" size={20} color={WARNA.TEKS_SEKUNDER} />
+            <TouchableOpacity onPress={() => bukaPemilihTanggal('selesai')} style={styles.inputTanggal}>
+                <Text>{rentangTanggal.selesai.toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'})}</Text>
+            </TouchableOpacity>
+        </View>
+      )}
+
+      {pickerTerlihat && (
+        <DateTimePicker
+          value={pickerUntuk === 'mulai' ? rentangTanggal.mulai : rentangTanggal.selesai}
+          mode="date"
+          display="default"
+          onChange={onUbahTanggal}
+        />
+      )}
 
       <NavigasiPeriode
         label={labelPeriodeAktif}
         onKiri={geserKiri}
         onKanan={geserKanan}
         bisaKanan={bisaKanan}
+        periode={periode}
       />
     </>
   );
@@ -116,7 +168,7 @@ export const FilterPeriode = () => {
 
 const styles = StyleSheet.create({
   containerPeriode: {
-    marginBottom: 20,
+    marginBottom: 16,
     marginHorizontal: -20,
   },
   scrollPeriodeContent: {
@@ -160,6 +212,31 @@ const styles = StyleSheet.create({
     width: 180,
     textAlign: 'center',
   },
+  wadahPilihTanggal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginBottom: 24,
+    backgroundColor: WARNA.SURFACE,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: WARNA.BORDER,
+  },
+  labelPilihTanggal: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: WARNA.TEKS_SEKUNDER
+  },
+  inputTanggal: {
+    borderWidth: 1,
+    borderColor: WARNA.BORDER,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: 'white',
+  },
 });
 
 const config = {
@@ -168,5 +245,7 @@ const config = {
     'mingguan',
     'bulanan',
     'tahunan',
+    'semua',
+    'pilih tanggal',
   ] as FilterPeriodeTipe[],
 };

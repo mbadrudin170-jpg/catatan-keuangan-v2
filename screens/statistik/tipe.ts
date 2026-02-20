@@ -6,16 +6,17 @@
  * - `mingguan`: data ditampilkan per minggu.
  * - `bulanan`: data ditampilkan per bulan.
  * - `tahunan`: data ditampilkan per tahun.
+ * - `semua`: menampilkan semua data.
+ * - `pilih tanggal`: menampilkan data untuk rentang tanggal tertentu.
  */
-export type FilterPeriode = 'harian' | 'mingguan' | 'bulanan' | 'tahunan';
-{
-  /** ask:  dibagian FilterPeriode tambahkan semua dan pilih tanggal agar ;eboh fleksibel  
- baca dahulu file  GEMINI.md
-ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu
- selalu tulis kan jalur path file di paling atas setiap file
- tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya
- */
-}
+export type FilterPeriode =
+  | 'harian'
+  | 'mingguan'
+  | 'bulanan'
+  | 'tahunan'
+  | 'semua'
+  | 'pilih tanggal';
+
 /**
  * Struktur data untuk setiap batang pada komponen GrafikBatang.
  */
