@@ -10,6 +10,7 @@ import { Alert } from 'react-native';
 import { ambilSemuaTransaksi, tambahSatuTransaksi as dbTambahTransaksi } from '@/database/operasi';
 import type { Transaksi } from '@/database/tipe';
 import { useDompet } from './DompetContext';
+import { useKategori } from './KategoriContext'; // DIIMPOR: Untuk mengakses data kategori
 
 type TipePilihanDompet = 'sumber' | 'tujuan';
 
@@ -45,6 +46,7 @@ export const TransaksiProvider = ({
   initialDaftarTransaksi,
 }: TransaksiProviderProps): JSX.Element => {
   const { tambahPemasukan, tambahPengeluaran, tambahTransfer } = useDompet();
+  const { daftarKategori } = useKategori(); // BARU: Mendapatkan daftar kategori
 
   const [transaksi, setTransaksi] = useState<Transaksi>({
     id: Date.now(),
@@ -53,7 +55,7 @@ export const TransaksiProvider = ({
     tanggal: new Date().toISOString(),
     tipe: 'pengeluaran',
     kategori_id: null,
-    dompet_id: null,
+    dompet_id: 0,
     dompet_tujuan_id: null,
     subkategori_id: null,
   });
@@ -79,54 +81,70 @@ export const TransaksiProvider = ({
     }
   }, [initialDaftarTransaksi, muatUlangDaftarTransaksi]);
 
-  const tambahTransaksi = async (transaksiBaru: Transaksi): Promise<void> => {
-    if (transaksiBaru.jumlah <= 0) {
+  const tambahTransaksi = async (transaksiInput: Transaksi): Promise<void> => {
+    const transaksiUntukSimpan = { ...transaksiInput };
+
+    // --- BLOK PERBAIKAN KATEGORI ---
+    // Logika ini secara defensif memperbaiki jika ID subkategori salah ditempatkan di kategori_id
+    if (transaksiUntukSimpan.tipe !== 'transfer' && transaksiUntukSimpan.kategori_id) {
+      const kategoriInduk = daftarKategori.find((k) => k.id === transaksiUntukSimpan.kategori_id);
+
+      if (!kategoriInduk) {
+        const semuaSubkategori = daftarKategori.flatMap((k) => k.subkategori);
+        const subkategori = semuaSubkategori.find((s) => s.id === transaksiUntukSimpan.kategori_id);
+
+        if (subkategori) {
+          transaksiUntukSimpan.subkategori_id = subkategori.id;
+          transaksiUntukSimpan.kategori_id = subkategori.kategori_id;
+        }
+      }
+    }
+    // --- AKHIR BLOK PERBAIKAN ---
+
+    if (transaksiUntukSimpan.jumlah <= 0) {
       Alert.alert('Input Tidak Valid', 'Jumlah transaksi harus lebih dari nol.');
       throw new Error('Jumlah transaksi tidak valid.');
     }
-    if (transaksiBaru.dompet_id === null) {
+    if (transaksiUntukSimpan.dompet_id === 0) {
       Alert.alert('Input Tidak Valid', 'Anda harus memilih dompet sumber.');
       throw new Error('Dompet sumber tidak dipilih.');
     }
 
-    if (transaksiBaru.tipe === 'transfer') {
-      if (!transaksiBaru.dompet_tujuan_id) {
-        Alert.alert('Input Tidak Valid', 'Anda harus memilih dompet tujuan untuk transfer.');
-        throw new Error('Dompet tujuan tidak dipilih untuk transfer.');
+    if (transaksiUntukSimpan.tipe === 'transfer') {
+      if (!transaksiUntukSimpan.dompet_tujuan_id) {
+        Alert.alert('Input Tidak Valid', 'Anda harus memilih dompet tujuan.');
+        throw new Error('Dompet tujuan tidak dipilih.');
       }
-      if (transaksiBaru.dompet_id === transaksiBaru.dompet_tujuan_id) {
+      if (transaksiUntukSimpan.dompet_id === transaksiUntukSimpan.dompet_tujuan_id) {
         Alert.alert('Input Tidak Valid', 'Dompet sumber dan tujuan tidak boleh sama.');
         throw new Error('Dompet sumber dan tujuan sama.');
       }
     } else {
-      // DIUBAH: Menambahkan validasi untuk memastikan kategori dipilih
-      if (transaksiBaru.kategori_id === null) {
+      if (!transaksiUntukSimpan.kategori_id) {
         Alert.alert('Input Tidak Valid', 'Anda harus memilih kategori.');
         throw new Error('Kategori tidak dipilih.');
       }
     }
 
     try {
-      await dbTambahTransaksi(transaksiBaru);
+      await dbTambahTransaksi(transaksiUntukSimpan);
 
-      if (transaksiBaru.dompet_id !== null) {
-        switch (transaksiBaru.tipe) {
-          case 'pemasukan':
-            await tambahPemasukan(transaksiBaru.dompet_id, transaksiBaru.jumlah);
-            break;
-          case 'pengeluaran':
-            await tambahPengeluaran(transaksiBaru.dompet_id, transaksiBaru.jumlah);
-            break;
-          case 'transfer':
-            if (transaksiBaru.dompet_tujuan_id !== null) {
-              await tambahTransfer(
-                transaksiBaru.dompet_id,
-                transaksiBaru.dompet_tujuan_id,
-                transaksiBaru.jumlah
-              );
-            }
-            break;
-        }
+      switch (transaksiUntukSimpan.tipe) {
+        case 'pemasukan':
+          await tambahPemasukan(transaksiUntukSimpan.dompet_id, transaksiUntukSimpan.jumlah);
+          break;
+        case 'pengeluaran':
+          await tambahPengeluaran(transaksiUntukSimpan.dompet_id, transaksiUntukSimpan.jumlah);
+          break;
+        case 'transfer':
+          if (transaksiUntukSimpan.dompet_tujuan_id) {
+            await tambahTransfer(
+              transaksiUntukSimpan.dompet_id,
+              transaksiUntukSimpan.dompet_tujuan_id,
+              transaksiUntukSimpan.jumlah
+            );
+          }
+          break;
       }
       await muatUlangDaftarTransaksi();
     } catch (error) {
