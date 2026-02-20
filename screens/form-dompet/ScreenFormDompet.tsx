@@ -9,45 +9,41 @@ import HeaderFormDompet from './HeaderFormDompet';
 import InputFormDompet from './InputFormDompet';
 import TombolSimpan from './TombolSimpan';
 
+// Definisikan state awal form yang bersih
+const formAwal = {
+  nama: '',
+  tipe: 'tunai',
+  ikon: 'cash',
+};
+
 export default function HalamanFormDompet() {
   const { id: idString } = useLocalSearchParams<{ id?: string }>();
   const { muatDompetUntukForm, setFormDompet } = useDompet();
 
   const idNumerik = idString ? parseInt(idString, 10) : undefined;
 
-  // DIUBAH: Logika efek disederhanakan setelah perbaikan di context
   useEffect(() => {
     if (idNumerik) {
-      // Mode Edit: Muat data dompet ke dalam form context
+      // Mode Edit: Muat data dompet dari context
       void muatDompetUntukForm(idNumerik);
     } else {
-      // Mode Tambah: Pastikan form bersih saat layar dibuka
-      setFormDompet({
-        nama: '',
-        saldo: '',
-        tipe: '',
-        ikon: '',
-      });
+      // Mode Tambah: Gunakan state form yang bersih
+      setFormDompet(formAwal);
     }
 
-    // Fungsi cleanup sekarang hanya reset form jika diperlukan
+    // Fungsi cleanup untuk mereset form saat meninggalkan layar
     return () => {
-      setFormDompet({
-        nama: '',
-        saldo: '',
-        tipe: '',
-        ikon: '',
-      });
+      setFormDompet(formAwal);
     };
-    // Dependensi: Cukup `idNumerik`. Fungsi context sekarang stabil.
-  }, [idNumerik, muatDompetUntukForm, setFormDompet]); // DIUBAH: Dependensi diperbarui
+  }, [idNumerik, muatDompetUntukForm, setFormDompet]);
 
   return (
     <SafeAreaView style={gaya.wadahAman}>
       <HeaderFormDompet />
       <ScrollView contentContainerStyle={gaya.kontenScroll}>
         <InputFormDompet />
-        <TombolSimpan idEdit={idNumerik} />
+        {/* TombolSimpan tidak lagi memerlukan prop idEdit */}
+        <TombolSimpan />
       </ScrollView>
     </SafeAreaView>
   );

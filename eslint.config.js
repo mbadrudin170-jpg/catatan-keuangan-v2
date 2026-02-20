@@ -1,69 +1,94 @@
 // eslint.config.js
-
 // @ts-check
 
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
+// @ts-ignore
+import importPlugin from 'eslint-plugin-import';
 
 export default tseslint.config(
-  // 1. Menggunakan konfigurasi dasar ESLint untuk JS
+  // 1. Base Configs
   eslint.configs.recommended,
-
-  // 2. Menggunakan konfigurasi rekomendasi TypeScript (tanpa info tipe)
   ...tseslint.configs.recommended,
+  ...tseslint.configs.strictTypeChecked,
 
-  // 3. Konfigurasi untuk aturan yang MEMERLUKAN info tipe (hanya untuk file .ts/.tsx)
   {
     files: ['**/*.ts', '**/*.tsx'],
+    plugins: {
+      import: importPlugin,
+    },
     languageOptions: {
       parserOptions: {
         project: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
+    settings: {
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: './tsconfig.json',
+        },
+      },
+    },
     rules: {
-      // Memastikan setiap fungsi asinkron (seperti operasi SQLite) menunggu promise selesai
+      // --- DETEKSI IMPORT/EXPORT (MENGATASI ts(2305)) ---
+      // Kita aktifkan ini untuk membantu editor memberikan feedback instan
+      'import/named': 'error',
+      'import/no-duplicates': 'warn',
+
+      // --- PENGHAPUSAN BENTROK (ANTI-CONFLICT) ---
+      // Kita matikan aturan ESLint bawaan yang sudah dihandle lebih baik oleh TS
+      'import/no-unresolved': 'off', // TS sudah handle ini, biar tidak bentrok saat pakai Alias Path
+      'no-undef': 'off', // TypeScript sudah mengecek variabel undefined secara native
+
+      // --- LOGIKA ASYNC ---
       '@typescript-eslint/no-floating-promises': 'error',
-      // Mencegah kesalahan penulisan 'await' yang tidak perlu atau tertinggal
       '@typescript-eslint/await-thenable': 'error',
-      // Mencegah penggunaan data null/undefined tanpa pengecekan (Optional Chaining)
+
+      // Mengubah ke 'warn' agar tidak menghalangi build jika ada pengecekan null yang dianggap berlebihan
       '@typescript-eslint/no-unnecessary-condition': 'warn',
     },
   },
 
-  // 4. Kustomisasi aturan umum (berlaku untuk semua file)
   {
     rules: {
-      'no-console': ['warn', { allow: ['warn', 'error'] }], // Mengizinkan error dan warn
-      // ... rules lainnya
-      // Aturan diperluas untuk mendeteksi parameter yang tidak digunakan.
+      // --- ATURAN CONSOLE ---
+      'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
+
+      // --- ATURAN VARIABEL & LINGKUP ---
       '@typescript-eslint/no-unused-vars': [
-        'error',
+        'error', // Artinya: Jika ada variabel tak terpakai, anggap Error (Garis Merah).
         {
-          args: 'all', // Memeriksa semua parameter fungsi.
-          argsIgnorePattern: '^_', // Mengabaikan parameter yang diawali dengan _.
-          ignoreRestSiblings: true, // Mengabaikan sisa properti pada destrukturisasi objek.
+          args: 'all', // Periksa semua parameter fungsi.
+          argsIgnorePattern: '^_', // Abaikan parameter jika namanya diawali _
+          varsIgnorePattern: '^_', // Abaikan variabel jika namanya diawali _ (kategoriInduk -> _kategoriInduk)
+          ignoreRestSiblings: true, // Berguna saat bongkar pasang objek (destructuring).
         },
       ],
+      '@typescript-eslint/no-explicit-any': 'warn',
 
-      '@typescript-eslint/no-explicit-any': 'warn', // Hindari penggunaan 'any' berlebihan.
-      // Mencegah penggunaan variabel sebelum didefinisikan (sering menyebabkan ReferenceError)
+      // Mematikan aturan JS bawaan untuk menghindari duplikasi peringatan dengan aturan TS
       'no-use-before-define': 'off',
-      '@typescript-eslint/no-use-before-define': ['error', { variables: false }],
+      '@typescript-eslint/no-use-before-define': [
+        'error',
+        {
+          functions: false,
+          classes: true,
+          variables: false, // Diatur false agar tidak bentrok dengan hoisting sederhana
+        },
+      ],
     },
   },
 
-  // 5. Mengabaikan folder yang tidak perlu di-scan
   {
     ignores: [
       'node_modules/',
       '.expo/',
       '.next/',
       'dist/',
-      'babel.config.cjs',
-      'metro.config.js',
-      'eslint.config.js',
-      'jest.config.cjs',
+      '*.config.js',
+      '*.config.cjs',
       'jest.setup.js',
     ],
   }

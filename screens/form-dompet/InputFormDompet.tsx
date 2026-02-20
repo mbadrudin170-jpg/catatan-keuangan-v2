@@ -2,26 +2,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { useDompet, type FormDompet } from '@/context/DompetContext'; // DIUBAH
+import { useDompet } from '@/context/DompetContext';
 import ModalTipeDompet from './modal/ModalTipeDompet';
 
-// DIHAPUS: Komponen ini tidak lagi menerima props dompet
 export default function InputFormDompet() {
-  // DIUBAH: Menggunakan nama baru dari context
   const { formDompet, setFormDompet, bukaModalTipe } = useDompet();
 
-  // DIHAPUS: useEffect untuk mengisi form telah dipindahkan ke level layar
-
   const handleNamaChange = (nama: string) => {
-    // DIUBAH: Menggunakan properti 'nama' dan tipe eksplisit
-    setFormDompet((dataSebelumnya: FormDompet) => ({ ...dataSebelumnya, nama }));
-  };
-
-  const handleSaldoChange = (saldo: string) => {
-    const saldoTanpaTitik = saldo.replace(/[^\d]/g, '');
-    const saldoTerformat = saldoTanpaTitik.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    // DIUBAH: Menggunakan properti 'saldo' dan tipe eksplisit
-    setFormDompet((dataSebelumnya: FormDompet) => ({ ...dataSebelumnya, saldo: saldoTerformat }));
+    setFormDompet((dataSebelumnya) => ({ ...dataSebelumnya, nama }));
   };
 
   return (
@@ -30,8 +18,9 @@ export default function InputFormDompet() {
       <View style={gaya.grupInput}>
         <Text style={gaya.label}>Tipe</Text>
         <Pressable style={gaya.inputPilihan} onPress={bukaModalTipe}>
-          {/* DIUBAH: Menggunakan formDompet.tipe */}
-          <Text style={gaya.teksInputPilihan}>{formDompet.tipe || 'Pilih Tipe'}</Text>
+          <Text style={gaya.teksInputPilihan}>
+            {formDompet.tipe ? formDompet.tipe.charAt(0).toUpperCase() + formDompet.tipe.slice(1) : 'Pilih Tipe'}
+          </Text>
           <Ionicons name="chevron-down" size={22} color={warna.teksSekunder} />
         </Pressable>
       </View>
@@ -43,33 +32,18 @@ export default function InputFormDompet() {
           style={gaya.inputTeks}
           placeholder="Cth: Dompet Utama"
           placeholderTextColor="#94a3b8"
-          value={formDompet.nama} // DIUBAH
+          value={formDompet.nama}
           onChangeText={handleNamaChange}
         />
       </View>
 
-      {/* Saldo Awal */}
-      <View style={gaya.grupInput}>
-        <Text style={gaya.label}>Saldo Awal</Text>
-        <View style={gaya.wadahInputNominal}>
-          <Text style={gaya.teksRp}>Rp</Text>
-          <TextInput
-            style={gaya.inputTeksNominal}
-            placeholder="0"
-            placeholderTextColor="#94a3b8"
-            keyboardType="numeric"
-            value={formDompet.saldo} // DIUBAH
-            onChangeText={handleSaldoChange}
-          />
-        </View>
-      </View>
+      {/* Input Saldo Awal telah dihapus */}
 
       <ModalTipeDompet />
     </View>
   );
 }
 
-// ... (gaya tidak berubah)
 const warna = {
   border: '#e2e8f0',
   teksUtama: '#0f172a',
@@ -116,27 +90,5 @@ const gaya = StyleSheet.create({
     fontSize: 15,
     color: warna.teksUtama,
     fontWeight: '500',
-  },
-  wadahInputNominal: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: warna.border,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    backgroundColor: warna.latarInput,
-  },
-  teksRp: {
-    fontSize: 15,
-    color: warna.teksSekunder,
-    marginRight: 8,
-    fontWeight: '600',
-  },
-  inputTeksNominal: {
-    flex: 1,
-    paddingVertical: 12,
-    fontSize: 16,
-    fontWeight: '600',
-    color: warna.teksUtama,
   },
 });

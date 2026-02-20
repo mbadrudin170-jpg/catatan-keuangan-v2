@@ -1,39 +1,55 @@
-// screens/detail-transaksi/TombolHapusDetailTransaksi.tsx
+import { AntDesign } from '@expo/vector-icons';
+import { router, useNavigation } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { useLogikaDetailTransaksi } from './logikaDetailTransaksi';
+import { Alert, Pressable } from 'react-native';
 
-const TombolHapusDetailTransaksi: React.FC = () => {
-  const { isLoading, hapusTransaksi } = useLogikaDetailTransaksi();
+import { useTransaksi } from '@/context/TransaksiContext';
+import { useDetailTransaksi } from './logikaDetailTransaksi';
+
+export default function TombolHapusDetailTransaksi() {
+  const navigasi = useNavigation();
+  const data = useDetailTransaksi();
+  const { hapusSatuTransaksi } = useTransaksi(); // Ganti nama fungsi di sini
+
+  // Jangan render tombol jika data transaksi belum siap
+  if (!data) {
+    return null;
+  }
+
+  const konfirmasiHapus = () => {
+    Alert.alert(
+      'Hapus Transaksi',
+      'Apakah Anda yakin ingin menghapus transaksi ini? Tindakan ini tidak dapat diurungkan.',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Panggil fungsi yang benar
+              await hapusSatuTransaksi(data.transaksi.id);
+
+              // Kembali ke halaman sebelumnya setelah berhasil menghapus
+              if (navigasi.canGoBack()) {
+                navigasi.goBack();
+              } else {
+                // Fallback jika tidak bisa kembali
+                router.replace('/(tabs)/transaksi');
+              }
+            } catch (error) {
+              console.error('Gagal menghapus transaksi:', error);
+              Alert.alert('Error', 'Gagal menghapus transaksi. Silakan coba lagi.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
-    <TouchableOpacity
-      onPress={hapusTransaksi}
-      style={[styles.button, isLoading && styles.buttonDisabled]}
-      disabled={isLoading}
-    >
-      <Text style={styles.buttonText}>{isLoading ? 'Menghapus...' : 'Hapus Transaksi'}</Text>
-    </TouchableOpacity>
+    <Pressable onPress={konfirmasiHapus} style={{ marginRight: 15 }}>
+      <AntDesign name="delete" size={24} color="#ef4444" />
+    </Pressable>
   );
-};
-
-const styles = StyleSheet.create({
-  button: {
-    backgroundColor: '#FF6347', // Tomato color for delete
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  buttonDisabled: {
-    backgroundColor: '#FF634780', // Lighter tomato for disabled state
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-});
-
-export default TombolHapusDetailTransaksi;
+}

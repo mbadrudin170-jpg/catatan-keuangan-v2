@@ -38,9 +38,13 @@ export interface Transaksi {
   jumlah: number;
   keterangan?: string;
   tanggal: string;
-  kategori_id: number | null; // Bisa NULL untuk tipe 'transfer'
-  // DIUBAH: Disesuaikan dengan skema DB (NOT NULL).
+  kategori_id: number | null;
+  subkategori_id: number | null;
   dompet_id: number;
-  dompet_tujuan_id: number | null; // Hanya untuk 'transfer', bisa NULL
-  subkategori_id: number | null; // Bisa NULL
+  dompet_tujuan_id: number | null;
+  // Salinan nama untuk tujuan historis/arsip.
+  nama_kategori?: string | null;
+  nama_subkategori?: string | null;
+  nama_dompet?: string | null; // BARU
+  nama_dompet_tujuan?: string | null; // BARU
 }

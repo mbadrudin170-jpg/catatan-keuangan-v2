@@ -1,173 +1,101 @@
 // database/operasi.ts
-
-import type { RingkasanKategori } from '@/screens/statistik/tipe';
+import type { Kategori, Subkategori, Transaksi, Dompet, TipeKategori } from '@/database/tipe';
 import db from './sqlite';
-import type { Dompet, Kategori, Subkategori, TipeTransaksi, Transaksi } from './tipe';
 
-// Tipe untuk hasil mentah dari query statistik
-interface HasilQueryStatistik {
-  id: number;
-  tipe: TipeTransaksi;
-  total: number;
-  kategori_nama: string;
-  kategori_ikon: string;
-}
-
-// Tipe untuk hasil statistik yang sudah diproses
-export interface DataGrafik {
-  label: string;
-  pemasukan: number;
-  pengeluaran: number;
-}
-
-export interface HasilStatistik {
-  totalPemasukan: number;
-  totalPengeluaran: number;
-  ringkasanPemasukan: RingkasanKategori[];
-  ringkasanPengeluaran: RingkasanKategori[];
-  dataGrafik: DataGrafik[];
-}
-
-// ─────────────────────────────────────────────
-// OPERASI KATEGORI
-// ─────────────────────────────────────────────
-
-export const ambilSemuaKategori = async (): Promise<Kategori[]> => {
-  const daftarKategori = await db.getAllAsync<Omit<Kategori, 'subkategori'>>(
-    'SELECT * FROM kategori ORDER BY nama ASC;'
+// Operasi untuk Kategori
+export const ambilSemuaKategori = async (tipe: TipeKategori): Promise<Kategori[]> => {
+  const semuaKategori = await db.getAllAsync<Kategori>(
+    'SELECT * FROM kategori WHERE tipe = ? ORDER BY nama ASC;', [tipe]
   );
-  const daftarSubkategori = await db.getAllAsync<Subkategori>(
-    'SELECT * FROM subkategori ORDER BY nama ASC;'
-  );
+  const semuaSubkategori = await db.getAllAsync<Subkategori>('SELECT * FROM subkategori;');
 
-  const subkategoriMap = new Map<number, Subkategori[]>();
-  for (const sub of daftarSubkategori) {
-    if (!subkategoriMap.has(sub.kategori_id)) {
-      subkategoriMap.set(sub.kategori_id, []);
-    }
-    subkategoriMap.get(sub.kategori_id)!.push(sub);
-  }
-
-  return daftarKategori.map((kategori) => ({
+  return semuaKategori.map((kategori) => ({
     ...kategori,
-    subkategori: subkategoriMap.get(kategori.id) || [],
+    subkategori: semuaSubkategori.filter((sub) => sub.kategori_id === kategori.id),
   }));
 };
 
-export const tambahKategori = async (
-  nama: string,
-  ikon: string,
-  tipe: TipeTransaksi
-): Promise<void> => {
-  await db.runAsync('INSERT INTO kategori (nama, ikon, tipe) VALUES (?, ?, ?);', nama, ikon, tipe);
+export const tambahSatuKategori = async (kategori: Omit<Kategori, 'id' | 'subkategori'>): Promise<number | undefined> => {
+  const hasil = await db.runAsync(
+    'INSERT INTO kategori (nama, ikon, tipe) VALUES (?, ?, ?);', [kategori.nama, kategori.ikon || null, kategori.tipe]
+  );
+  return hasil.lastInsertRowId;
 };
 
-export const perbaruiKategori = async (id: number, nama: string, ikon: string): Promise<void> => {
-  await db.runAsync('UPDATE kategori SET nama = ?, ikon = ? WHERE id = ?;', nama, ikon, id);
-};
-
-export const hapusKategori = async (id: number): Promise<void> => {
-  await db.runAsync('DELETE FROM kategori WHERE id = ?;', id);
-};
-
-// ─────────────────────────────────────────────
-// OPERASI SUBKATEGORI
-// ─────────────────────────────────────────────
-
-export const tambahSubkategori = async (nama: string, kategori_id: number): Promise<void> => {
+export const perbaruiSatuKategori = async (kategori: Omit<Kategori, 'subkategori'>): Promise<void> => {
   await db.runAsync(
-    'INSERT INTO subkategori (nama, kategori_id) VALUES (?, ?);',
-    nama,
-    kategori_id
+    'UPDATE kategori SET nama = ?, ikon = ?, tipe = ? WHERE id = ?;', [kategori.nama, kategori.ikon || null, kategori.tipe, kategori.id]
   );
 };
 
-export const perbaruiSubkategori = async (id: number, nama: string): Promise<void> => {
-  await db.runAsync('UPDATE subkategori SET nama = ? WHERE id = ?;', nama, id);
+export const hapusSatuKategori = async (id: number): Promise<void> => {
+  await db.runAsync('DELETE FROM kategori WHERE id = ?;', [id]);
 };
 
-export const hapusSubkategori = async (id: number): Promise<void> => {
-  await db.runAsync('DELETE FROM subkategori WHERE id = ?;', id);
+// Operasi untuk Subkategori
+export const tambahSatuSubkategori = async (subkategori: Omit<Subkategori, 'id'>): Promise<number | undefined> => {
+  const hasil = await db.runAsync(
+    'INSERT INTO subkategori (nama, kategori_id) VALUES (?, ?);', [subkategori.nama, subkategori.kategori_id]
+  );
+  return hasil.lastInsertRowId;
 };
 
-// ─────────────────────────────────────────────
-// OPERASI DOMPET
-// ─────────────────────────────────────────────
-
-export const ambilSemuaDompet = async (): Promise<Dompet[]> => {
-  return await db.getAllAsync('SELECT * FROM dompet ORDER BY nama ASC;');
-};
-
-export const ambilSatuDompet = async (id: number): Promise<Dompet | null> => {
-  const hasil = await db.getFirstAsync<Dompet>('SELECT * FROM dompet WHERE id = ?', id);
-  return hasil ?? null;
-};
-
-export const tambahDompet = async (
-  nama: string,
-  saldo: number,
-  tipe: string,
-  ikon: string
-): Promise<void> => {
+export const perbaruiSatuSubkategori = async (subkategori: Subkategori): Promise<void> => {
   await db.runAsync(
-    'INSERT INTO dompet (nama, saldo, tipe, ikon) VALUES (?, ?, ?, ?);',
-    nama,
-    saldo,
-    tipe,
-    ikon
+    'UPDATE subkategori SET nama = ?, kategori_id = ? WHERE id = ?;',
+    [subkategori.nama, subkategori.kategori_id, subkategori.id]
   );
 };
 
-export const perbaruiDompet = async (
-  id: number,
-  nama: string,
-  saldo: number,
-  tipe: string,
-  ikon: string
-): Promise<void> => {
-  await db.runAsync(
-    'UPDATE dompet SET nama = ?, saldo = ?, tipe = ?, ikon = ? WHERE id = ?;',
-    nama,
-    saldo,
-    tipe,
-    ikon,
-    id
-  );
+export const hapusSatuSubkategori = async (id: number): Promise<void> => {
+  await db.runAsync('DELETE FROM subkategori WHERE id = ?;', [id]);
 };
 
-export const hapusDompet = async (id: number): Promise<void> => {
-  await db.runAsync('DELETE FROM dompet WHERE id = ?;', id);
-};
-
-// Fungsi baru untuk menghapus semua dompet
-export const hapusSemuaDompet = async (): Promise<void> => {
-  // Menghapus semua data dari tabel dompet
-  await db.runAsync('DELETE FROM dompet;');
-  // Mereset auto-increment ID untuk tabel dompet (khusus SQLite)
-  await db.runAsync(`DELETE FROM sqlite_sequence WHERE name='dompet';`);
-};
-
-// ─────────────────────────────────────────────
-// OPERASI TRANSAKSI
-// ─────────────────────────────────────────────
-
-export const tambahSatuTransaksi = async (transaksi: Transaksi): Promise<void> => {
-  // DIUBAH: Memastikan semua nilai yang bisa null ditangani secara konsisten
-  await db.runAsync(
-    'INSERT INTO transaksi (jumlah, keterangan, tanggal, tipe, kategori_id, dompet_id, dompet_tujuan_id, subkategori_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);',
-    transaksi.jumlah,
-    transaksi.keterangan ?? null,
-    transaksi.tanggal,
-    transaksi.tipe,
-    transaksi.kategori_id ?? null,
-    transaksi.dompet_id ?? null, // Ditambahkan pengaman nullish coalescing
-    transaksi.dompet_tujuan_id ?? null,
-    transaksi.subkategori_id ?? null
-  );
-};
-
+// Operasi untuk Transaksi
 export const ambilSemuaTransaksi = async (): Promise<Transaksi[]> => {
-  return await db.getAllAsync('SELECT * FROM transaksi ORDER BY tanggal DESC;');
+  return await db.getAllAsync<Transaksi>(
+    'SELECT * FROM transaksi ORDER BY tanggal DESC;'
+  );
 };
 
-// ... (sisa kode statistik tidak berubah)
+export const tambahSatuTransaksi = async (transaksi: Transaksi): Promise<number | undefined> => {
+  const { jumlah, keterangan, tanggal, tipe, kategori_id, dompet_id, dompet_tujuan_id, subkategori_id, nama_kategori, nama_subkategori, nama_dompet, nama_dompet_tujuan } = transaksi;
+
+  const hasil = await db.runAsync(
+    `INSERT INTO transaksi 
+     (jumlah, keterangan, tanggal, tipe, kategori_id, dompet_id, dompet_tujuan_id, subkategori_id, nama_kategori, nama_subkategori, nama_dompet, nama_dompet_tujuan) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+    [jumlah, keterangan || null, tanggal, tipe, kategori_id, dompet_id, dompet_tujuan_id || null, subkategori_id || null, nama_kategori || null, nama_subkategori || null, nama_dompet || null, nama_dompet_tujuan || null]
+  );
+  return hasil.lastInsertRowId;
+};
+
+// Operasi untuk Dompet
+export const ambilSemuaDompet = async (): Promise<Dompet[]> => {
+  return await db.getAllAsync<Dompet>('SELECT * FROM dompet ORDER BY nama ASC;');
+};
+
+export const tambahSatuDompet = async (dompet: Omit<Dompet, 'id' | 'saldo'>): Promise<number | undefined> => {
+  const hasil = await db.runAsync(
+    'INSERT INTO dompet (nama, tipe, ikon, saldo) VALUES (?, ?, ?, 0);', [dompet.nama, dompet.tipe || null, dompet.ikon || null]
+  );
+  return hasil.lastInsertRowId;
+};
+
+export const perbaruiSatuDompet = async (dompet: Omit<Dompet, 'saldo'>): Promise<void> => {
+  await db.runAsync(
+    'UPDATE dompet SET nama = ?, tipe = ?, ikon = ? WHERE id = ?;', [dompet.nama, dompet.tipe || null, dompet.ikon || null, dompet.id]
+  );
+};
+
+export const perbaruiSaldoDompet = async (id: number, jumlah: number): Promise<void> => {
+  await db.runAsync('UPDATE dompet SET saldo = saldo + ? WHERE id = ?;', [jumlah, id]);
+};
+
+export const hapusSatuDompet = async (id: number): Promise<void> => {
+  await db.runAsync('DELETE FROM dompet WHERE id = ?;', [id]);
+};
+
+export const hapusSemuaDompet = async (): Promise<void> => {
+  await db.runAsync('DELETE FROM dompet;');
+};

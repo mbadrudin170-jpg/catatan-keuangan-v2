@@ -1,56 +1,33 @@
 // screens/detail-dompet/ScreenDetailDompet.tsx
-
-import { useLocalSearchParams } from 'expo-router';
-import React, { type JSX } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import React from 'react';
+import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import HeaderDetailDompet from './HeaderDetailDompet';
+import KontenDetailDompet from './KontenDetailDompet';
+import { DetailDompetProvider } from './logikaDetailDompet';
+import StatistikDompet from './StatistikDompet';
 
-import HeaderDetailDompet from '@/screens/detail-dompet/HeaderDetailDompet';
-import KontenDetailDompet from '@/screens/detail-dompet/KontenDetailDompet';
-import { DetailDompetProvider, useDetailDompet } from './logikaDetailDompet';
-import RiwayatTransaksiPerDompet from './RiwayatTransaksiPerDompet';
-import TombolHapusDetailDompet from './TombolHapusDetailDompet';
-
-function KontenHalaman(): JSX.Element {
-  const logika = useDetailDompet();
-  const { dompetId } = useLocalSearchParams<{ dompetId: string }>();
-
-  if (logika.memuat) {
-    return <ActivityIndicator size="large" color="#3b82f6" style={gaya.pusat} testID="activity-indicator" />;
-  }
-
-  if (!logika.dompet) {
-    return (
-      <View style={gaya.pusat}>
-        <Text>Dompet tidak ditemukan.</Text>
-      </View>
-    );
-  }
-
+export default function ScreenDetailDompet() {
   return (
-    <DetailDompetProvider value={logika}>
-      <SafeAreaView style={gaya.wadah}>
+    <DetailDompetProvider>
+      {/* Membungkus seluruh layar dengan SafeAreaView untuk menghindari notch */}
+      <SafeAreaView style={gaya.areaAman}>
         <HeaderDetailDompet />
+        <StatistikDompet />
         <KontenDetailDompet />
-        <RiwayatTransaksiPerDompet dompetId={Number(dompetId)} />
-        <TombolHapusDetailDompet />
       </SafeAreaView>
     </DetailDompetProvider>
   );
 }
 
-export default function DetailDompetHalaman(): JSX.Element {
-  return <KontenHalaman />;
-}
-
 const gaya = StyleSheet.create({
-  wadah: {
+  // Gaya untuk SafeAreaView, memastikan ia mengisi seluruh area aman
+  areaAman: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#FFFFFF', // Set warna latar belakang di sini
   },
-  pusat: {
+  // Gaya untuk View yang menampung konten di dalamnya
+  penampungKonten: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

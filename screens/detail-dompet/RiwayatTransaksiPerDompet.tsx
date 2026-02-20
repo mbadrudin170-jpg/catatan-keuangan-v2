@@ -6,7 +6,6 @@ import { router } from 'expo-router';
 import { useMemo } from 'react';
 import { Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 
-import { useKategori } from '@/context/KategoriContext';
 import { useTransaksi } from '@/context/TransaksiContext';
 import type { Transaksi } from '@/database/tipe';
 import { formatAngka } from '@/utils/format/FormatAngka';
@@ -25,11 +24,6 @@ const groupBy = <T, K extends keyof any>(list: T[], getKey: (item: T) => K) =>
  * Ia bertanggung jawab untuk menampilkan detail transaksi dan menangani navigasi.
  */
 function ItemRiwayat({ item, dompetId }: { item: Transaksi; dompetId: number }) {
-  const { daftarKategori } = useKategori();
-
-  const semuaSubkategori = daftarKategori.flatMap((k) => k.subkategori);
-  const subkategori = semuaSubkategori.find((s) => s.id === item.kategori_id);
-
   // Menentukan detail tampilan berdasarkan tipe transaksi
   const isPemasukkan = item.tipe === 'pemasukan';
   const isTransfer = item.tipe === 'transfer';
@@ -37,8 +31,10 @@ function ItemRiwayat({ item, dompetId }: { item: Transaksi; dompetId: number }) 
 
   let warnaNominal = '#ef4444'; // Pengeluaran (default)
   let tanda = '-';
-  let keteranganAtas = item.keterangan || subkategori?.nama || 'Lainnya';
-  let keteranganBawah = item.keterangan ? subkategori?.nama : undefined;
+  // Menggunakan nama_subkategori atau nama_kategori dari transaksi
+  let keteranganAtas = item.keterangan || item.nama_subkategori || item.nama_kategori || 'Lainnya';
+  // Menampilkan subkategori jika keterangan ada
+  let keteranganBawah = item.keterangan ? item.nama_subkategori || item.nama_kategori : undefined;
 
   if (isPemasukkan) {
     warnaNominal = '#10b981'; // Hijau untuk pemasukan
@@ -47,11 +43,14 @@ function ItemRiwayat({ item, dompetId }: { item: Transaksi; dompetId: number }) 
     warnaNominal = '#3b82f6'; // Biru untuk transfer
     if (isTransferMasuk) {
       tanda = '+';
-      keteranganAtas = 'Transfer Masuk';
+      // Menampilkan nama dompet pengirim
+      keteranganAtas = `Transfer dari ${item.nama_dompet || 'Lainnya'}`;
     } else {
       tanda = '-';
-      keteranganAtas = 'Transfer Keluar';
+      // Menampilkan nama dompet tujuan
+      keteranganAtas = `Transfer ke ${item.nama_dompet_tujuan || 'Lainnya'}`;
     }
+    // Keterangan transaksi transfer tetap ditampilkan
     keteranganBawah = item.keterangan;
   }
 

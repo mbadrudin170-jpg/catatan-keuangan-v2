@@ -1,27 +1,21 @@
 // screens/detail-transaksi/ScreenDetailTransaksi.tsx
-import { useLocalSearchParams } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useDompet } from '@/context/DompetContext';
-import { useKategori } from '@/context/KategoriContext';
-import { useTransaksi } from '@/context/TransaksiContext';
 import { formatAngka } from '@/utils/format/FormatAngka';
+import HeaderDetailTransaksi from './HeaderDetailTransaksi';
+import { useDetailTransaksi } from './logikaDetailTransaksi';
 
 export default function ScreenDetailTransaksi() {
-  const { id: transaksiId } = useLocalSearchParams<{ id: string }>();
-  const { daftarTransaksi } = useTransaksi();
-  const { daftarKategori } = useKategori();
-  const { daftarDompet } = useDompet();
+  const data = useDetailTransaksi();
 
-  // DIUBAH: Konversi `transaksiId` dari string ke number untuk perbandingan yang benar
-  const transaksi = daftarTransaksi.find((t) => t.id === Number(transaksiId));
-
-  if (!transaksi) {
+  // Jika data tidak ditemukan (misal, ID transaksi tidak valid)
+  if (!data) {
     return (
       <SafeAreaView style={gaya.penampung}>
+        <HeaderDetailTransaksi />
         <View style={gaya.kontenKosong}>
           <Text>Transaksi tidak ditemukan.</Text>
         </View>
@@ -29,31 +23,13 @@ export default function ScreenDetailTransaksi() {
     );
   }
 
-  const semuaSubkategori = daftarKategori.flatMap((k) => k.subkategori);
-  const subkategori = semuaSubkategori.find((s) => s.id === transaksi.kategori_id);
-  const kategoriInduk = daftarKategori.find((k) => k.id === subkategori?.kategori_id);
-  const dompet = daftarDompet.find((d) => d.id === transaksi.dompet_id);
-  const dompetTujuan = daftarDompet.find((d) => d.id === transaksi.dompet_tujuan_id);
-
-  const namaKategori = subkategori?.nama || 'Lainnya';
-  const namaDompet = dompet?.nama || '-';
-  const namaDompetTujuan = dompetTujuan?.nama;
-
-  const isPemasukkan = transaksi.tipe === 'pemasukan';
-  const isTransfer = transaksi.tipe === 'transfer';
-
-  let warnaNominal = '#ef4444'; // Default pengeluaran
-  let tanda = '-';
-  if (isPemasukkan) {
-    warnaNominal = '#10b981';
-    tanda = '+';
-  } else if (isTransfer) {
-    warnaNominal = '#3b82f6';
-    tanda = ''; // Transfer tidak memiliki tanda +/-
-  }
+  // Destructuring data untuk kemudahan akses
+  const { transaksi, isTransfer, namaDompet, namaDompetTujuan, namaKategori, warnaNominal, tanda } =
+    data;
 
   return (
     <SafeAreaView style={gaya.penampung}>
+      <HeaderDetailTransaksi />
       <View style={gaya.areaNominal}>
         <Text style={[gaya.teksNominal, { color: warnaNominal }]}>
           {tanda} {formatAngka(transaksi.jumlah)}
@@ -101,6 +77,7 @@ export default function ScreenDetailTransaksi() {
   );
 }
 
+// Gaya tidak berubah, tetap sama seperti sebelumnya
 const gaya = StyleSheet.create({
   penampung: {
     flex: 1,
@@ -134,14 +111,14 @@ const gaya = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    overflow: 'hidden', // Agar border-radius diterapkan pada anak-anaknya
+    overflow: 'hidden',
   },
   barisDetail: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderColor: '#eef2ff', // Warna border yang lebih lembut
+    borderColor: '#eef2ff',
   },
   labelDetail: {
     fontSize: 15,

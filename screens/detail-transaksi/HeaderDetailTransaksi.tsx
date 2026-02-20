@@ -1,18 +1,25 @@
 // screens/detail-transaksi/HeaderDetailTransaksi.tsx
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { type JSX } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import TombolEditDetailTransaksi from './TombolEditDetailTransaksi';
+import TombolHapusDetailTransaksi from './TombolHapusDetailTransaksi';
 
 export default function HeaderDetailTransaksi(): JSX.Element {
   return (
     <View style={styles.container}>
-      <Pressable style={styles.tombolIkon}>
+      <Pressable onPress={() => router.back()} style={styles.tombolIkon}>
         <Ionicons name="arrow-back" size={24} color="#333333" />
       </Pressable>
-      <Text style={styles.judul}>nama item</Text>
-      <Pressable style={styles.tombolIkon}>
-        <Ionicons name="trash-outline" size={24} color="#FF6347" />
-      </Pressable>
+      <Text style={styles.judul}>Detail Transaksi</Text>
+
+      {/* Grup untuk menampung tombol aksi di sebelah kanan */}
+      <View style={styles.grupTombol}>
+        <TombolEditDetailTransaksi />
+        <TombolHapusDetailTransaksi />
+      </View>
     </View>
   );
 }
@@ -36,9 +43,13 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     textAlign: 'center',
-    zIndex: -1, // Agar tidak menimpa tombol
   },
   tombolIkon: {
     padding: 8,
+  },
+  // Gaya untuk mengelompokkan tombol di kanan
+  grupTombol: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

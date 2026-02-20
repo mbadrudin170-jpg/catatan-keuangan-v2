@@ -33,9 +33,10 @@ export default function Index(): JSX.Element {
             <Text style={gaya.teksTombol}>Form Kategori</Text>
           </Pressable>
         </Link>
-        <Link href="/(lainnya)/kategori" asChild>
+        {/* DIUBAH: Mengarahkan ke rute yang benar setelah file dipindahkan */}
+        <Link href="/(tabs)/kategori" asChild>
           <Pressable style={gaya.tombol}>
-            <Text style={gaya.teksTombol}>Kategori</Text>
+            <Text style={gaya.teksTombol}>Kategori (Tab)</Text>
           </Pressable>
         </Link>
       </View>

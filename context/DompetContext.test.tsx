@@ -1,95 +1,123 @@
 // context/DompetContext.test.tsx
-
+import { renderHook, waitFor } from '@testing-library/react-native';
 import React from 'react';
-import { renderHook, act } from '@testing-library/react-native';
-import { DompetProvider, useDompet } from './DompetContext';
-import * as dbOps from '@/database/operasi';
-import { Alert } from 'react-native';
 
-// Mocking operasi database
+import * as dbOperasi from '@/database/operasi';
+import type { Dompet } from '@/database/tipe';
+import { DompetProvider, useDompet } from './DompetContext';
+
+// Mock database operations
 jest.mock('@/database/operasi', () => ({
-  ambilSatuDompet: jest.fn(),
   ambilSemuaDompet: jest.fn(),
-  tambahDompet: jest.fn(),
-  perbaruiDompet: jest.fn(),
-  hapusDompet: jest.fn(),
+  tambahSatuDompet: jest.fn(),
+  perbaruiSatuDompet: jest.fn(),
+  hapusSatuDompet: jest.fn(),
+  perbaruiSaldoDompet: jest.fn(),
 }));
 
+const mockDaftarDompet: Dompet[] = [
+  { id: 1, nama: 'Dompet Utama', saldo: 1000, tipe: 'cash', ikon: 'wallet' },
+  { id: 2, nama: 'Bank', saldo: 5000, tipe: 'bank', ikon: 'bank' },
+];
+
 describe('DompetContext', () => {
-  const dompetPalsu = {
-    id: 1,
-    nama: 'Kas Utama',
-    saldo: 100000,
-    tipe: 'Tunai',
-    ikon: 'cash',
-  };
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-    (dbOps.ambilSemuaDompet as jest.Mock).mockResolvedValue([dompetPalsu]);
-    (dbOps.ambilSatuDompet as jest.Mock).mockResolvedValue(dompetPalsu);
-  });
-
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <DompetProvider>{children}</DompetProvider>
   );
 
-  it('harus memvalidasi bahwa nama dompet tidak boleh kosong saat simpan', async () => {
-    const { result } = renderHook(() => useDompet(), { wrapper });
-
-    // Set form dengan nama kosong
-    act(() => {
-      result.current.setFormDompet({ nama: '', saldo: '1000', tipe: '', ikon: '' });
-    });
-
-    await expect(act(() => result.current.simpanDompetBaru())).rejects.toThrow(
-      'Nama dompet tidak boleh kosong.'
-    );
-
-    expect(Alert.alert).toHaveBeenCalledWith('Validasi Gagal', expect.any(String));
+  beforeEach(() => {
+    // Reset mocks before each test
+    (dbOperasi.ambilSemuaDompet as jest.Mock).mockClear();
+    (dbOperasi.tambahSatuDompet as jest.Mock).mockClear();
+    (dbOperasi.perbaruiSatuDompet as jest.Mock).mockClear();
+    (dbOperasi.hapusSatuDompet as jest.Mock).mockClear();
+    (dbOperasi.perbaruiSaldoDompet as jest.Mock).mockClear();
   });
 
-  it('harus menambah saldo dengan benar saat ada pemasukan', async () => {
+  it('seharusnya memuat daftar dompet saat inisialisasi', async () => {
+    (dbOperasi.ambilSemuaDompet as jest.Mock).mockResolvedValue(mockDaftarDompet);
+
     const { result } = renderHook(() => useDompet(), { wrapper });
 
-    await act(async () => {
-      await result.current.tambahPemasukan(1, 50000);
-    });
+    await waitFor(() => expect(result.current.memuat).toBe(false));
 
-    // Saldo awal 100.000 + 50.000 = 150.000
-    expect(dbOps.perbaruiDompet).toHaveBeenCalledWith(1, 'Kas Utama', 150000, 'Tunai', 'cash');
+    expect(dbOperasi.ambilSemuaDompet).toHaveBeenCalledTimes(1);
+    expect(result.current.daftarDompet).toEqual(mockDaftarDompet);
   });
 
-  it('harus mengurangi saldo dengan benar saat ada pengeluaran', async () => {
+  it('seharusnya bisa menambah dompet baru', async () => {
+    const dompetBaru = { nama: 'Dompet Baru', tipe: 'ewallet', ikon: 'cellphone' };
+    (dbOperasi.ambilSemuaDompet as jest.Mock).mockResolvedValue(mockDaftarDompet);
+
     const { result } = renderHook(() => useDompet(), { wrapper });
 
-    await act(async () => {
-      await result.current.tambahPengeluaran(1, 30000);
-    });
+    await waitFor(() => expect(result.current.memuat).toBe(false));
+    await result.current.tambahDompet(dompetBaru);
 
-    // Saldo awal 100.000 - 30.000 = 70.000
-    expect(dbOps.perbaruiDompet).toHaveBeenCalledWith(1, 'Kas Utama', 70000, 'Tunai', 'cash');
+    expect(dbOperasi.tambahSatuDompet).toHaveBeenCalledWith(dompetBaru);
+    expect(dbOperasi.ambilSemuaDompet).toHaveBeenCalledTimes(2); // Initial load + reload
   });
 
-  it('harus memproses transfer antar dompet (mengurangi asal, menambah tujuan)', async () => {
-    const dompetTujuanPalsu = { id: 2, nama: 'Bank', saldo: 200000, tipe: 'Bank', ikon: 'card' };
-
-    // Mock agar pengembalian dompet berbeda sesuai ID
-    (dbOps.ambilSatuDompet as jest.Mock).mockImplementation((id) => {
-      if (id === 1) return Promise.resolve(dompetPalsu);
-      if (id === 2) return Promise.resolve(dompetTujuanPalsu);
-      return Promise.resolve(null);
-    });
+  it('seharusnya bisa memperbarui dompet', async () => {
+    const dompetDiperbarui = { id: 1, nama: 'Dompet Saya', tipe: 'cash', ikon: 'wallet' };
+    (dbOperasi.ambilSemuaDompet as jest.Mock).mockResolvedValue(mockDaftarDompet);
 
     const { result } = renderHook(() => useDompet(), { wrapper });
 
-    await act(async () => {
-      await result.current.tambahTransfer(1, 2, 50000);
-    });
+    await waitFor(() => expect(result.current.memuat).toBe(false));
+    await result.current.perbaruiDompet(dompetDiperbarui);
 
-    // Cek dompet asal dikurangi
-    expect(dbOps.perbaruiDompet).toHaveBeenCalledWith(1, 'Kas Utama', 50000, 'Tunai', 'cash');
-    // Cek dompet tujuan ditambah
-    expect(dbOps.perbaruiDompet).toHaveBeenCalledWith(2, 'Bank', 250000, 'Bank', 'card');
+    expect(dbOperasi.perbaruiSatuDompet).toHaveBeenCalledWith(dompetDiperbarui);
+    expect(dbOperasi.ambilSemuaDompet).toHaveBeenCalledTimes(2);
+  });
+
+  it('seharusnya bisa menghapus dompet', async () => {
+    (dbOperasi.ambilSemuaDompet as jest.Mock).mockResolvedValue(mockDaftarDompet);
+
+    const { result } = renderHook(() => useDompet(), { wrapper });
+
+    await waitFor(() => expect(result.current.memuat).toBe(false));
+    await result.current.hapusDompet(1);
+
+    expect(dbOperasi.hapusSatuDompet).toHaveBeenCalledWith(1);
+    expect(dbOperasi.ambilSemuaDompet).toHaveBeenCalledTimes(2);
+  });
+
+  it('seharusnya bisa menambah pemasukan ke dompet', async () => {
+    const { result } = renderHook(() => useDompet(), { wrapper });
+
+    await result.current.tambahPemasukan(1, 100);
+
+    expect(dbOperasi.perbaruiSaldoDompet).toHaveBeenCalledWith(1, 100);
+  });
+
+  it('seharusnya bisa menambah pengeluaran dari dompet', async () => {
+    const { result } = renderHook(() => useDompet(), { wrapper });
+
+    await result.current.tambahPengeluaran(1, 100);
+
+    expect(dbOperasi.perbaruiSaldoDompet).toHaveBeenCalledWith(1, -100);
+  });
+
+  it('seharusnya bisa melakukan transfer antar dompet', async () => {
+    const { result } = renderHook(() => useDompet(), { wrapper });
+
+    await result.current.tambahTransfer(2, 1, 500);
+
+    expect(dbOperasi.perbaruiSaldoDompet).toHaveBeenCalledWith(2, -500);
+    expect(dbOperasi.perbaruiSaldoDompet).toHaveBeenCalledWith(1, 500);
+  });
+
+  it('seharusnya bisa mengambil dompet dengan id yang benar', async () => {
+    (dbOperasi.ambilSemuaDompet as jest.Mock).mockResolvedValue(mockDaftarDompet);
+    const { result } = renderHook(() => useDompet(), { wrapper });
+
+    await waitFor(() => expect(result.current.memuat).toBe(false));
+
+    const dompet = result.current.ambilDompetDenganId(1);
+    expect(dompet).toEqual(mockDaftarDompet[0]);
+
+    const tidakDitemukan = result.current.ambilDompetDenganId(99);
+    expect(tidakDitemukan).toBeUndefined();
   });
 });

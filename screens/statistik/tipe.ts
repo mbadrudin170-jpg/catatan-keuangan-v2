@@ -8,7 +8,14 @@
  * - `tahunan`: data ditampilkan per tahun.
  */
 export type FilterPeriode = 'harian' | 'mingguan' | 'bulanan' | 'tahunan';
-
+{
+  /** ask:  dibagian FilterPeriode tambahkan semua dan pilih tanggal agar ;eboh fleksibel  
+ baca dahulu file  GEMINI.md
+ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu
+ selalu tulis kan jalur path file di paling atas setiap file
+ tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya
+ */
+}
 /**
  * Struktur data untuk setiap batang pada komponen GrafikBatang.
  */

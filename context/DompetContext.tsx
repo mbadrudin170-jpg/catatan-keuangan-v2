@@ -1,272 +1,169 @@
 // context/DompetContext.tsx
-import type { JSX, ReactNode } from 'react';
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { Alert } from 'react-native';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
-  ambilSatuDompet,
   ambilSemuaDompet,
-  hapusDompet as dbHapusDompet,
-  // Mengimpor fungsi baru
-  hapusSemuaDompet as dbHapusSemuaDompet,
-  perbaruiDompet as dbPerbaruiDompet,
-  tambahDompet as dbTambahDompet,
+  hapusSemuaDompet as hapusSemuaDompetDariDb, // Nama impor diperbaiki
+  hapusSatuDompet,
+  perbaruiSaldoDompet,
+  perbaruiSatuDompet,
+  tambahSatuDompet,
 } from '@/database/operasi';
 import type { Dompet } from '@/database/tipe';
 
-export interface FormDompet {
-  nama: string;
-  saldo: string;
-  tipe: string;
-  ikon: string;
-}
+// Tipe untuk data yang ada di dalam form dompet.
+export type FormDompet = Partial<Omit<Dompet, 'id' | 'saldo'> & { id?: number }>;
 
-interface DompetProviderProps {
-  children: ReactNode;
-  initialDaftarDompet?: Dompet[];
-}
+const initialFormDompet: FormDompet = {
+  nama: '',
+  tipe: 'tunai',
+  ikon: 'cash',
+};
 
-interface ContextDompetType {
-  formDompet: FormDompet;
-  setFormDompet: React.Dispatch<React.SetStateAction<FormDompet>>;
+interface DompetContextType {
   daftarDompet: Dompet[];
-  memuat: boolean;
-  muatUlangDaftarDompet: () => Promise<void>;
-  muatDompetUntukForm: (id: number) => Promise<void>;
-  simpanDompetBaru: () => Promise<void>;
-  perbaruiDompet: (id: number) => Promise<void>;
+  tambahDompet: (dompet: Omit<Dompet, 'id' | 'saldo'>) => Promise<void>;
+  perbaruiDompet: (dompet: Omit<Dompet, 'saldo'>) => Promise<void>;
   hapusDompet: (id: number) => Promise<void>;
-  // Menambahkan fungsi baru ke tipe konteks
-  hapusSemuaDompet: () => Promise<void>;
+  tambahPemasukan: (id: number, jumlah: number) => Promise<void>;
+  tambahPengeluaran: (id: number, jumlah: number) => Promise<void>;
+  tambahTransfer: (idSumber: number, idTujuan: number, jumlah: number) => Promise<void>;
+  ambilDompetDenganId: (id: number) => Dompet | undefined;
+  memuat: boolean;
+  formDompet: FormDompet;
+  setFormDompet: Dispatch<SetStateAction<FormDompet>>;
   modalTipeTerlihat: boolean;
   bukaModalTipe: () => void;
   tutupModalTipe: () => void;
-  tambahPemasukan: (dompetId: number, jumlah: number) => Promise<void>;
-  tambahPengeluaran: (dompetId: number, jumlah: number) => Promise<void>;
-  tambahTransfer: (dompetAsalId: number, dompetTujuanId: number, jumlah: number) => Promise<void>;
+  muatDompetUntukForm: (id: number) => void;
+  simpanDompetBaru: () => Promise<void>;
+  hapusSemuaDompet: () => Promise<void>;
 }
 
-const DompetContext = createContext<ContextDompetType | undefined>(undefined);
+const DompetContext = createContext<DompetContextType | undefined>(undefined);
 
-export function DompetProvider({ children, initialDaftarDompet }: DompetProviderProps): JSX.Element {
-  const [formDompet, setFormDompet] = useState<FormDompet>({
-    nama: '',
-    saldo: '',
-    tipe: '',
-    ikon: '',
-  });
-  const [daftarDompet, setDaftarDompet] = useState<Dompet[]>(initialDaftarDompet || []);
+export const DompetProvider = ({ children }: { children: ReactNode }) => {
+  const [daftarDompet, setDaftarDompet] = useState<Dompet[]>([]);
+  const [memuat, setMemuat] = useState(true);
+  const [formDompet, setFormDompet] = useState<FormDompet>(initialFormDompet);
   const [modalTipeTerlihat, setModalTipeTerlihat] = useState(false);
-  const [memuat, setMemuat] = useState(!initialDaftarDompet);
 
-  const muatUlangDaftarDompet = useCallback(async (): Promise<void> => {
+  const muatUlangDaftarDompet = useCallback(async () => {
     setMemuat(true);
     try {
-      const hasil = await ambilSemuaDompet();
-      setDaftarDompet(hasil);
+      const dompet = await ambilSemuaDompet();
+      setDaftarDompet(dompet);
     } catch (error) {
-      console.error('Gagal memuat daftar dompet:', error);
+      console.error('Gagal memuat dompet:', error);
     } finally {
       setMemuat(false);
     }
   }, []);
 
-  const muatDompetUntukForm = useCallback(async (id: number): Promise<void> => {
-    try {
-      const dompet = await ambilSatuDompet(id);
-      if (dompet) {
-        setFormDompet({
-          nama: dompet.nama,
-          saldo: String(dompet.saldo),
-          tipe: dompet.tipe ?? '',
-          ikon: dompet.ikon ?? '',
-        });
-      }
-    } catch (error) {
-      console.error(`Gagal memuat dompet dengan id ${id}:`, error);
-    }
-  }, []);
-
-  const simpanDompetBaru = useCallback(async (): Promise<void> => {
-    if (!formDompet.nama.trim()) {
-      Alert.alert('Validasi Gagal', 'Nama dompet tidak boleh kosong.');
-      throw new Error('Nama dompet tidak boleh kosong.');
-    }
-    const saldoNumerik = parseFloat(formDompet.saldo.replace(/[^0-9]/g, '')) || 0;
-    try {
-      await dbTambahDompet(formDompet.nama.trim(), saldoNumerik, formDompet.tipe, formDompet.ikon);
-      await muatUlangDaftarDompet();
-    } catch (error) {
-      console.error('Gagal menyimpan dompet baru:', error);
-      throw error;
-    }
-  }, [formDompet, muatUlangDaftarDompet]);
-
-  const perbaruiDompet = useCallback(
-    async (id: number): Promise<void> => {
-      if (!formDompet.nama.trim()) {
-        Alert.alert('Validasi Gagal', 'Nama dompet tidak boleh kosong.');
-        throw new Error('Nama dompet tidak boleh kosong.');
-      }
-      const saldoNumerik = parseFloat(formDompet.saldo.replace(/[^0-9]/g, '')) || 0;
-      try {
-        await dbPerbaruiDompet(
-          id,
-          formDompet.nama.trim(),
-          saldoNumerik,
-          formDompet.tipe ?? '',
-          formDompet.ikon ?? ''
-        );
-        await muatUlangDaftarDompet();
-      } catch (error) {
-        console.error(`Gagal memperbarui dompet dengan id ${id}:`, error);
-        throw error;
-      }
-    },
-    [formDompet, muatUlangDaftarDompet]
-  );
-
-  const hapusDompet = useCallback(
-    async (id: number): Promise<void> => {
-      try {
-        await dbHapusDompet(id);
-        await muatUlangDaftarDompet();
-      } catch (error) {
-        console.error(`Gagal menghapus dompet dengan id ${id}:`, error);
-        throw error;
-      }
-    },
-    [muatUlangDaftarDompet]
-  );
-
-  // Implementasi fungsi hapus semua dompet
-  const hapusSemuaDompet = useCallback(async (): Promise<void> => {
-    try {
-      await dbHapusSemuaDompet();
-      await muatUlangDaftarDompet(); // Memuat ulang daftar yang sekarang kosong
-    } catch (error) {
-      console.error('Gagal menghapus semua dompet:', error);
-      throw error;
-    }
+  useEffect(() => {
+    void muatUlangDaftarDompet();
   }, [muatUlangDaftarDompet]);
 
-  const tambahPemasukan = useCallback(
-    async (dompetId: number, jumlah: number): Promise<void> => {
-      try {
-        const dompet = await ambilSatuDompet(dompetId);
-        if (!dompet) throw new Error('Dompet tidak ditemukan');
-        const saldoBaru = dompet.saldo + jumlah;
-        await dbPerbaruiDompet(
-          dompet.id,
-          dompet.nama,
-          saldoBaru,
-          dompet.tipe ?? '',
-          dompet.ikon ?? ''
-        );
-        await muatUlangDaftarDompet();
-      } catch (error) {
-        console.error('Gagal menambah pemasukan:', error);
-        throw error;
+  const tambahDompet = async (dompet: Omit<Dompet, 'id' | 'saldo'>) => {
+    await tambahSatuDompet(dompet);
+    await muatUlangDaftarDompet();
+  };
+
+  const perbaruiDompet = async (dompet: Omit<Dompet, 'saldo'>) => {
+    await perbaruiSatuDompet(dompet);
+    await muatUlangDaftarDompet();
+  };
+
+  const hapusDompet = async (id: number) => {
+    await hapusSatuDompet(id);
+    await muatUlangDaftarDompet();
+  };
+
+  const hapusSemuaDompet = async () => {
+    await hapusSemuaDompetDariDb();
+    await muatUlangDaftarDompet();
+  };
+
+  const tambahPemasukan = async (id: number, jumlah: number) => {
+    await perbaruiSaldoDompet(id, jumlah);
+    await muatUlangDaftarDompet();
+  };
+
+  const tambahPengeluaran = async (id: number, jumlah: number) => {
+    await perbaruiSaldoDompet(id, -jumlah);
+    await muatUlangDaftarDompet();
+  };
+
+  const tambahTransfer = async (idSumber: number, idTujuan: number, jumlah: number) => {
+    await perbaruiSaldoDompet(idSumber, -jumlah);
+    await perbaruiSaldoDompet(idTujuan, jumlah);
+    await muatUlangDaftarDompet();
+  };
+
+  const ambilDompetDenganId = useCallback((id: number) => {
+    return daftarDompet.find((d) => d.id === id);
+  }, [daftarDompet]);
+
+  // --- Logika Form ---
+  const bukaModalTipe = () => setModalTipeTerlihat(true);
+  const tutupModalTipe = () => setModalTipeTerlihat(false);
+
+  const muatDompetUntukForm = useCallback(
+    (id: number) => {
+      const dompet = ambilDompetDenganId(id);
+      if (dompet) {
+        setFormDompet(dompet);
       }
     },
-    [muatUlangDaftarDompet]
+    [ambilDompetDenganId]
   );
 
-  const tambahPengeluaran = useCallback(
-    async (dompetId: number, jumlah: number): Promise<void> => {
-      try {
-        const dompet = await ambilSatuDompet(dompetId);
-        if (!dompet) throw new Error('Dompet tidak ditemukan');
-        const saldoBaru = dompet.saldo - jumlah;
-        await dbPerbaruiDompet(
-          dompet.id,
-          dompet.nama,
-          saldoBaru,
-          dompet.tipe ?? '',
-          dompet.ikon ?? ''
-        );
-        await muatUlangDaftarDompet();
-      } catch (error) {
-        console.error('Gagal menambah pengeluaran:', error);
-        throw error;
-      }
-    },
-    [muatUlangDaftarDompet]
-  );
+  const simpanDompetBaru = async () => {
+    const { id, nama, tipe, ikon } = formDompet;
 
-  const tambahTransfer = useCallback(
-    async (dompetAsalId: number, dompetTujuanId: number, jumlah: number): Promise<void> => {
-      try {
-        const dompetAsal = await ambilSatuDompet(dompetAsalId);
-        if (!dompetAsal) throw new Error('Dompet asal tidak ditemukan');
-
-        const dompetTujuan = await ambilSatuDompet(dompetTujuanId);
-        if (!dompetTujuan) throw new Error('Dompet tujuan tidak ditemukan');
-
-        const saldoBaruAsal = dompetAsal.saldo - jumlah;
-        const saldoBaruTujuan = dompetTujuan.saldo + jumlah;
-
-        await dbPerbaruiDompet(
-          dompetAsal.id,
-          dompetAsal.nama,
-          saldoBaruAsal,
-          dompetAsal.tipe ?? '',
-          dompetAsal.ikon ?? ''
-        );
-        await dbPerbaruiDompet(
-          dompetTujuan.id,
-          dompetTujuan.nama,
-          saldoBaruTujuan,
-          dompetTujuan.tipe ?? '',
-          dompetTujuan.ikon ?? ''
-        );
-
-        await muatUlangDaftarDompet();
-      } catch (error) {
-        console.error('Gagal melakukan transfer:', error);
-        throw error;
-      }
-    },
-    [muatUlangDaftarDompet]
-  );
-
-  const bukaModalTipe = useCallback((): void => setModalTipeTerlihat(true), []);
-  const tutupModalTipe = useCallback((): void => setModalTipeTerlihat(false), []);
-
-  useEffect(() => {
-    if (!initialDaftarDompet) {
-      void muatUlangDaftarDompet();
+    if (!nama || !tipe || !ikon) {
+      console.error('Form tidak lengkap');
+      return;
     }
-  }, [muatUlangDaftarDompet, initialDaftarDompet]);
 
-  return (
-    <DompetContext.Provider
-      value={{
-        formDompet,
-        setFormDompet,
-        daftarDompet,
-        memuat,
-        muatUlangDaftarDompet,
-        muatDompetUntukForm,
-        simpanDompetBaru,
-        perbaruiDompet,
-        hapusDompet,
-        // Menyediakan fungsi baru melalui konteks
-        hapusSemuaDompet,
-        modalTipeTerlihat,
-        bukaModalTipe,
-        tutupModalTipe,
-        tambahPemasukan,
-        tambahPengeluaran,
-        tambahTransfer,
-      }}
-    >
-      {children}
-    </DompetContext.Provider>
+    if (id) {
+      // Perbarui dompet yang ada
+      await perbaruiDompet({ id, nama, tipe, ikon });
+    } else {
+      // Tambah dompet baru
+      await tambahDompet({ nama, tipe, ikon });
+    }
+    setFormDompet(initialFormDompet); // Reset form setelah simpan
+  };
+
+  const nilai = useMemo(
+    () => ({
+      daftarDompet,
+      tambahDompet,
+      perbaruiDompet,
+      hapusDompet,
+      tambahPemasukan,
+      tambahPengeluaran,
+      tambahTransfer,
+      ambilDompetDenganId,
+      memuat,
+      formDompet,
+      setFormDompet,
+      modalTipeTerlihat,
+      bukaModalTipe,
+      tutupModalTipe,
+      muatDompetUntukForm,
+      simpanDompetBaru,
+      hapusSemuaDompet,
+    }),
+    [daftarDompet, ambilDompetDenganId, memuat, formDompet, modalTipeTerlihat]
   );
-}
 
-export const useDompet = (): ContextDompetType => {
+  return <DompetContext.Provider value={nilai}>{children}</DompetContext.Provider>;
+};
+
+export const useDompet = () => {
   const context = useContext(DompetContext);
   if (context === undefined) {
     throw new Error('useDompet harus digunakan di dalam DompetProvider');

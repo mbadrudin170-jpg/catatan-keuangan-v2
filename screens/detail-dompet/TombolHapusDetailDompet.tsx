@@ -1,36 +1,52 @@
-// ~/catatan-keuangan-v2/screens/detail-dompet/TombolHapusDetailDompet.tsx
+// screens/detail-dompet/TombolHapusDetailDompet.tsx
+import { AntDesign } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
+import React from 'react';
+import { Alert, Pressable } from 'react-native';
 
-import React, { type JSX } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useDetailDompetContext } from './logikaDetailDompet';
+import { useDetailDompet } from './logikaDetailDompet';
 
-export default function TombolHapusDetailDompet(): JSX.Element {
-  const { onHapus } = useDetailDompetContext();
+export default function TombolHapusDetailDompet() {
+  const { dompet, hapusDompet } = useDetailDompet();
+  const navigasi = useNavigation();
+
+  if (!dompet) {
+    return null; // Jangan render apapun jika data dompet belum siap
+  }
+
+  const konfirmasiHapus = () => {
+    Alert.alert(
+      'Hapus Dompet',
+      'Apakah Anda yakin ingin menghapus dompet ini? Tindakan ini tidak akan menghapus transaksi terkait.',
+      [
+        { text: 'Batal', style: 'cancel' },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await hapusDompet(dompet.id);
+              // Kembali ke halaman sebelumnya setelah berhasil menghapus
+              if (navigasi.canGoBack()) {
+                navigasi.goBack();
+              } else {
+                // Fallback jika tidak bisa kembali (misal deep link)
+                router.replace('/dompet');
+              }
+            } catch (error) {
+              console.error('Gagal menghapus dompet:', error);
+              Alert.alert('Error', 'Gagal menghapus dompet. Silakan coba lagi.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
-    <View style={gaya.wadah}>
-      <Pressable onPress={onHapus} style={gaya.tombol}>
-        <Text style={gaya.teksTombol}>Hapus Dompet</Text>
-      </Pressable>
-    </View>
+    <Pressable onPress={konfirmasiHapus} style={{ marginRight: 15 }}>
+      <AntDesign name="delete" size={24} color="red" />
+    </Pressable>
   );
 }
-
-const gaya = StyleSheet.create({
-  wadah: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-    paddingTop: 10,
-  },
-  tombol: {
-    backgroundColor: '#dc2626',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  teksTombol: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-});

@@ -13,12 +13,14 @@
     "doctor": "npx expo-doctor",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "validate": "npm run check && npm run type-check && npm run lint"
+    "tree": "npx tree-node-cli -L 3 -I node_modules -I .git -I .expo -I .idx",
+    "validate": "npm run tree && npm run check && npm run type-check && npm run lint"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@react-native-community/datetimepicker": "8.4.4",
     "@react-navigation/native": "^7.1.8",
+    "@shopify/flash-list": "2.0.2",
     "babel-preset-expo": "^54.0.10",
     "date-fns": "^4.1.0",
     "expo": "^54.0.33",

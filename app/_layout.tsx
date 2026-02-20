@@ -36,9 +36,9 @@ export default function RootLayout(): JSX.Element | null {
     void setupAplikasi();
   }, []);
 
-  const onLayoutRootView = useCallback(async (): Promise<void> => {
+  const onLayoutRootView = useCallback(() => {
     if (dbInisialisasi) {
-      await SplashScreen.hideAsync();
+      void SplashScreen.hideAsync();
     }
   }, [dbInisialisasi]);
 
@@ -49,11 +49,6 @@ export default function RootLayout(): JSX.Element | null {
   return (
     <View style={styles.container} onLayout={onLayoutRootView}>
       <SafeAreaProvider>
-        {/*
-          DIUBAH: Urutan Provider diperbaiki.
-          DompetProvider sekarang membungkus KategoriProvider dan TransaksiProvider
-          karena TransaksiProvider memiliki dependensi terhadap DompetProvider (menggunakan useDompet).
-        */}
         <DompetProvider>
           <KategoriProvider>
             <TransaksiProvider>
@@ -64,7 +59,6 @@ export default function RootLayout(): JSX.Element | null {
                 {/* Definisikan rute untuk form di sini agar bisa diakses */}
                 <Stack.Screen name="(form)" />
                 <Stack.Screen name="(detail)" />
-                <Stack.Screen name="(lainnya)" />
               </Stack>
               <StatusBar style="dark" />
             </TransaksiProvider>

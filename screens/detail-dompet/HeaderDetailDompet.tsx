@@ -4,10 +4,10 @@ import { router } from 'expo-router';
 import React, { type JSX } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { useDetailDompetContext } from './logikaDetailDompet';
+import { useDetailDompet } from './logikaDetailDompet';
 
 export default function HeaderDetailDompet(): JSX.Element | null {
-  const { dompet } = useDetailDompetContext();
+  const { dompet } = useDetailDompet();
 
   // Jika dompet belum ada (misal masih loading), jangan tampilkan apapun untuk mencegah error
   if (!dompet) {
@@ -19,7 +19,7 @@ export default function HeaderDetailDompet(): JSX.Element | null {
       <Pressable onPress={() => router.back()} style={gaya.tombolHeader}>
         <Ionicons name="arrow-back" size={24} color={warna.teksUtama} />
       </Pressable>
-      <Text style={gaya.judulHeader}>Detail Dompet</Text>
+      <Text style={gaya.judulHeader}>{dompet.nama}</Text>
       <Pressable
         onPress={() => router.push({ pathname: '/(form)/form-dompet', params: { id: dompet.id } })}
         style={gaya.tombolHeader}

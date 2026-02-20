@@ -23,6 +23,13 @@ interface ChipPeriodeProps {
 }
 
 const ChipPeriode = ({ label, aktif, onTekan }: ChipPeriodeProps) => (
+  {/** ask:  untuk const ChipPeriode = ({ label, aktif, onTekan }: ChipPeriodeProps) => (
+tolong tambahkan fungsi untuk menampilkan tanggal 
+   baca dahulu file  GEMINI.md
+  ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu
+   selalu tulis kan jalur path file di paling atas setiap file
+   tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya
+   */}
   <TouchableOpacity
     style={[styles.chip, aktif && styles.chipAktif]}
     onPress={onTekan}
@@ -76,6 +83,7 @@ export const FilterPeriode = () => {
     setPeriode(p);
     setOffsetPeriode(0); // reset ke periode sekarang
   };
+
 
   return (
     <>

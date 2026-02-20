@@ -4,26 +4,19 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { useDompet } from '@/context/DompetContext';
 
-// Terima prop `idEdit` yang bisa berupa angka atau undefined
-export default function TombolSimpan({ idEdit }: { idEdit?: number }) {
-  const { simpanDompetBaru, perbaruiDompet } = useDompet();
+export default function TombolSimpan() {
+  // Ambil fungsi simpan universal dan state form dari konteks
+  const { simpanDompetBaru, formDompet } = useDompet();
 
   const handleSimpan = async () => {
     try {
-      if (idEdit !== undefined) {
-        // Jika ada idEdit, panggil fungsi perbarui
-        await perbaruiDompet(idEdit);
-      } else {
-        // Jika tidak, panggil fungsi simpan baru
-        await simpanDompetBaru();
-      }
+      // Panggil satu fungsi saja, logika edit/tambah sudah ada di dalam konteks
+      await simpanDompetBaru();
       // Setelah berhasil, kembali ke layar sebelumnya
       router.back();
     } catch (error) {
-      // Pesan error lebih spesifik berdasarkan konteks
-      const aksi = idEdit !== undefined ? 'memperbarui' : 'menyimpan';
-      console.error(`Gagal ${aksi} dompet:`, error);
-      // Di sini bisa ditambahkan feedback ke pengguna
+      // Error logging tetap sama, tetapi lebih sederhana
+      console.error(`Gagal menyimpan dompet:`, error);
     }
   };
 
@@ -32,10 +25,8 @@ export default function TombolSimpan({ idEdit }: { idEdit?: number }) {
       style={({ pressed }) => [gaya.tombol, pressed && gaya.tombolDitekan]}
       onPress={handleSimpan}
     >
-      {/* Teks tombol dinamis berdasarkan mode (edit atau simpan) */}
-      <Text style={gaya.teksTombol}>
-        {idEdit !== undefined ? 'Perbarui' : 'Simpan'}
-      </Text>
+      {/* Teks tombol dinamis berdasarkan keberadaan `id` di form state */}
+      <Text style={gaya.teksTombol}>{formDompet.id ? 'Perbarui' : 'Simpan'}</Text>
     </Pressable>
   );
 }
