@@ -4,7 +4,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import {
   ambilSemuaDompet,
-  hapusSemuaDompet as hapusSemuaDompetDariDb, // Nama impor diperbaiki
+  hapusSemuaDompet as hapusSemuaDompetDariDb,
   hapusSatuDompet,
   perbaruiSaldoDompet,
   perbaruiSatuDompet,
@@ -13,17 +13,18 @@ import {
 import type { Dompet } from '@/database/tipe';
 
 // Tipe untuk data yang ada di dalam form dompet.
-export type FormDompet = Partial<Omit<Dompet, 'id' | 'saldo'> & { id?: number }>;
+export type FormDompet = Partial<Omit<Dompet, 'id'> & { id?: number; saldo?: number }>;
 
 const initialFormDompet: FormDompet = {
   nama: '',
   tipe: 'tunai',
   ikon: 'cash',
+  saldo: 0,
 };
 
 interface DompetContextType {
   daftarDompet: Dompet[];
-  tambahDompet: (dompet: Omit<Dompet, 'id' | 'saldo'>) => Promise<void>;
+  tambahDompet: (dompet: Omit<Dompet, 'id'>) => Promise<void>;
   perbaruiDompet: (dompet: Omit<Dompet, 'saldo'>) => Promise<void>;
   hapusDompet: (id: number) => Promise<void>;
   tambahPemasukan: (id: number, jumlah: number) => Promise<void>;
@@ -39,7 +40,7 @@ interface DompetContextType {
   muatDompetUntukForm: (id: number) => void;
   simpanDompetBaru: () => Promise<void>;
   hapusSemuaDompet: () => Promise<void>;
-  muatUlangDaftarDompet: () => Promise<void>; // Ditambahkan
+  muatUlangDaftarDompet: () => Promise<void>;
 }
 
 const DompetContext = createContext<DompetContextType | undefined>(undefined);
@@ -66,7 +67,7 @@ export const DompetProvider = ({ children }: { children: ReactNode }) => {
     void muatUlangDaftarDompet();
   }, [muatUlangDaftarDompet]);
 
-  const tambahDompet = async (dompet: Omit<Dompet, 'id' | 'saldo'>) => {
+  const tambahDompet = async (dompet: Omit<Dompet, 'id'>) => {
     await tambahSatuDompet(dompet);
     await muatUlangDaftarDompet();
   };
@@ -121,7 +122,7 @@ export const DompetProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const simpanDompetBaru = async () => {
-    const { id, nama, tipe, ikon } = formDompet;
+    const { id, nama, tipe, ikon, saldo } = formDompet;
 
     if (!nama || !tipe || !ikon) {
       console.error('Form tidak lengkap');
@@ -133,7 +134,7 @@ export const DompetProvider = ({ children }: { children: ReactNode }) => {
       await perbaruiDompet({ id, nama, tipe, ikon });
     } else {
       // Tambah dompet baru
-      await tambahDompet({ nama, tipe, ikon });
+      await tambahDompet({ nama, tipe, ikon, saldo: saldo || 0 });
     }
     setFormDompet(initialFormDompet); // Reset form setelah simpan
   };
@@ -157,9 +158,16 @@ export const DompetProvider = ({ children }: { children: ReactNode }) => {
       muatDompetUntukForm,
       simpanDompetBaru,
       hapusSemuaDompet,
-      muatUlangDaftarDompet, // Diekspos
+      muatUlangDaftarDompet,
     }),
-    [daftarDompet, ambilDompetDenganId, memuat, formDompet, modalTipeTerlihat, muatUlangDaftarDompet]
+    [
+      daftarDompet,
+      ambilDompetDenganId,
+      memuat,
+      formDompet,
+      modalTipeTerlihat,
+      muatUlangDaftarDompet,
+    ]
   );
 
   return <DompetContext.Provider value={nilai}>{children}</DompetContext.Provider>;

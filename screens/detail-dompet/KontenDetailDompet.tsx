@@ -1,8 +1,9 @@
+// screens/detail-dompet/KontenDetailDompet.tsx
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { KartuTransaksi } from '@/components/KartuTransaksi';
+import KartuTransaksi from '@/components/KartuTransaksi'; // Impor default
 import type { Transaksi } from '@/database/tipe';
 import { useDetailDompet } from './logikaDetailDompet';
 
@@ -14,7 +15,8 @@ export default function KontenDetailDompet() {
   }
 
   const renderItem = ({ item }: ListRenderItemInfo<Transaksi>) => (
-    <KartuTransaksi transaksi={item} />
+    // Tambahkan properti onPress yang diperlukan
+    <KartuTransaksi transaksi={item} onPress={() => {}} />
   );
 
   return (

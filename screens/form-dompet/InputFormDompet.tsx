@@ -12,6 +12,16 @@ export default function InputFormDompet() {
     setFormDompet((dataSebelumnya) => ({ ...dataSebelumnya, nama }));
   };
 
+  // Fungsi untuk menangani perubahan saldo
+  const handleSaldoChange = (teks: string) => {
+    // Hanya mengizinkan angka dan menghapus format non-numerik
+    const nilaiAngka = teks.replace(/[^0-9]/g, '');
+    setFormDompet((dataSebelumnya) => ({
+      ...dataSebelumnya,
+      saldo: Number(nilaiAngka),
+    }));
+  };
+
   return (
     <View style={gaya.wadah}>
       {/* Tipe Dompet */}
@@ -37,7 +47,18 @@ export default function InputFormDompet() {
         />
       </View>
 
-      {/* Input Saldo Awal telah dihapus */}
+      {/* Saldo Awal - DITAMBAHKAN KEMBALI */}
+      <View style={gaya.grupInput}>
+        <Text style={gaya.label}>Saldo Awal</Text>
+        <TextInput
+          style={gaya.inputTeks}
+          placeholder="Rp 0"
+          placeholderTextColor="#94a3b8"
+          keyboardType="numeric"
+          value={formDompet.saldo ? `Rp ${formDompet.saldo.toLocaleString('id-ID')}` : ''}
+          onChangeText={handleSaldoChange}
+        />
+      </View>
 
       <ModalTipeDompet />
     </View>

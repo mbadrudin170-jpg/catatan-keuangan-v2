@@ -1,96 +1,126 @@
-import { Ionicons } from '@expo/vector-icons';
+// components/KartuTransaksi.tsx
+
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Transaksi } from '@/database/tipe';
+import { formatMataUang } from '@/utils/formatMataUang';
+import { formatJam } from '@/utils/format/FormatJam';
 
-import type { Transaksi } from '@/database/tipe';
-import { formatAngka } from '@/utils/format/FormatAngka';
-
-interface Props {
+interface KartuTransaksiProps {
   transaksi: Transaksi;
+  onPress: (id: number) => void;
 }
 
-export function KartuTransaksi({ transaksi }: Props) {
-  const isPemasukan = transaksi.tipe === 'pemasukan';
-  const isTransfer = transaksi.tipe === 'transfer';
-
-  let warnaJumlah = warna.pengeluaran; // Default pengeluaran
-  let ikon: keyof typeof Ionicons.glyphMap = 'arrow-up';
-  let simbol = '-';
-  let namaTampilan = transaksi.keterangan || transaksi.nama_subkategori || transaksi.nama_kategori || 'Transaksi';
-
-  if (isPemasukan) {
-    warnaJumlah = warna.pemasukan;
-    ikon = 'arrow-down';
-    simbol = '+';
-  } else if (isTransfer) {
-    warnaJumlah = warna.transfer;
-    ikon = 'swap-horizontal';
-    simbol = ''; // Transfer netral
-    // FIX: Memberikan fallback jika nama_dompet_tujuan null/undefined
-    namaTampilan = `Transfer ke ${transaksi.nama_dompet_tujuan ?? 'Dompet'}`;
-  }
+const KartuTransaksi: React.FC<KartuTransaksiProps> = ({ transaksi, onPress }) => {
+  const isPengeluaran = transaksi.tipe === 'pengeluaran';
 
   return (
-    <View style={gaya.penampung}>
-      <View style={[gaya.ikonPenampung, { backgroundColor: warnaJumlah, opacity: 0.2 }]}>
-        <Ionicons name={ikon} size={20} color={warnaJumlah} />
+    <Pressable
+      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+      onPress={() => {
+        onPress(transaksi.id);
+      }}
+    >
+      <View style={styles.iconContainer}>
+        <View style={[styles.bgIcon, { backgroundColor: isPengeluaran ? '#FFEBEE' : '#E8F5E9' }]}>
+          <Ionicons
+            name={isPengeluaran ? 'arrow-up-circle' : 'arrow-down-circle'}
+            size={28}
+            color={isPengeluaran ? '#D32F2F' : '#388E3C'}
+          />
+        </View>
       </View>
-      <View style={gaya.infoPenampung}>
-        <Text style={gaya.nama}>{namaTampilan}</Text>
-        <Text style={gaya.dompet}>{transaksi.nama_dompet}</Text>
-      </View>
-      <View style={gaya.jumlahPenampung}>
-        <Text style={[gaya.jumlah, { color: warnaJumlah }]}>
-          {simbol} {formatAngka(transaksi.jumlah)}
-        </Text>
-      </View>
-    </View>
-  );
-}
 
-const warna = {
-  pemasukan: '#16a34a', // hijau
-  pengeluaran: '#dc2626', // merah
-  transfer: '#2563eb', // biru
-  teksUtama: '#1f2937',
-  teksSekunder: '#6b7280',
-  border: '#e5e7eb',
+      <View style={styles.content}>
+        <View style={styles.rowUtama}>
+          <Text style={styles.judul} numberOfLines={1}>
+            {transaksi.nama_kategori}
+          </Text>
+          <Text style={[styles.nominal, { color: isPengeluaran ? '#D32F2F' : '#388E3C' }]}>
+            {isPengeluaran ? '-' : '+'} {formatMataUang(transaksi.jumlah)}
+          </Text>
+        </View>
+
+        <View style={styles.rowSub}>
+          <Text style={styles.catatan} numberOfLines={1}>
+            {transaksi.keterangan || 'Tanpa catatan'}
+          </Text>
+          <Text style={styles.jam}>{formatJam(new Date(transaksi.tanggal))}</Text>
+        </View>
+      </View>
+    </Pressable>
+  );
 };
 
-const gaya = StyleSheet.create({
-  penampung: {
+const styles = StyleSheet.create({
+  container: {
     flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginVertical: 6,
+    marginHorizontal: 16,
+    borderRadius: 16,
+    // Modern Shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#fff',
   },
-  ikonPenampung: {
-    width: 40,
-    height: 40,
-    borderRadius: 20, // lingkaran
+  pressed: {
+    opacity: 0.7,
+    transform: [{ scale: 0.98 }],
+  },
+  iconContainer: {
+    marginRight: 14,
+  },
+  bgIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
   },
-  infoPenampung: {
+  content: {
     flex: 1,
     justifyContent: 'center',
   },
-  nama: {
+  rowUtama: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  judul: {
     fontSize: 16,
-    fontWeight: '600',
-    color: warna.teksUtama,
-    marginBottom: 2,
+    fontWeight: '700',
+    color: '#263238',
+    flex: 1,
+    marginRight: 8,
   },
-  dompet: {
-    fontSize: 14,
-    color: warna.teksSekunder,
+  nominal: {
+    fontSize: 15,
+    fontWeight: '800',
   },
-  jumlahPenampung: {
-    alignItems: 'flex-end',
+  rowSub: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  jumlah: {
-    fontSize: 16,
-    fontWeight: 'bold',
+  catatan: {
+    fontSize: 13,
+    color: '#78909C',
+    flex: 1,
+    marginRight: 8,
+  },
+  jam: {
+    fontSize: 12,
+    color: '#B0BEC5',
+    fontWeight: '500',
   },
 });
+
+export default KartuTransaksi;

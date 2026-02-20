@@ -79,9 +79,9 @@ export const ambilSemuaDompet = async (): Promise<Dompet[]> => {
   return await db.getAllAsync<Dompet>('SELECT * FROM dompet ORDER BY nama ASC;');
 };
 
-export const tambahSatuDompet = async (dompet: Omit<Dompet, 'id' | 'saldo'>): Promise<number | undefined> => {
+export const tambahSatuDompet = async (dompet: Omit<Dompet, 'id'>): Promise<number | undefined> => {
   const hasil = await db.runAsync(
-    'INSERT INTO dompet (nama, tipe, ikon, saldo) VALUES (?, ?, ?, 0);', [dompet.nama, dompet.tipe || null, dompet.ikon || null]
+    'INSERT INTO dompet (nama, tipe, ikon, saldo) VALUES (?, ?, ?, ?);', [dompet.nama, dompet.tipe || null, dompet.ikon || null, dompet.saldo || 0]
   );
   return hasil.lastInsertRowId;
 };

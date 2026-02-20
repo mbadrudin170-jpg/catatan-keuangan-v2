@@ -1,159 +1,125 @@
 // screens/statistik/KartuSaldo.tsx
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
 
-// ─────────────────────────────────────────────
-// TIPE INTERNAL
-// ─────────────────────────────────────────────
+import { formatMataUang } from '@/utils/formatMataUang';
+import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { Dimensions, StyleSheet, Text, View } from 'react-native';
+
 interface KartuSaldoProps {
-  saldo: number;
-  pemasukan: number;
-  pengeluaran: number;
+  totalSaldo: number;
+  totalPemasukan: number;
+  totalPengeluaran: number;
 }
 
-// ─────────────────────────────────────────────
-// KONSTANTA DESAIN
-// ─────────────────────────────────────────────
-const WARNA = {
-  surface: '#FFFFFF',
-  border: '#E2E8F0',
-  hijau: '#16A34A',
-  merah: '#DC2626',
-  biru: '#2563EB',
-  teksUtama: '#0F172A',
-  teksSekunder: '#64748B',
-};
+const { width } = Dimensions.get('window');
 
-// ─────────────────────────────────────────────
-// HELPER
-// ─────────────────────────────────────────────
-const formatRupiah = (angka: number): string => {
-  if (angka >= 1_000_000_000) return `Rp ${(angka / 1_000_000_000).toFixed(1)}M`;
-  if (angka >= 1_000_000) return `Rp ${(angka / 1_000_000).toFixed(1)}Jt`;
-  if (angka >= 1_000) return `Rp ${(angka / 1_000).toFixed(0)}Rb`;
-  return `Rp ${angka}`;
-};
-
-const formatRupiahLengkap = (angka: number): string =>
-  new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(angka);
-
-// ─────────────────────────────────────────────
-// KOMPONEN: KARTU SALDO UTAMA
-// ─────────────────────────────────────────────
-export const KartuSaldo = ({ saldo, pemasukan, pengeluaran }: KartuSaldoProps) => (
-  <View style={styles.kartuSaldo}>
-    <View style={styles.dekorasiSaldo1} />
-    <View style={styles.dekorasiSaldo2} />
-
-    <Text style={styles.labelSaldo}>Total Saldo</Text>
-    <Text style={styles.nilaiSaldo}>{formatRupiahLengkap(saldo)}</Text>
-
-    <View style={styles.barisKartuSaldo}>
-      <View style={styles.itemKartuSaldo}>
-        <View style={[styles.dotIndikator, { backgroundColor: WARNA.hijau }]} />
-        <View>
-          <Text style={styles.labelItemKartu}>Pemasukan</Text>
-          <Text style={[styles.nilaiItemKartu, { color: WARNA.hijau }]}>
-            {formatRupiah(pemasukan)}
-          </Text>
-        </View>
+const KartuSaldo: React.FC<KartuSaldoProps> = ({
+  totalSaldo,
+  totalPemasukan,
+  totalPengeluaran,
+}) => {
+  return (
+    <View style={styles.container}>
+      {/* Bagian Saldo Utama */}
+      <View style={styles.header}>
+        <Text style={styles.labelUtama}>Total Saldo</Text>
+        <Text style={styles.nilaiSaldo}>{formatMataUang(totalSaldo)}</Text>
       </View>
-      <View style={styles.pemisahVertikal} />
-      <View style={styles.itemKartuSaldo}>
-        <View style={[styles.dotIndikator, { backgroundColor: WARNA.merah }]} />
-        <View>
-          <Text style={styles.labelItemKartu}>Pengeluaran</Text>
-          <Text style={[styles.nilaiItemKartu, { color: WARNA.merah }]}>
-            {formatRupiah(pengeluaran)}
-          </Text>
+
+      <View style={styles.garisPemisah} />
+
+      {/* Bagian Pemasukan & Pengeluaran */}
+      <View style={styles.row}>
+        <View style={styles.item}>
+          <View style={[styles.bgIkon, { backgroundColor: '#E8F5E9' }]}>
+            <Ionicons name="arrow-down-outline" size={18} color="#2E7D32" />
+          </View>
+          <View>
+            <Text style={styles.labelSub}>Pemasukan</Text>
+            <Text style={[styles.nilaiSub, { color: '#2E7D32' }]}>
+              {formatMataUang(totalPemasukan)}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.item}>
+          <View style={[styles.bgIkon, { backgroundColor: '#FFEBEE' }]}>
+            <Ionicons name="arrow-up-outline" size={18} color="#C62828" />
+          </View>
+          <View>
+            <Text style={styles.labelSub}>Pengeluaran</Text>
+            <Text style={[styles.nilaiSub, { color: '#C62828' }]}>
+              {formatMataUang(totalPengeluaran)}
+            </Text>
+          </View>
         </View>
       </View>
     </View>
-  </View>
-);
+  );
+};
 
-// ─────────────────────────────────────────────
-// STYLES
-// ─────────────────────────────────────────────
 const styles = StyleSheet.create({
-  kartuSaldo: {
-    backgroundColor: WARNA.surface,
-    borderRadius: 24,
+  container: {
+    backgroundColor: '#1A237E', // Deep Indigo untuk kesan premium
     padding: 24,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: WARNA.border,
-    overflow: 'hidden',
-    shadowColor: '#94A3B8',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 4,
+    borderRadius: 24,
+    marginHorizontal: 16,
+    marginVertical: 10,
+    // Modern Shadow
+    shadowColor: '#1A237E',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 8,
   },
-  dekorasiSaldo1: {
-    position: 'absolute',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: `${WARNA.biru}12`,
-    top: -70,
-    right: -50,
+  header: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  dekorasiSaldo2: {
-    position: 'absolute',
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: `${WARNA.hijau}10`,
-    bottom: -40,
-    left: 30,
-  },
-  labelSaldo: {
-    fontSize: 12,
-    color: WARNA.teksSekunder,
-    letterSpacing: 1,
+  labelUtama: {
+    fontSize: 14,
+    color: '#C5CAE9',
     textTransform: 'uppercase',
-    marginBottom: 8,
+    letterSpacing: 1,
+    fontWeight: '600',
+    marginBottom: 6,
   },
   nilaiSaldo: {
     fontSize: 32,
-    fontWeight: '700',
-    color: WARNA.teksUtama,
-    letterSpacing: -1,
-    marginBottom: 24,
+    fontWeight: '800',
+    color: '#FFFFFF',
   },
-  barisKartuSaldo: {
+  garisPemisah: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 20,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  item: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  itemKartuSaldo: {
     flex: 1,
-    flexDirection: 'row',
+  },
+  bgIkon: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 10,
+    marginRight: 10,
   },
-  dotIndikator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  labelItemKartu: {
-    fontSize: 11,
-    color: WARNA.teksSekunder,
+  labelSub: {
+    fontSize: 12,
+    color: '#C5CAE9',
     marginBottom: 2,
   },
-  nilaiItemKartu: {
-    fontSize: 15,
+  nilaiSub: {
+    fontSize: 14,
     fontWeight: '700',
   },
-  pemisahVertikal: {
-    width: 1,
-    height: 36,
-    backgroundColor: WARNA.border,
-    marginHorizontal: 16,
-  },
 });
+
+export default KartuSaldo;
