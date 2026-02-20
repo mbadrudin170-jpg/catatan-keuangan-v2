@@ -9,7 +9,7 @@ export function useFormKategori() {
   const {
     tipeAktif,
     setTipeAktif,
-    daftarKategori,
+    semuaKategori,
     tambahKategori: tambahKategoriDariKonteks,
     hapusKategori: hapusKategoriDariKonteks,
     tambahSubkategori: tambahSubkategoriDariKonteks,
@@ -69,12 +69,12 @@ export function useFormKategori() {
   };
 
   const kategoriDisesuaikan = useMemo(
-    () => daftarKategori.filter((k) => k.tipe === tipeAktif),
-    [daftarKategori, tipeAktif]
+    () => semuaKategori.filter((k: Kategori) => k.tipe === tipeAktif),
+    [semuaKategori, tipeAktif]
   );
 
   const subkategoriTerpilih = kategoriTerpilih
-    ? kategoriDisesuaikan.find((k) => k.id === kategoriTerpilih.id)?.subkategori || []
+    ? kategoriDisesuaikan.find((k: Kategori) => k.id === kategoriTerpilih.id)?.subkategori || []
     : [];
 
   return {

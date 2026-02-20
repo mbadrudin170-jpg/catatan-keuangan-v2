@@ -36,8 +36,8 @@ interface StatistikContextType {
   setRentangTanggal: (rentang: { mulai: Date; selesai: Date }) => void;
   // Data mentah yang dibutuhkan oleh komponen anak
   daftarDompet: Dompet[];
-  daftarTransaksi: Transaksi[];
-  daftarKategori: Kategori[];
+  semuaTransaksi: Transaksi[];
+  semuaKategori: Kategori[];
 }
 
 // 2. Buat Context
@@ -54,8 +54,8 @@ export const StatistikProvider = ({ children }: { children: React.ReactNode }) =
   });
 
   // Ambil data mentah dari context lain
-  const { daftarTransaksi } = useTransaksi();
-  const { daftarKategori } = useKategori();
+  const { semuaTransaksi } = useTransaksi();
+  const { semuaKategori } = useKategori();
   const { daftarDompet } = useDompet();
 
   const statistik = useMemo(() => {
@@ -97,7 +97,7 @@ export const StatistikProvider = ({ children }: { children: React.ReactNode }) =
         break;
     }
 
-    const transaksiTerfilter = daftarTransaksi.filter((t) => {
+    const transaksiTerfilter = semuaTransaksi.filter((t: Transaksi) => {
       if (!tanggalAwal || !tanggalAkhir) return true; // Untuk kasus 'semua'
       const tanggalTransaksi = parseISO(t.tanggal);
       return tanggalTransaksi >= tanggalAwal && tanggalTransaksi <= tanggalAkhir;
@@ -111,8 +111,8 @@ export const StatistikProvider = ({ children }: { children: React.ReactNode }) =
       { total: number; nama: string; ikon: string }
     >();
 
-    transaksiTerfilter.forEach((t) => {
-      const kategori = daftarKategori.find((k) => k.id === t.kategori_id);
+    transaksiTerfilter.forEach((t: Transaksi) => {
+      const kategori = semuaKategori.find((k: Kategori) => k.id === t.kategori_id);
       if (!kategori) return;
 
       const ikonKategori = kategori.ikon || '';
@@ -156,7 +156,7 @@ export const StatistikProvider = ({ children }: { children: React.ReactNode }) =
       tanggalAwal,
       tanggalAkhir,
     };
-  }, [daftarTransaksi, daftarKategori, periode, offsetPeriode, rentangTanggal]);
+  }, [semuaTransaksi, semuaKategori, periode, offsetPeriode, rentangTanggal]);
 
   const value: StatistikContextType = {
     ...statistik,
@@ -170,8 +170,8 @@ export const StatistikProvider = ({ children }: { children: React.ReactNode }) =
     setRentangTanggal,
     // Tambahkan data mentah ke dalam value
     daftarDompet,
-    daftarTransaksi,
-    daftarKategori,
+    semuaTransaksi,
+    semuaKategori,
   };
 
   return <StatistikContext.Provider value={value}>{children}</StatistikContext.Provider>;

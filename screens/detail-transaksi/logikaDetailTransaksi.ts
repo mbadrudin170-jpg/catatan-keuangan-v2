@@ -4,14 +4,15 @@ import { useMemo } from 'react';
 import { useDompet } from '@/context/DompetContext';
 import { useKategori } from '@/context/KategoriContext';
 import { useTransaksi } from '@/context/TransaksiContext';
+import type { Transaksi, Kategori, Subkategori } from '@/database/tipe';
 
 export function useDetailTransaksi() {
   // 1. Ambil ID transaksi dari parameter URL
   const { id: transaksiId } = useLocalSearchParams<{ id: string }>();
 
   // 2. Ambil data global dari context
-  const { daftarTransaksi } = useTransaksi();
-  const { daftarKategori } = useKategori();
+  const { semuaTransaksi } = useTransaksi();
+  const { semuaKategori } = useKategori();
   const { daftarDompet } = useDompet();
 
   // 3. Gunakan `useMemo` untuk menghitung data turunan.
@@ -20,7 +21,7 @@ export function useDetailTransaksi() {
     if (!transaksiId) return null;
 
     // Cari transaksi berdasarkan ID
-    const transaksi = daftarTransaksi.find((t) => t.id === Number(transaksiId));
+    const transaksi = semuaTransaksi.find((t: Transaksi) => t.id === Number(transaksiId));
     if (!transaksi) return null;
 
     // Tentukan tipe transaksi untuk logika kondisional
@@ -35,8 +36,8 @@ export function useDetailTransaksi() {
 
     let namaKategori = 'Lainnya';
     if (!isTransfer) {
-      const semuaSubkategori = daftarKategori.flatMap((k) => k.subkategori);
-      const subkategori = semuaSubkategori.find((s) => s.id === transaksi.kategori_id);
+      const semuaSubkategori: Subkategori[] = semuaKategori.flatMap((k: Kategori) => k.subkategori);
+      const subkategori = semuaSubkategori.find((s: Subkategori) => s.id === transaksi.kategori_id);
       if (subkategori) {
         namaKategori = subkategori.nama;
       }
@@ -63,7 +64,7 @@ export function useDetailTransaksi() {
       warnaNominal,
       tanda,
     };
-  }, [transaksiId, daftarTransaksi, daftarKategori, daftarDompet]);
+  }, [transaksiId, semuaTransaksi, semuaKategori, daftarDompet]);
 
   return dataTransaksi;
 }

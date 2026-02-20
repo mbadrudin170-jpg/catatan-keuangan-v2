@@ -14,21 +14,21 @@ export default function ModalPilihKategori() {
     modalKategoriTerlihat,
     tutupModalKategori,
   } = useTransaksi();
-  const { daftarKategori } = useKategori();
+  const { semuaKategori } = useKategori();
   const [kategoriAktif, setKategoriAktif] = useState<Kategori | null>(null);
 
   // Memo untuk menyaring kategori berdasarkan tipe transaksi yang aktif.
   const kategoriTersaring = useMemo(() => {
     if (transaksi.tipe === 'transfer') return [];
-    return daftarKategori.filter((k) => k.tipe === transaksi.tipe);
-  }, [daftarKategori, transaksi.tipe]);
+    return semuaKategori.filter((k: Kategori) => k.tipe === transaksi.tipe);
+  }, [semuaKategori, transaksi.tipe]);
 
   // DIUBAH: Logika efek disempurnakan untuk menangani perubahan tipe transaksi.
   useEffect(() => {
     if (!modalKategoriTerlihat) return;
 
-    const subkategoriMasihValid = kategoriTersaring.some((k) =>
-      k.subkategori.some((s) => s.id === transaksi.kategori_id)
+    const subkategoriMasihValid = kategoriTersaring.some((k: Kategori) =>
+      k.subkategori.some((s: Subkategori) => s.id === transaksi.kategori_id)
     );
 
     // Jika subkategori yang dipilih sebelumnya tidak lagi valid (karena tipe berubah)
@@ -39,8 +39,8 @@ export default function ModalPilihKategori() {
       setKategoriAktif(kategoriTersaring.length > 0 ? kategoriTersaring[0] : null);
     } else {
       // Jika masih valid, temukan dan atur kategori induknya sebagai yang aktif.
-      const kategoriIndukSaatIni = kategoriTersaring.find((k) =>
-        k.subkategori.some((s) => s.id === transaksi.kategori_id)
+      const kategoriIndukSaatIni = kategoriTersaring.find((k: Kategori) =>
+        k.subkategori.some((s: Subkategori) => s.id === transaksi.kategori_id)
       );
       setKategoriAktif(kategoriIndukSaatIni || null);
     }

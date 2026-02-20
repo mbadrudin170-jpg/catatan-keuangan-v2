@@ -27,23 +27,23 @@ export const DetailDompetProvider = ({ children }: { children: ReactNode }) => {
   const idNumerik = parseInt(id || '0', 10);
 
   const { ambilDompetDenganId, hapusDompet: hapusDompetDariKonteks, memuat: memuatDompet } = useDompet();
-  const { daftarTransaksi, memuat: memuatTransaksi } = useTransaksi();
+  const { semuaTransaksi, memuat: memuatTransaksi } = useTransaksi();
 
   const [modalTerlihat, setModalTerlihat] = useState(false);
 
   const dompet = useMemo(() => ambilDompetDenganId(idNumerik) || null, [ambilDompetDenganId, idNumerik]);
 
   const transaksiDompet = useMemo(() => {
-    return daftarTransaksi.filter(
-      (t) => t.dompet_id === idNumerik || t.dompet_tujuan_id === idNumerik
+    return semuaTransaksi.filter(
+      (t: Transaksi) => t.dompet_id === idNumerik || t.dompet_tujuan_id === idNumerik
     );
-  }, [daftarTransaksi, idNumerik]);
+  }, [semuaTransaksi, idNumerik]);
 
   const { pemasukan, pengeluaran } = useMemo(() => {
     let hitungPemasukan = 0;
     let hitungPengeluaran = 0;
 
-    transaksiDompet.forEach((transaksi) => {
+    transaksiDompet.forEach((transaksi: Transaksi) => {
       if (transaksi.tipe === 'pemasukan' && transaksi.dompet_id === idNumerik) {
         hitungPemasukan += transaksi.jumlah;
       } else if (transaksi.tipe === 'pengeluaran' && transaksi.dompet_id === idNumerik) {

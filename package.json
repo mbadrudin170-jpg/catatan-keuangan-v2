@@ -13,8 +13,9 @@
     "doctor": "npx expo-doctor",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "tree": "npx tree-node-cli -L 3 -I node_modules -I .git -I .expo -I .idx",
-    "validate": "npm run tree && npm run check && npm run type-check && npm run lint"
+    "tree1": "tree -L 5 -I \"node_modules|.git|.expo|.idx\"",
+    "tree": "npx tree-node-cli -L 2 -I node_modules -I .git -I .expo -I .idx",
+    "validate": "npm run tree1 && npm run check && npm run type-check && npm run lint"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -32,10 +33,12 @@
     "expo-splash-screen": "^31.0.13",
     "expo-sqlite": "^16.0.10",
     "expo-status-bar": "^3.0.9",
+    "i18n-js": "^4.5.2",
     "react": "19.1.0",
     "react-native": "0.81.5",
     "react-native-chart-kit": "^6.12.0",
     "react-native-gesture-handler": "~2.28.0",
+    "react-native-localize": "^3.6.1",
     "react-native-reanimated": "~4.1.1",
     "react-native-safe-area-context": "^5.6.2",
     "react-native-screens": "4.16.0",

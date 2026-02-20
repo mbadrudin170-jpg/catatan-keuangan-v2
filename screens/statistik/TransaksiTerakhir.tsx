@@ -4,18 +4,19 @@ import { StyleSheet, Text, View } from 'react-native';
 import { WARNA } from './konstanta';
 import { useStatistik } from './StatistikContext'; // DIUBAH
 import { formatRupiah } from './util';
+import type { Transaksi, Kategori, Dompet } from '@/database/tipe';
 
 export const TransaksiTerakhir = () => {
   // Ambil data langsung dari context, bukan props
-  const { daftarTransaksi, daftarKategori, daftarDompet } = useStatistik();
+  const { semuaTransaksi, semuaKategori, daftarDompet } = useStatistik();
 
   return (
     <View style={[styles.seksi, { marginBottom: 32 }]}>
       <Text style={styles.judulSeksi}>Transaksi Terakhir</Text>
       {/* Gunakan data dari context */}
-      {daftarTransaksi.slice(0, 5).map((t) => {
-        const kat = daftarKategori.find((k) => k.id === t.kategori_id);
-        const dom = daftarDompet.find((d) => d.id === t.dompet_id);
+      {semuaTransaksi.slice(0, 5).map((t: Transaksi) => {
+        const kat = semuaKategori.find((k: Kategori) => k.id === t.kategori_id);
+        const dom = daftarDompet.find((d: Dompet) => d.id === t.dompet_id);
         const isPemasukan = kat?.tipe === 'pemasukan';
         return (
           <View key={t.id} style={styles.itemTransaksi}>

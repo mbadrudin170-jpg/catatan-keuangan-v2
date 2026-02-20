@@ -5,7 +5,7 @@ import { id } from 'date-fns/locale';
 
 // Tipe untuk data yang sudah dikelompokkan yang akan digunakan oleh SectionList
 export interface TransaksiGrup {
-  tanggal: string; // Misal: "24 Januari 2024"
+  tanggal: string; // Misal: "2024-01-24"
   total: number; // Total pemasukan/pengeluaran pada hari itu
   data: Transaksi[]; // Daftar transaksi pada hari itu
 }
@@ -69,11 +69,10 @@ export const grupTransaksiBerdasarkanTanggal = (
   // 3. Ubah objek sementara menjadi array format SectionList
   const hasilGrup = Object.keys(grupSementara).map((kunciTanggal) => {
     const grup = grupSementara[kunciTanggal];
-    const tanggalGrup = parseISO(kunciTanggal);
     const totalHarian = grup.pemasukan - grup.pengeluaran;
 
     return {
-      tanggal: format(tanggalGrup, 'd MMMM yyyy', { locale: id }),
+      tanggal: kunciTanggal, // Format 'yyyy-MM-dd'
       total: totalHarian,
       data: grup.transaksi,
     };
@@ -81,6 +80,6 @@ export const grupTransaksiBerdasarkanTanggal = (
 
   // 4. Urutkan grup berdasarkan tanggal (terbaru di atas)
   return hasilGrup.sort((a, b) => {
-    return parseISO(b.data[0].tanggal).getTime() - parseISO(a.data[0].tanggal).getTime();
+    return new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime();
   });
 };

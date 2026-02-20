@@ -4,12 +4,12 @@ import type { Kategori } from '@/database/tipe';
 import { useEffect, useMemo, useState } from 'react';
 
 export function useKategoriScreen() {
-  const { tipeAktif, setTipeAktif, daftarKategori } = useKategori();
+  const { tipeAktif, setTipeAktif, semuaKategori } = useKategori();
   const [kategoriTerpilih, setKategoriTerpilih] = useState<Kategori | null>(null);
 
   const kategoriDisesuaikan = useMemo(
-    () => daftarKategori.filter((k) => k.tipe === tipeAktif),
-    [daftarKategori, tipeAktif]
+    () => semuaKategori.filter((k: Kategori) => k.tipe === tipeAktif),
+    [semuaKategori, tipeAktif]
   );
 
   // Efek untuk me-reset pilihan kategori saat tipe berubah
@@ -18,7 +18,7 @@ export function useKategoriScreen() {
     if (kategoriDisesuaikan.length > 0) {
       // Jika kategori yang sedang dipilih tidak ada di daftar baru, reset
       const pilihanSaatIniMasihValid = kategoriDisesuaikan.some(
-        (k) => k.id === kategoriTerpilih?.id
+        (k: Kategori) => k.id === kategoriTerpilih?.id
       );
       if (!pilihanSaatIniMasihValid) {
         setKategoriTerpilih(kategoriDisesuaikan[0]);

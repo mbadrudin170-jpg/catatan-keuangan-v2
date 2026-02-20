@@ -14,3 +14,4 @@ baca terlebih dahulu file STRUKTUR_PROJEK.md dan PEDOMAN_KOLABORASI.md
 12. untuk komponen selalu gunakan props.
 13. kalau ada error tolong cek di file export nya jangan berasumsi liar.
 14. saya izin kan kamu untuk membaca struktur kode saya.
+15. setelah membaca ini silahkan jalankan npm run validate.

@@ -5,26 +5,16 @@ import React from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useDompet } from '@/context/DompetContext';
-{
-  /** ask:  kenapa file ini tidak import database/tipe.ts 
- baca dahulu file  GEMINI.md
-ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu
- selalu tulis kan jalur path file di paling atas setiap file
- tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya
- */
-}
+
 export default function HeaderDompet() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const idDompet = id ? Number(id) : undefined;
 
-  // Mengambil fungsi hapusSemuaDompet dari konteks
   const { hapusSemuaDompet, daftarDompet } = useDompet();
 
   const dompetSaatIni = daftarDompet.find((d) => d.id === idDompet);
-
   const judul = dompetSaatIni?.nama || 'Daftar Dompet';
 
-  // Fungsi baru untuk konfirmasi hapus semua dompet
   const konfirmasiHapusSemua = () => {
     Alert.alert(
       'Hapus Semua Dompet',
@@ -37,14 +27,11 @@ export default function HeaderDompet() {
     );
   };
 
-  // Fungsi baru untuk menangani aksi hapus semua
   const handleHapusSemua = () => {
     hapusSemuaDompet();
-    // Kembali ke halaman utama setelah semua terhapus
     router.replace('/dompet');
   };
 
-  // Tombol hapus hanya aktif di halaman daftar (saat tidak ada idDompet)
   const hapusNonaktif = !!idDompet;
 
   return (
@@ -55,23 +42,35 @@ export default function HeaderDompet() {
         </Text>
       </View>
 
-      <Pressable onPress={konfirmasiHapusSemua} style={gaya.tombol} disabled={hapusNonaktif}>
+      <Pressable
+        onPress={konfirmasiHapusSemua}
+        style={({ pressed }) => [
+          gaya.tombol,
+          pressed && !hapusNonaktif && gaya.tombolTekan,
+          hapusNonaktif && gaya.tombolNonaktif,
+        ]}
+        disabled={hapusNonaktif}
+        android_ripple={!hapusNonaktif ? { color: warna.abuRipple, borderless: true } : undefined}
+      >
         <Ionicons
           name="trash-outline"
-          size={22}
-          color={hapusNonaktif ? warna.abuabu : warna.merah}
+          size={24}
+          color={hapusNonaktif ? warna.abuMuda : warna.merah}
         />
       </Pressable>
     </View>
   );
 }
 
+// Konstanta warna dengan nama deskriptif dalam bahasa Indonesia
 const warna = {
   latar: '#ffffff',
-  teksUtama: '#1f2937',
+  teksUtama: '#1f2937', // abu-abu gelap untuk judul
   border: '#e5e7eb',
-  merah: '#ef4444',
-  abuabu: '#cccccc',
+  merah: '#dc2626', // merah lebih terang untuk aksen hapus
+  abuMuda: '#d1d5db', // abu-abu untuk ikon nonaktif
+  abuRipple: '#9ca3af', // efek ripple saat ditekan
+  bayangan: '#000000',
 };
 
 const gaya = StyleSheet.create({
@@ -80,24 +79,42 @@ const gaya = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 12, // sedikit dikurangi agar lebih proporsional
     backgroundColor: warna.latar,
     borderBottomWidth: 1,
     borderBottomColor: warna.border,
+    // Bayangan halus untuk kedalaman (opsional, cocok untuk iOS)
+    shadowColor: warna.bayangan,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2, // untuk Android
   },
   grupKiri: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
-  },
-  tombol: {
-    padding: 4,
+    marginRight: 8, // beri jarak dengan tombol
   },
   judul: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '600', // semi-bold lebih modern
     color: warna.teksUtama,
     flexShrink: 1,
+  },
+  tombol: {
+    padding: 8, // area sentuh lebih luas
+    borderRadius: 20, // bentuk melingkar
+    minWidth: 40, // ukuran minimum untuk aksesibilitas
+    minHeight: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  tombolTekan: {
+    backgroundColor: '#f3f4f6', // efek latar saat ditekan
+  },
+  tombolNonaktif: {
+    // tidak ada latar, hanya ikon yang berubah warna
   },
 });

@@ -21,7 +21,7 @@ type TipePilihanDompet = 'sumber' | 'tujuan';
 interface TransaksiContextType {
   transaksi: Transaksi;
   setTransaksi: React.Dispatch<React.SetStateAction<Transaksi>>;
-  daftarTransaksi: Transaksi[];
+  semuaTransaksi: Transaksi[];
   memuat: boolean;
   muatUlangDaftarTransaksi: () => Promise<void>;
   tambahTransaksi: (transaksi: Transaksi) => Promise<void>;
@@ -61,7 +61,7 @@ export const TransaksiProvider = ({
     ambilDompetDenganId,
   } = useDompet();
   // Mengambil daftar kategori dari KategoriContext.
-  const { daftarKategori } = useKategori();
+  const { semuaKategori } = useKategori();
 
   // State untuk menampung data transaksi yang sedang dibuat atau diubah di form.
   const [transaksi, setTransaksi] = useState<Transaksi>({
@@ -81,7 +81,7 @@ export const TransaksiProvider = ({
   });
 
   // State untuk menyimpan daftar semua transaksi yang diambil dari database.
-  const [daftarTransaksi, setDaftarTransaksi] = useState<Transaksi[]>(initialDaftarTransaksi || []);
+  const [semuaTransaksi, setSemuaTransaksi] = useState<Transaksi[]>(initialDaftarTransaksi || []);
   // State untuk menandakan apakah sedang ada proses pemuatan data (loading).
   const [memuat, setMemuat] = useState(!initialDaftarTransaksi);
 
@@ -90,7 +90,7 @@ export const TransaksiProvider = ({
     setMemuat(true);
     try {
       const hasil = await ambilSemuaTransaksi();
-      setDaftarTransaksi(hasil);
+      setSemuaTransaksi(hasil);
     } catch (error) {
       console.error('Gagal memuat daftar transaksi:', error);
     } finally {
@@ -126,7 +126,7 @@ export const TransaksiProvider = ({
 
     // Jika bukan transfer, proses dan simpan nama kategori/subkategori.
     if (transaksiUntukSimpan.tipe !== 'transfer' && transaksiUntukSimpan.kategori_id) {
-      const semuaSubkategori = daftarKategori.flatMap((k) => k.subkategori);
+      const semuaSubkategori = semuaKategori.flatMap((k) => k.subkategori);
       const subkategoriDariId = semuaSubkategori.find(
         (s) => s.id === transaksiUntukSimpan.kategori_id
       );
@@ -136,7 +136,7 @@ export const TransaksiProvider = ({
         transaksiUntukSimpan.kategori_id = subkategoriDariId.kategori_id;
       }
 
-      const kategoriInduk = daftarKategori.find((k) => k.id === transaksiUntukSimpan.kategori_id);
+      const kategoriInduk = semuaKategori.find((k) => k.id === transaksiUntukSimpan.kategori_id);
       if (kategoriInduk) {
         transaksiUntukSimpan.nama_kategori = kategoriInduk.nama;
         if (transaksiUntukSimpan.subkategori_id) {
@@ -179,7 +179,7 @@ export const TransaksiProvider = ({
 
   // Fungsi untuk menghapus satu transaksi (saat ini hanya di state).
   const hapusSatuTransaksi = async (id: number): Promise<void> => {
-    setDaftarTransaksi((daftarLama) => daftarLama.filter((item) => item.id !== id));
+    setSemuaTransaksi((daftarLama) => daftarLama.filter((item) => item.id !== id));
   };
 
   // Fungsi untuk menghapus SEMUA transaksi.
@@ -187,7 +187,7 @@ export const TransaksiProvider = ({
     try {
       await dbHapusSemuaTransaksi(); // Panggil operasi DB
       await resetSemuaSaldoDompet(); // Reset saldo semua dompet
-      setDaftarTransaksi([]); // Kosongkan state transaksi
+      setSemuaTransaksi([]); // Kosongkan state transaksi
       await muatUlangDaftarDompet(); // Sinkronkan ulang daftar dompet
     } catch (error) {
       console.error('Gagal menghapus semua transaksi:', error);
@@ -244,7 +244,7 @@ export const TransaksiProvider = ({
   const nilai = {
     transaksi,
     setTransaksi,
-    daftarTransaksi,
+    semuaTransaksi,
     memuat,
     muatUlangDaftarTransaksi,
     tambahTransaksi,

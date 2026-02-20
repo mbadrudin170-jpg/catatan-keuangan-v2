@@ -9,7 +9,7 @@ import { Keyboard, Pressable, StyleSheet, Text, TextInput, View } from 'react-na
 import { useDompet } from '@/context/DompetContext';
 import { useKategori } from '@/context/KategoriContext';
 import { useTransaksi } from '@/context/TransaksiContext';
-import type { Transaksi } from '@/database/tipe';
+import type { Transaksi, Kategori, Subkategori } from '@/database/tipe';
 
 // Definisikan state awal untuk transaksi baru agar mudah di-reset
 const STATE_AWAL_TRANSAKSI: Transaksi = {
@@ -33,21 +33,21 @@ export default function InputFormTransaksi() {
   const {
     transaksi,
     setTransaksi,
-    daftarTransaksi, // Ambil daftar transaksi untuk mencari data edit
+    semuaTransaksi, // Ambil daftar transaksi untuk mencari data edit
     tampilkanPemilihTanggal,
     tampilkanPemilihWaktu,
     bukaModalKategori,
     bukaModalDompet,
   } = useTransaksi();
 
-  const { daftarKategori } = useKategori();
+  const { semuaKategori } = useKategori();
   const { daftarDompet } = useDompet();
 
   // EFEK BARU: Mengisi form saat mode edit atau me-reset saat mode baru
   useEffect(() => {
     if (idParams) {
       // MODE EDIT: Cari transaksi yang sesuai di daftar
-      const transaksiUntukDiedit = daftarTransaksi.find((t) => t.id === Number(idParams));
+      const transaksiUntukDiedit = semuaTransaksi.find((t: Transaksi) => t.id === Number(idParams));
       if (transaksiUntukDiedit) {
         // Jika ditemukan, isi state form dengan datanya
         setTransaksi(transaksiUntukDiedit);
@@ -61,7 +61,7 @@ export default function InputFormTransaksi() {
     return () => {
       setTransaksi(STATE_AWAL_TRANSAKSI);
     };
-  }, [idParams, daftarTransaksi, setTransaksi]);
+  }, [idParams, semuaTransaksi, setTransaksi]);
 
   // EFEK LAMA: Tetap ada untuk membersihkan state saat tipe transaksi diubah
   useEffect(() => {
@@ -79,9 +79,9 @@ export default function InputFormTransaksi() {
   // Referensi untuk berpindah input
   const referensiInputKeterangan = useRef<TextInput>(null);
 
-  const semuaSubkategori = daftarKategori.flatMap((k) => k.subkategori);
+  const semuaSubkategori: Subkategori[] = semuaKategori.flatMap((k: Kategori) => k.subkategori);
   const namaKategori =
-    semuaSubkategori.find((s) => s.id === transaksi.kategori_id)?.nama || 'Pilih Kategori';
+    semuaSubkategori.find((s: Subkategori) => s.id === transaksi.kategori_id)?.nama || 'Pilih Kategori';
 
   const namaDompet = daftarDompet.find((d) => d.id === transaksi.dompet_id)?.nama || 'Pilih Dompet';
   const namaDompetTujuan =

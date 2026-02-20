@@ -14,11 +14,12 @@ interface ListDompetProps {
 const ListDompet: React.FC<ListDompetProps> = ({ dompet, onPress }) => {
   // Mengelompokkan data berdasarkan tipe dompet
   const sections = dompet.reduce((acc, current) => {
-    const found = acc.find((section) => section.title === current.tipe);
+    const tipeDompet = current.tipe || 'Umum';
+    const found = acc.find((section) => section.title === tipeDompet);
     if (found) {
       found.data.push(current);
     } else {
-      acc.push({ title: current.tipe, data: [current] });
+      acc.push({ title: tipeDompet, data: [current] });
     }
     return acc;
   }, [] as { title: string; data: Dompet[] }[]);
@@ -47,7 +48,7 @@ const ListDompet: React.FC<ListDompetProps> = ({ dompet, onPress }) => {
       <View style={styles.cardFooter}>
         <Text style={styles.chipText}>ID: {String(item.id).padStart(4, '0')}</Text>
         <View style={styles.badgeTipe}>
-          <Text style={styles.tipeTextSmall}>{item.tipe}</Text>
+          <Text style={styles.tipeTextSmall}>{item.tipe || 'Umum'}</Text>
         </View>
       </View>
     </Pressable>

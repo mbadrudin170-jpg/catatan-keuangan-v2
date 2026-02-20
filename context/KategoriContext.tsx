@@ -1,9 +1,9 @@
 // context/KategoriContext.tsx
 import type { Dispatch, ReactNode, SetStateAction } from 'react';
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 import {
-  ambilSemuaKategori,
+  ambilSemuaKategori as dbAmbilSemuaKategori,
   hapusSatuKategori,
   hapusSatuSubkategori,
   perbaruiSatuKategori,
@@ -14,7 +14,7 @@ import {
 import type { Kategori, Subkategori, TipeKategori } from '@/database/tipe';
 
 interface KategoriContextType {
-  daftarKategori: Kategori[];
+  semuaKategori: Kategori[];
   tambahKategori: (kategori: Omit<Kategori, 'id' | 'subkategori'>) => Promise<void>;
   perbaruiKategori: (kategori: Omit<Kategori, 'subkategori'>) => Promise<void>;
   hapusKategori: (id: number, tipe: TipeKategori) => Promise<void>;
@@ -24,7 +24,7 @@ interface KategoriContextType {
   ) => Promise<void>;
   perbaruiSubkategori: (subkategori: Subkategori, tipe: TipeKategori) => Promise<void>;
   hapusSubkategori: (id: number, tipe: TipeKategori) => Promise<void>;
-  muatUlangKategori: (tipe: TipeKategori) => Promise<void>;
+  muatUlangKategori: () => Promise<void>;
   memuat: boolean;
   tipeAktif: TipeKategori;
   setTipeAktif: Dispatch<SetStateAction<TipeKategori>>;
@@ -33,35 +33,40 @@ interface KategoriContextType {
 const KategoriContext = createContext<KategoriContextType | undefined>(undefined);
 
 export const KategoriProvider = ({ children }: { children: ReactNode }) => {
-  const [daftarKategori, setDaftarKategori] = useState<Kategori[]>([]);
+  const [semuaKategori, setSemuaKategori] = useState<Kategori[]>([]);
   const [memuat, setMemuat] = useState(false);
   const [tipeAktif, setTipeAktif] = useState<TipeKategori>('pengeluaran');
 
-  const muatUlangKategori = useCallback(async (tipe: TipeKategori) => {
+  const muatUlangKategori = useCallback(async () => {
     setMemuat(true);
     try {
-      const kategori = await ambilSemuaKategori(tipe);
-      setDaftarKategori(kategori);
+      const kategoriPengeluaran = await dbAmbilSemuaKategori('pengeluaran');
+      const kategoriPemasukan = await dbAmbilSemuaKategori('pemasukan');
+      setSemuaKategori([...kategoriPengeluaran, ...kategoriPemasukan]);
     } catch (error) {
-      console.error(`Gagal memuat kategori tipe ${tipe}:`, error);
+      console.error(`Gagal memuat semua kategori:`, error);
     } finally {
       setMemuat(false);
     }
   }, []);
 
+  useEffect(() => {
+    muatUlangKategori();
+  }, [muatUlangKategori]);
+
   const tambahKategori = async (kategori: Omit<Kategori, 'id' | 'subkategori'>) => {
     await tambahSatuKategori(kategori);
-    await muatUlangKategori(kategori.tipe);
+    await muatUlangKategori();
   };
 
   const perbaruiKategori = async (kategori: Omit<Kategori, 'subkategori'>) => {
     await perbaruiSatuKategori(kategori);
-    await muatUlangKategori(kategori.tipe);
+    await muatUlangKategori();
   };
 
   const hapusKategori = async (id: number, tipe: TipeKategori) => {
     await hapusSatuKategori(id);
-    await muatUlangKategori(tipe);
+    await muatUlangKategori();
   };
 
   const tambahSubkategori = async (
@@ -69,21 +74,21 @@ export const KategoriProvider = ({ children }: { children: ReactNode }) => {
     tipe: TipeKategori
   ) => {
     await tambahSatuSubkategori(subkategori);
-    await muatUlangKategori(tipe);
+    await muatUlangKategori();
   };
 
   const perbaruiSubkategori = async (subkategori: Subkategori, tipe: TipeKategori) => {
     await perbaruiSatuSubkategori(subkategori);
-    await muatUlangKategori(tipe);
+    await muatUlangKategori();
   };
 
   const hapusSubkategori = async (id: number, tipe: TipeKategori) => {
     await hapusSatuSubkategori(id);
-    await muatUlangKategori(tipe);
+    await muatUlangKategori();
   };
 
   const nilai = {
-    daftarKategori,
+    semuaKategori,
     tambahKategori,
     perbaruiKategori,
     hapusKategori,

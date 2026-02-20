@@ -1,4 +1,4 @@
-// ~/catatan-keuangan-v2/screens/detail-dompet/RiwayatTransaksiPerDompet.tsx
+// screens/detail-dompet/RiwayatTransaksiPerDompet.tsx
 
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
@@ -29,7 +29,7 @@ function ItemRiwayat({ item, dompetId }: { item: Transaksi; dompetId: number }) 
   const isTransfer = item.tipe === 'transfer';
   const isTransferMasuk = isTransfer && item.dompet_tujuan_id === dompetId;
 
-  let warnaNominal = '#ef4444'; // Pengeluaran (default)
+  let warnaNominal = warna.merah; // Pengeluaran (default)
   let tanda = '-';
   // Menggunakan nama_subkategori atau nama_kategori dari transaksi
   let keteranganAtas = item.keterangan || item.nama_subkategori || item.nama_kategori || 'Lainnya';
@@ -37,10 +37,10 @@ function ItemRiwayat({ item, dompetId }: { item: Transaksi; dompetId: number }) 
   let keteranganBawah = item.keterangan ? item.nama_subkategori || item.nama_kategori : undefined;
 
   if (isPemasukkan) {
-    warnaNominal = '#10b981'; // Hijau untuk pemasukan
+    warnaNominal = warna.hijau; // Hijau untuk pemasukan
     tanda = '+';
   } else if (isTransfer) {
-    warnaNominal = '#3b82f6'; // Biru untuk transfer
+    warnaNominal = warna.biru; // Biru untuk transfer
     if (isTransferMasuk) {
       tanda = '+';
       // Menampilkan nama dompet pengirim
@@ -55,7 +55,11 @@ function ItemRiwayat({ item, dompetId }: { item: Transaksi; dompetId: number }) 
   }
 
   return (
-    <Pressable style={gayaItem.wadah} onPress={() => router.push(`/transaksi/${item.id}`)}>
+    <Pressable
+      style={({ pressed }) => [gayaItem.wadah, pressed && gayaItem.wadahTekan]}
+      onPress={() => router.push(`/transaksi/${item.id}`)}
+      android_ripple={{ color: warna.abuRipple, borderless: false }}
+    >
       <View style={gayaItem.info}>
         <Text style={gayaItem.keterangan}>{keteranganAtas}</Text>
         {keteranganBawah && <Text style={gayaItem.subKeterangan}>{keteranganBawah}</Text>}
@@ -72,15 +76,17 @@ function ItemRiwayat({ item, dompetId }: { item: Transaksi; dompetId: number }) 
  * Mengambil data, memfilternya, dan menampilkannya dalam SectionList.
  */
 export default function RiwayatTransaksiPerDompet({ dompetId }: { dompetId: number }) {
-  const { daftarTransaksi } = useTransaksi();
+  const { semuaTransaksi } = useTransaksi();
 
   // Memfilter dan mengelompokkan transaksi yang relevan dengan dompet ini
   const transaksiTergrup = useMemo(() => {
-    const transaksiTersaring = daftarTransaksi.filter(
-      (t) => t.dompet_id === dompetId || t.dompet_tujuan_id === dompetId
+    const transaksiTersaring = semuaTransaksi.filter(
+      (t: Transaksi) => t.dompet_id === dompetId || t.dompet_tujuan_id === dompetId
     );
 
-    const grup = groupBy(transaksiTersaring, (t) => format(new Date(t.tanggal), 'yyyy-MM-dd'));
+    const grup = groupBy(transaksiTersaring, (t: Transaksi) =>
+      format(new Date(t.tanggal), 'yyyy-MM-dd')
+    );
 
     // Mengubah format agar sesuai dengan SectionList dan mengurutkan berdasarkan tanggal
     return Object.keys(grup)
@@ -88,18 +94,19 @@ export default function RiwayatTransaksiPerDompet({ dompetId }: { dompetId: numb
       .map((tanggal) => ({
         title: tanggal,
         data: grup[tanggal].sort(
-          (a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
+          (a: Transaksi, b: Transaksi) =>
+            new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()
         ),
       }));
-  }, [daftarTransaksi, dompetId]);
+  }, [semuaTransaksi, dompetId]);
 
   return (
     <View style={gaya.wadah}>
       <Text style={gaya.judul}>Riwayat Transaksi</Text>
       <SectionList
         sections={transaksiTergrup}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => <ItemRiwayat item={item} dompetId={dompetId} />}
+        keyExtractor={(item: Transaksi) => item.id.toString()}
+        renderItem={({ item }) => <ItemRiwayat item={item as Transaksi} dompetId={dompetId} />}
         renderSectionHeader={({ section: { title } }) => (
           <Text style={gaya.headerBagian}>
             {format(new Date(title), 'EEEE, dd MMMM yyyy', { locale: id })}
@@ -117,6 +124,20 @@ export default function RiwayatTransaksiPerDompet({ dompetId }: { dompetId: numb
   );
 }
 
+// Palet warna dengan nama dalam bahasa Indonesia
+const warna = {
+  latar: '#ffffff',
+  latarSekunder: '#f8fafc',
+  teksUtama: '#0f172a', // biru sangat gelap
+  teksSekunder: '#64748b', // abu-abu biru
+  border: '#f1f5f9',
+  merah: '#ef4444',
+  hijau: '#10b981',
+  biru: '#3b82f6',
+  abuRipple: '#cbd5e1',
+  bayangan: '#000000',
+};
+
 // Gaya untuk komponen utama
 const gaya = StyleSheet.create({
   wadah: {
@@ -126,29 +147,37 @@ const gaya = StyleSheet.create({
   },
   judul: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#0f172a',
-    marginBottom: 12,
+    fontWeight: '700',
+    color: warna.teksUtama,
+    marginBottom: 16,
+    letterSpacing: 0.3,
   },
   headerBagian: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#64748b',
-    backgroundColor: '#f8fafc',
-    paddingVertical: 8,
+    color: warna.teksSekunder,
+    backgroundColor: warna.latarSekunder,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     marginTop: 8,
+    borderRadius: 8,
   },
   penampungKosong: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: warna.latar,
+    borderRadius: 16,
     marginTop: 16,
+    shadowColor: warna.bayangan,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   teksKosong: {
     fontSize: 15,
-    color: '#64748b',
+    color: warna.teksSekunder,
   },
 });
 
@@ -157,11 +186,14 @@ const gayaItem = StyleSheet.create({
   wadah: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: warna.latar,
     paddingVertical: 14,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: warna.border,
+  },
+  wadahTekan: {
+    backgroundColor: '#f1f5f9', // efek tekan ringan
   },
   info: {
     flex: 1,
@@ -170,16 +202,16 @@ const gayaItem = StyleSheet.create({
   keterangan: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1e293b',
+    color: warna.teksUtama,
+    marginBottom: 2,
   },
   subKeterangan: {
     fontSize: 13,
-    color: '#64748b',
-    marginTop: 2,
+    color: warna.teksSekunder,
   },
   nominal: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
 });

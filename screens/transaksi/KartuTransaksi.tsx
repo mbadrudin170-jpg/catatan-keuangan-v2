@@ -1,24 +1,23 @@
-// screens/transaksi/ItemTransaksi.tsx
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useDompet } from '@/context/DompetContext';
 import { useKategori } from '@/context/KategoriContext';
-import type { Transaksi, Kategori, Subkategori } from '@/database/tipe';
-import { formatAngka } from '@/utils/format/FormatAngka';
+import type { Kategori, Subkategori, Transaksi } from '@/database/tipe';
+import { formatMataUang } from '@/utils/formatMataUang';
 
 interface Props {
-  item: Transaksi;
+  transaksi: Transaksi;
 }
 
-export default function ItemTransaksi({ item }: Props) {
+export default function KartuTransaksi({ transaksi }: Props) {
   const { semuaKategori } = useKategori();
   const { daftarDompet } = useDompet();
 
   const semuaSubkategori = semuaKategori.flatMap((k: Kategori) => k.subkategori);
-  const subkategori = semuaSubkategori.find((s: Subkategori) => s.id === item.kategori_id);
+  const subkategori = semuaSubkategori.find((s: Subkategori) => s.id === transaksi.kategori_id);
   const kategoriInduk = semuaKategori.find((k: Kategori) => k.id === subkategori?.kategori_id);
-  const dompet = daftarDompet.find((d) => d.id === item.dompet_id);
+  const dompet = daftarDompet.find((d) => d.id === transaksi.dompet_id);
 
   const namaKategori = subkategori?.nama || 'Lainnya';
   const namaDompet = dompet?.nama || '-';
@@ -27,47 +26,26 @@ export default function ItemTransaksi({ item }: Props) {
   const warnaNominal = { color: isPemasukkan ? '#10b981' : '#ef4444' };
   const tanda = isPemasukkan ? '+' : '-';
 
-  // Fungsi untuk menangani navigasi ke halaman detail
   const bukaDetail = () => {
-    router.push(`/transaksi/${item.id}`);
+    router.push(`/transaksi/${transaksi.id}`);
   };
 
   return (
-    <Pressable style={gaya.wadah} onPress={bukaDetail}>
-      <View style={gaya.infoKiri}>
-        <Text style={gaya.teksNama} numberOfLines={1}>
-          {item.keterangan}
+    <Pressable style={styles.wadah} onPress={bukaDetail}>
+      <View style={styles.infoKiri}>
+        <Text style={styles.teksNama} numberOfLines={1}>
+          {transaksi.keterangan}
         </Text>
-        <Text style={gaya.teksKategori}>{`${namaKategori} · ${namaDompet}`}</Text>
+        <Text style={styles.teksKategori}>{`${namaKategori} · ${namaDompet}`}</Text>
       </View>
-      <Text style={[gaya.teksNominal, warnaNominal]}>
-        {tanda} {formatAngka(item.jumlah)}
+      <Text style={[styles.teksNominal, warnaNominal]}>
+        {tanda} {formatMataUang(transaksi.jumlah)}
       </Text>
     </Pressable>
   );
 }
 
-const gaya = StyleSheet.create({
-  // BARU: Gaya untuk header grup
-  headerGrup: {
-    paddingHorizontal: 22,
-    paddingTop: 16,
-    paddingBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  teksTanggalGrup: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#475569',
-  },
-  teksTotalGrup: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1e293b',
-  },
-  // Gaya lama yang dipercantik
+const styles = StyleSheet.create({
   wadah: {
     backgroundColor: '#ffffff',
     paddingVertical: 16,
@@ -77,7 +55,6 @@ const gaya = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
-    marginHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
