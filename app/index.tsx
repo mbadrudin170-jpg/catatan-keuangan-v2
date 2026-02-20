@@ -3,19 +3,20 @@ import { Link } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { JSX } from 'react';
+import i18n from '@/utils/i18n';
 
 export default function Index(): JSX.Element {
   return (
     <SafeAreaView style={gaya.penampung}>
       <View style={gaya.header}>
-        <Text style={gaya.judul}>Halaman Debug</Text>
-        <Text style={gaya.subjudul}>Pilih halaman di bawah ini untuk mengujinya secara cepat.</Text>
+        <Text style={gaya.judul}>{i18n.t('Halaman_debug')}</Text>
+        <Text style={gaya.subjudul}>{i18n.t('pilih_halaman_dibawah_ini_untuk_mengujinya_secara_cepat')}</Text>
       </View>
 
       <View style={gaya.konten}>
         <Link href="/(tabs)/transaksi" asChild>
           <Pressable style={gaya.tombol}>
-            <Text style={gaya.teksTombol}>Riwayat Transaksi (Tab)</Text>
+            <Text style={gaya.teksTombol}>{i18n.t('tombol_riwayat_transaksi_tab')}</Text>
           </Pressable>
         </Link>
         <Link href="/(form)/form-transaksi" asChild>
