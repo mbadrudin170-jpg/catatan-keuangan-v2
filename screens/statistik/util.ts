@@ -1,68 +1,69 @@
 // screens/statistik/util.ts
-import { endOfWeek, format, startOfWeek, sub } from 'date-fns';
-import { id as idLocale } from 'date-fns/locale';
+import {
+  format,
+  addDays,
+  addMonths,
+  addWeeks,
+  addYears,
+  startOfWeek,
+  endOfWeek,
+  isSameMonth,
+  isSameYear,
+} from 'date-fns';
+import { id } from 'date-fns/locale';
 import type { FilterPeriode } from './tipe';
 
-export const formatRupiah = (angka: number): string => {
-  if (angka >= 1_000_000_000) return `Rp ${(angka / 1_000_000_000).toFixed(1)}M`;
-  if (angka >= 1_000_000) return `Rp ${(angka / 1_000_000).toFixed(1)}Jt`;
-  if (angka >= 1_000) return `Rp ${(angka / 1_000).toFixed(0)}Rb`;
-  return `Rp ${angka}`;
+const formatTanggal = (tanggal: Date, formatString: string) => {
+  return format(tanggal, formatString, { locale: id });
 };
 
-export const NAMA_BULAN = [
-  'Januari',
-  'Februari',
-  'Maret',
-  'April',
-  'Mei',
-  'Juni',
-  'Juli',
-  'Agustus',
-  'September',
-  'Oktober',
-  'November',
-  'Desember',
-];
-
-export const NAMA_HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-
-export const getLabelPeriode = (periode: FilterPeriode, offset: number): string => {
+export const getLabelPeriode = (
+  periode: FilterPeriode,
+  offset: number,
+  rentangTanggal?: { mulai: Date; selesai: Date }
+) => {
   const sekarang = new Date();
-  // Offset dibuat absolut karena nilainya negatif saat mundur (misal: -1 untuk kemarin)
-  // sedangkan `sub` dari date-fns butuh angka positif untuk mengurangi tanggal.
-  const offsetAbs = Math.abs(offset);
 
-  if (periode === 'harian') {
-    if (offset === 0) return 'Hari Ini';
-    if (offset === -1) return 'Kemarin';
-    const tgl = sub(sekarang, { days: offsetAbs });
-    return format(tgl, 'EEEE, dd MMMM yyyy', { locale: idLocale });
+  switch (periode) {
+    case 'harian':
+      const tanggalHarian = addDays(sekarang, offset);
+      if (offset === 0) return 'Hari Ini';
+      if (offset === -1) return 'Kemarin';
+      return formatTanggal(tanggalHarian, 'd MMM yyyy');
+
+    case 'mingguan':
+      const tanggalMingguan = addWeeks(sekarang, offset);
+      const awalMinggu = startOfWeek(tanggalMingguan, { weekStartsOn: 1 });
+      const akhirMinggu = endOfWeek(tanggalMingguan, { weekStartsOn: 1 });
+      const formatAwal = isSameMonth(awalMinggu, akhirMinggu) ? 'd' : 'd MMM';
+      const formatAkhir = isSameYear(awalMinggu, akhirMinggu) ? 'd MMM yyyy' : 'd MMM yyyy';
+      return `${formatTanggal(awalMinggu, formatAwal)} - ${formatTanggal(
+        akhirMinggu,
+        formatAkhir
+      )}`;
+
+    case 'bulanan':
+      const tanggalBulanan = addMonths(sekarang, offset);
+      return formatTanggal(tanggalBulanan, 'MMMM yyyy');
+
+    case 'tahunan':
+      const tanggalTahunan = addYears(sekarang, offset);
+      return formatTanggal(tanggalTahunan, 'yyyy');
+
+    case 'semua':
+      return 'Semua Waktu';
+
+    case 'pilih tanggal':
+        if (rentangTanggal) {
+            const { mulai, selesai } = rentangTanggal;
+            const formatMulai = isSameYear(mulai, selesai) ? 'd MMM' : 'd MMM yyyy';
+            return `${formatTanggal(mulai, formatMulai)} - ${formatTanggal(selesai, 'd MMM yyyy')}`;
+        }
+        return 'Pilih Tanggal';
+
+    default:
+      return '';
   }
-
-  if (periode === 'mingguan') {
-    const targetMinggu = sub(sekarang, { weeks: offsetAbs });
-    const senin = startOfWeek(targetMinggu, { weekStartsOn: 1 });
-    const minggu = endOfWeek(targetMinggu, { weekStartsOn: 1 });
-    const formatTanggal = (tgl: Date) => format(tgl, 'dd MMM', { locale: idLocale });
-    return `${formatTanggal(senin)} - ${formatTanggal(minggu)} ${format(senin, 'yyyy')}`;
-  }
-
-  if (periode === 'bulanan') {
-    const tgl = sub(sekarang, { months: offsetAbs });
-    return format(tgl, 'MMMM yyyy', { locale: idLocale });
-  }
-
-  if (periode === 'tahunan') {
-    const tgl = sub(sekarang, { years: offsetAbs });
-    return format(tgl, 'yyyy');
-  }
-
-  return 'Semua Waktu';
 };
-{/** ask:  disini jika user pilih tanggal spesifik tolong buatkan logikanya 
- baca dahulu file  GEMINI.md
-ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu
- selalu tulis kan jalur path file di paling atas setiap file
- tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya
- */}
+
+export const formatRupiah = (nilai: number) => 'Rp ' + nilai.toLocaleString('id-ID');

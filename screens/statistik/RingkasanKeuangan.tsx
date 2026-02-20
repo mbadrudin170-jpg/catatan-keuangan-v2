@@ -4,14 +4,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { DonutChart } from './DonutChart';
 import { GrafikBatang } from './GrafikBatang';
 import { WARNA } from './konstanta';
-import { useStatistik } from './StatistikContext'; // DIUBAH
+import { useStatistik } from './StatistikContext';
+import { formatRupiah } from './util'; // DIIMPOR
 
 export const RingkasanKeuangan = () => {
   // Ambil data langsung dari context, bukan props
   const { totalPemasukan, totalPengeluaran, dataGrafik } = useStatistik();
 
   const saldo = totalPemasukan - totalPengeluaran;
-  const formatRupiah = (nilai: number) => 'Rp ' + nilai.toLocaleString('id-ID');
 
   return (
     <>

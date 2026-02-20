@@ -6,7 +6,11 @@ import {
 import type { JSX, ReactNode } from 'react';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
-import { ambilSemuaTransaksi, tambahSatuTransaksi as dbTambahTransaksi } from '@/database/operasi';
+import {
+  ambilSemuaTransaksi,
+  hapusSemuaTransaksi as dbHapusSemuaTransaksi, // Impor fungsi hapus semua
+  tambahSatuTransaksi as dbTambahTransaksi,
+} from '@/database/operasi';
 import type { Transaksi } from '@/database/tipe';
 import { useDompet } from './DompetContext';
 import { useKategori } from './KategoriContext';
@@ -21,6 +25,7 @@ interface TransaksiContextType {
   muatUlangDaftarTransaksi: () => Promise<void>;
   tambahTransaksi: (transaksi: Transaksi) => Promise<void>;
   hapusSatuTransaksi: (id: number) => Promise<void>;
+  hapusSemuaTransaksi: () => Promise<void>; // Tambah tipe
   modalDompetTerlihat: boolean;
   modalKategoriTerlihat: boolean;
   tipePilihanDompet: TipePilihanDompet | null;
@@ -47,7 +52,8 @@ export const TransaksiProvider = ({
   initialDaftarTransaksi,
 }: TransaksiProviderProps): JSX.Element => {
   // Mengambil fungsi-fungsi yang berhubungan dengan dompet dari DompetContext.
-  const { tambahPemasukan, tambahPengeluaran, tambahTransfer, ambilDompetDenganId } = useDompet();
+  const { muatUlangDaftarDompet, tambahPemasukan, tambahPengeluaran, tambahTransfer, ambilDompetDenganId } =
+    useDompet();
   // Mengambil daftar kategori dari KategoriContext.
   const { daftarKategori } = useKategori();
 
@@ -170,6 +176,18 @@ export const TransaksiProvider = ({
     setDaftarTransaksi((daftarLama) => daftarLama.filter((item) => item.id !== id));
   };
 
+  // Fungsi untuk menghapus SEMUA transaksi.
+  const hapusSemuaTransaksi = async (): Promise<void> => {
+    try {
+      await dbHapusSemuaTransaksi(); // Panggil operasi DB
+      setDaftarTransaksi([]); // Kosongkan state
+      await muatUlangDaftarDompet(); // Sinkronkan ulang saldo dompet
+    } catch (error) {
+      console.error('Gagal menghapus semua transaksi:', error);
+      throw error; // Lemparkan error agar bisa ditangani di komponen
+    }
+  };
+
   // State untuk mengontrol visibilitas modal pemilihan dompet.
   const [modalDompetTerlihat, setModalDompetTerlihat] = useState(false);
   // State untuk mengontrol visibilitas modal pemilihan kategori.
@@ -224,6 +242,7 @@ export const TransaksiProvider = ({
     muatUlangDaftarTransaksi,
     tambahTransaksi,
     hapusSatuTransaksi,
+    hapusSemuaTransaksi, // Tambahkan ke nilai context
     modalDompetTerlihat,
     modalKategoriTerlihat,
     tipePilihanDompet,
