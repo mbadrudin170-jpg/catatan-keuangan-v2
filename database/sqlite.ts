@@ -1,60 +1,64 @@
-// database/sqlite.ts
 import * as SQLite from 'expo-sqlite';
 
-// Definisikan tipe untuk kolom dari PRAGMA table_info
-interface PragmaKolomInfo {
-  id: number;
-  name: string;
-  type: string;
-  notnull: number;
-  dflt_value: string | number | null;
-  pk: number;
-}
+// Gunakan openDatabaseSync untuk API berbasis Promise
+export const db = SQLite.openDatabaseSync('catatan_keuangan.db');
 
-// Membuka database secara sinkron
-const db = SQLite.openDatabaseSync('catatanKeuangan.db');
-
-const migrasiSkema = async (): Promise<void> => {
+// Fungsi untuk mengecek kolom pada tabel
+const cekKolom = async (namaTabel: string): Promise<string[]> => {
   try {
-    const kolomDompet = await db.getAllAsync<PragmaKolomInfo>('PRAGMA table_info(dompet);');
-    const namaKolomDompet = kolomDompet.map((kolom) => kolom.name);
+    // Dapatkan semua info kolom
+    const columnsInfo = await db.getAllAsync(`PRAGMA table_info(${namaTabel});`);
+    // Ekstrak hanya nama kolomnya
+    return columnsInfo.map((kolom: any) => kolom.name as string);
+  } catch (error) {
+    // Jika tabel tidak ada atau error lain, kembalikan array kosong
+    return [];
+  }
+};
 
-    if (!namaKolomDompet.includes('tipe')) {
-      await db.execAsync('ALTER TABLE dompet ADD COLUMN tipe TEXT;');
-    }
-    if (!namaKolomDompet.includes('ikon')) {
-      await db.execAsync('ALTER TABLE dompet ADD COLUMN ikon TEXT;');
+// Fungsi untuk melakukan migrasi skema database
+export const migrasiSkema = async (): Promise<void> => {
+  const versiPragma = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version;');
+  let versiDb = versiPragma?.user_version ?? 0;
+
+  try {
+    if (versiDb < 1) {
+      // Migrasi awal atau perubahan besar pertama
+      console.log('Menjalankan migrasi ke v1...');
+      // Tambahkan migrasi spesifik jika perlu, contoh: menambah kolom baru
+      const namaKolomKategori = await cekKolom('kategori');
+      if (namaKolomKategori.length > 0) {
+        if (!namaKolomKategori.includes('ikon')) {
+          await db.execAsync('ALTER TABLE kategori ADD COLUMN ikon TEXT;');
+        }
+      }
+      await db.execAsync('PRAGMA user_version = 1');
+      versiDb = 1;
     }
 
-    const kolomTransaksi = await db.getAllAsync<PragmaKolomInfo>('PRAGMA table_info(transaksi);');
-    const namaKolomTransaksi = kolomTransaksi.map((kolom) => kolom.name);
-
-    if (!namaKolomTransaksi.includes('tipe')) {
-      await db.execAsync(
-        "ALTER TABLE transaksi ADD COLUMN tipe TEXT NOT NULL DEFAULT 'pengeluaran';"
-      );
+    if (versiDb < 2) {
+      console.log('Menjalankan migrasi ke v2...');
+      const namaKolomTransaksi = await cekKolom('transaksi');
+      if (namaKolomTransaksi.length > 0) {
+        if (!namaKolomTransaksi.includes('nama_kategori')) {
+          await db.execAsync('ALTER TABLE transaksi ADD COLUMN nama_kategori TEXT;');
+        }
+        if (!namaKolomTransaksi.includes('nama_subkategori')) {
+          await db.execAsync('ALTER TABLE transaksi ADD COLUMN nama_subkategori TEXT;');
+        }
+        if (!namaKolomTransaksi.includes('nama_dompet')) {
+          await db.execAsync('ALTER TABLE transaksi ADD COLUMN nama_dompet TEXT;');
+        }
+        if (!namaKolomTransaksi.includes('nama_dompet_tujuan')) {
+          await db.execAsync('ALTER TABLE transaksi ADD COLUMN nama_dompet_tujuan TEXT;');
+        }
+      }
+      await db.execAsync('PRAGMA user_version = 2');
+      versiDb = 2;
     }
-    if (!namaKolomTransaksi.includes('dompet_tujuan_id')) {
-      await db.execAsync('ALTER TABLE transaksi ADD COLUMN dompet_tujuan_id INTEGER;');
-    }
-    if (!namaKolomTransaksi.includes('subkategori_id')) {
-      await db.execAsync('ALTER TABLE transaksi ADD COLUMN subkategori_id INTEGER;');
-    }
-    if (!namaKolomTransaksi.includes('nama_kategori')) {
-      await db.execAsync('ALTER TABLE transaksi ADD COLUMN nama_kategori TEXT;');
-    }
-    if (!namaKolomTransaksi.includes('nama_subkategori')) {
-      await db.execAsync('ALTER TABLE transaksi ADD COLUMN nama_subkategori TEXT;');
-    }
-    // BARU: Migrasi untuk menambahkan kolom nama dompet
-    if (!namaKolomTransaksi.includes('nama_dompet')) {
-      await db.execAsync('ALTER TABLE transaksi ADD COLUMN nama_dompet TEXT;');
-    }
-    if (!namaKolomTransaksi.includes('nama_dompet_tujuan')) {
-      await db.execAsync('ALTER TABLE transaksi ADD COLUMN nama_dompet_tujuan TEXT;');
-    }
-  } catch {
-    console.warn('Tabel belum ada, akan dibuat oleh CREATE TABLE.');
+  } catch (error) {
+    console.error('Migrasi skema gagal:', error);
+    throw error;
   }
 };
 
@@ -66,15 +70,18 @@ export const inisialisasiDB = async (): Promise<void> => {
       CREATE TABLE IF NOT EXISTS kategori (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nama TEXT NOT NULL UNIQUE,
-        ikon TEXT,
-        tipe TEXT NOT NULL CHECK(tipe IN ('pemasukan', 'pengeluaran'))
+        tipe TEXT NOT NULL CHECK(tipe IN ('pemasukan', 'pengeluaran')),
+        ikon TEXT
       );
+
       CREATE TABLE IF NOT EXISTS subkategori (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nama TEXT NOT NULL,
         kategori_id INTEGER NOT NULL,
-        FOREIGN KEY (kategori_id) REFERENCES kategori (id) ON DELETE CASCADE
+        FOREIGN KEY (kategori_id) REFERENCES kategori (id) ON DELETE CASCADE,
+        UNIQUE (nama, kategori_id)
       );
+
       CREATE TABLE IF NOT EXISTS dompet (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         nama TEXT NOT NULL UNIQUE,
@@ -82,32 +89,42 @@ export const inisialisasiDB = async (): Promise<void> => {
         tipe TEXT,
         ikon TEXT
       );
+
       CREATE TABLE IF NOT EXISTS transaksi (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tipe TEXT NOT NULL CHECK(tipe IN ('pemasukan', 'pengeluaran', 'transfer')),
         jumlah REAL NOT NULL,
         keterangan TEXT,
         tanggal TEXT NOT NULL,
-        tipe TEXT NOT NULL CHECK(tipe IN ('pemasukan', 'pengeluaran', 'transfer')),
-        nama_kategori TEXT,
-        nama_subkategori TEXT,
-        nama_dompet TEXT, -- BARU: Salinan nama dompet untuk arsip
-        nama_dompet_tujuan TEXT, -- BARU: Salinan nama dompet tujuan untuk arsip
         kategori_id INTEGER,
+        subkategori_id INTEGER,
         dompet_id INTEGER NOT NULL,
         dompet_tujuan_id INTEGER,
-        subkategori_id INTEGER,
+        nama_kategori TEXT,
+        nama_subkategori TEXT,
+        nama_dompet TEXT,
+        nama_dompet_tujuan TEXT,
         FOREIGN KEY (kategori_id) REFERENCES kategori (id) ON DELETE SET NULL,
-        FOREIGN KEY (dompet_id) REFERENCES dompet (id) ON DELETE SET NULL, -- DIUBAH: dari CASCADE menjadi SET NULL
-        FOREIGN KEY (dompet_tujuan_id) REFERENCES dompet(id) ON DELETE SET NULL,
-        FOREIGN KEY (subkategori_id) REFERENCES subkategori(id) ON DELETE SET NULL
+        FOREIGN KEY (subkategori_id) REFERENCES subkategori (id) ON DELETE SET NULL,
+        FOREIGN KEY (dompet_id) REFERENCES dompet (id) ON DELETE CASCADE,
+        FOREIGN KEY (dompet_tujuan_id) REFERENCES dompet (id) ON DELETE SET NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS anggaran (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        jumlah REAL NOT NULL,
+        periode TEXT NOT NULL CHECK(periode IN ('bulanan', 'tahunan', 'sekali')),
+        tanggal_mulai TEXT NOT NULL,
+        kategori_id INTEGER NOT NULL UNIQUE,
+        FOREIGN KEY (kategori_id) REFERENCES kategori (id) ON DELETE CASCADE
       );
     `);
 
     await migrasiSkema();
+
+    console.log('Database berhasil diinisialisasi.');
   } catch (error) {
-    console.error('Gagal melakukan inisialisasi database:', error);
+    console.error('Inisialisasi database gagal:', error);
     throw error;
   }
 };
-
-export default db;

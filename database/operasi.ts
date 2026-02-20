@@ -1,6 +1,6 @@
 // database/operasi.ts
-import type { Kategori, Subkategori, Transaksi, Dompet, TipeKategori } from '@/database/tipe';
-import db from './sqlite';
+import type { Kategori, Subkategori, Transaksi, Dompet, TipeKategori, Anggaran } from '@/database/tipe';
+import { db } from './sqlite';
 
 // Operasi untuk Kategori
 export const ambilSemuaKategori = async (tipe: TipeKategori): Promise<Kategori[]> => {
@@ -9,9 +9,9 @@ export const ambilSemuaKategori = async (tipe: TipeKategori): Promise<Kategori[]
   );
   const semuaSubkategori = await db.getAllAsync<Subkategori>('SELECT * FROM subkategori;');
 
-  return semuaKategori.map((kategori) => ({
+  return semuaKategori.map((kategori: Kategori) => ({
     ...kategori,
-    subkategori: semuaSubkategori.filter((sub) => sub.kategori_id === kategori.id),
+    subkategori: semuaSubkategori.filter((sub: Subkategori) => sub.kategori_id === kategori.id),
   }));
 };
 
@@ -106,4 +106,42 @@ export const hapusSatuDompet = async (id: number): Promise<void> => {
 
 export const hapusSemuaDompet = async (): Promise<void> => {
   await db.runAsync('DELETE FROM dompet;');
+};
+
+// Operasi untuk Anggaran
+export const simpanAnggaran = async (anggaran: Omit<Anggaran, 'id' | 'nama_kategori'>): Promise<void> => {
+  const { jumlah, periode, tanggal_mulai, kategori_id } = anggaran;
+
+  // Cek apakah anggaran untuk kategori ini sudah ada
+  const existing = await db.getFirstAsync<Anggaran>(
+    'SELECT * FROM anggaran WHERE kategori_id = ? AND periode = ?;',
+    [kategori_id, periode]
+  );
+
+  if (existing) {
+    // Jika ada, perbarui
+    await db.runAsync(
+      'UPDATE anggaran SET jumlah = ?, tanggal_mulai = ? WHERE id = ?;',
+      [jumlah, tanggal_mulai, existing.id]
+    );
+  } else {
+    // Jika tidak ada, buat baru
+    await db.runAsync(
+      'INSERT INTO anggaran (jumlah, periode, tanggal_mulai, kategori_id) VALUES (?, ?, ?, ?);',
+      [jumlah, periode, tanggal_mulai, kategori_id]
+    );
+  }
+};
+
+export const ambilSemuaAnggaran = async (): Promise<Anggaran[]> => {
+  return await db.getAllAsync<Anggaran>(
+    `SELECT a.*, k.nama as nama_kategori 
+     FROM anggaran a 
+     JOIN kategori k ON a.kategori_id = k.id 
+     ORDER BY k.nama ASC;`
+  );
+};
+
+export const hapusAnggaran = async (id: number): Promise<void> => {
+  await db.runAsync('DELETE FROM anggaran WHERE id = ?;', [id]);
 };

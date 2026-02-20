@@ -48,3 +48,17 @@ export interface Transaksi {
   nama_dompet?: string | null; // BARU
   nama_dompet_tujuan?: string | null; // BARU
 }
+
+// Mendefinisikan tipe untuk periode anggaran.
+export type TipePeriode = 'bulanan' | 'tahunan' | 'sekali';
+
+// Mendefinisikan struktur data untuk Anggaran.
+export interface Anggaran {
+  id: number;
+  jumlah: number;
+  periode: TipePeriode;
+  tanggal_mulai: string;
+  kategori_id: number;
+  // Opsional, untuk kemudahan menampilkan nama kategori di UI.
+  nama_kategori?: string;
+}
