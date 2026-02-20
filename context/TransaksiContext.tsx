@@ -8,8 +8,9 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 
 import {
   ambilSemuaTransaksi,
-  hapusSemuaTransaksi as dbHapusSemuaTransaksi, // Impor fungsi hapus semua
-  tambahSatuTransaksi as dbTambahTransaksi,
+  hapusSemuaTransaksi as dbHapusSemuaTransaksi, // Impor fungsi reset saldo
+  tambahSatuTransaksi as dbTambahTransaksi, // Impor fungsi hapus semua
+  resetSemuaSaldoDompet, // Impor fungsi reset saldo
 } from '@/database/operasi';
 import type { Transaksi } from '@/database/tipe';
 import { useDompet } from './DompetContext';
@@ -52,8 +53,13 @@ export const TransaksiProvider = ({
   initialDaftarTransaksi,
 }: TransaksiProviderProps): JSX.Element => {
   // Mengambil fungsi-fungsi yang berhubungan dengan dompet dari DompetContext.
-  const { muatUlangDaftarDompet, tambahPemasukan, tambahPengeluaran, tambahTransfer, ambilDompetDenganId } =
-    useDompet();
+  const {
+    muatUlangDaftarDompet,
+    tambahPemasukan,
+    tambahPengeluaran,
+    tambahTransfer,
+    ambilDompetDenganId,
+  } = useDompet();
   // Mengambil daftar kategori dari KategoriContext.
   const { daftarKategori } = useKategori();
 
@@ -180,8 +186,9 @@ export const TransaksiProvider = ({
   const hapusSemuaTransaksi = async (): Promise<void> => {
     try {
       await dbHapusSemuaTransaksi(); // Panggil operasi DB
-      setDaftarTransaksi([]); // Kosongkan state
-      await muatUlangDaftarDompet(); // Sinkronkan ulang saldo dompet
+      await resetSemuaSaldoDompet(); // Reset saldo semua dompet
+      setDaftarTransaksi([]); // Kosongkan state transaksi
+      await muatUlangDaftarDompet(); // Sinkronkan ulang daftar dompet
     } catch (error) {
       console.error('Gagal menghapus semua transaksi:', error);
       throw error; // Lemparkan error agar bisa ditangani di komponen

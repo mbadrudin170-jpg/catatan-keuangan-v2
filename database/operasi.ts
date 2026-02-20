@@ -70,6 +70,10 @@ export const tambahSatuTransaksi = async (transaksi: Transaksi): Promise<number 
   return hasil.lastInsertRowId;
 };
 
+export const hapusSemuaTransaksi = async (): Promise<void> => {
+  await db.runAsync('DELETE FROM transaksi;');
+};
+
 // Operasi untuk Dompet
 export const ambilSemuaDompet = async (): Promise<Dompet[]> => {
   return await db.getAllAsync<Dompet>('SELECT * FROM dompet ORDER BY nama ASC;');
@@ -90,6 +94,10 @@ export const perbaruiSatuDompet = async (dompet: Omit<Dompet, 'saldo'>): Promise
 
 export const perbaruiSaldoDompet = async (id: number, jumlah: number): Promise<void> => {
   await db.runAsync('UPDATE dompet SET saldo = saldo + ? WHERE id = ?;', [jumlah, id]);
+};
+
+export const resetSemuaSaldoDompet = async (): Promise<void> => {
+  await db.runAsync('UPDATE dompet SET saldo = 0;');
 };
 
 export const hapusSatuDompet = async (id: number): Promise<void> => {

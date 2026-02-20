@@ -39,6 +39,7 @@ interface DompetContextType {
   muatDompetUntukForm: (id: number) => void;
   simpanDompetBaru: () => Promise<void>;
   hapusSemuaDompet: () => Promise<void>;
+  muatUlangDaftarDompet: () => Promise<void>; // Ditambahkan
 }
 
 const DompetContext = createContext<DompetContextType | undefined>(undefined);
@@ -156,8 +157,9 @@ export const DompetProvider = ({ children }: { children: ReactNode }) => {
       muatDompetUntukForm,
       simpanDompetBaru,
       hapusSemuaDompet,
+      muatUlangDaftarDompet, // Diekspos
     }),
-    [daftarDompet, ambilDompetDenganId, memuat, formDompet, modalTipeTerlihat]
+    [daftarDompet, ambilDompetDenganId, memuat, formDompet, modalTipeTerlihat, muatUlangDaftarDompet]
   );
 
   return <DompetContext.Provider value={nilai}>{children}</DompetContext.Provider>;
