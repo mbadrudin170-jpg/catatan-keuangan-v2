@@ -33,7 +33,6 @@ export default function ItemTransaksi({ item }: Props) {
   };
 
   return (
-    // DIUBAH: Komponen sekarang bisa ditekan dan akan menavigasi pengguna
     <Pressable style={gaya.wadah} onPress={bukaDetail}>
       <View style={gaya.infoKiri}>
         <Text style={gaya.teksNama} numberOfLines={1}>
@@ -48,8 +47,27 @@ export default function ItemTransaksi({ item }: Props) {
   );
 }
 
-// Gaya dipercantik dengan tampilan modern
 const gaya = StyleSheet.create({
+  // BARU: Gaya untuk header grup
+  headerGrup: {
+    paddingHorizontal: 22,
+    paddingTop: 16,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  teksTanggalGrup: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  teksTotalGrup: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1e293b',
+  },
+  // Gaya lama yang dipercantik
   wadah: {
     backgroundColor: '#ffffff',
     paddingVertical: 16,
@@ -60,13 +78,11 @@ const gaya = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
     marginHorizontal: 16,
-    // Shadow modern & lebih lembut
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,
     shadowRadius: 12,
     elevation: 3,
-    // Border tipis untuk definisi
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.03)',
   },

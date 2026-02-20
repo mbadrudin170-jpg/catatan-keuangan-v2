@@ -1,14 +1,16 @@
 // screens/kategori/TombolTipe.tsx
-import { useKategori } from '../../context/KategoriContext'; // Perbaiki path import
+import type { TipeKategori } from '@/database/tipe';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-export default function TombolTipe() {
-  const { tipeAktif, setTipeAktif } = useKategori();
+interface TombolTipeProps {
+  tipeAktif: TipeKategori;
+  setTipeAktif: (tipe: TipeKategori) => void;
+}
 
+export default function TombolTipe({ tipeAktif, setTipeAktif }: TombolTipeProps) {
   return (
     <View style={styles.wadah}>
-      {/* --- DIPERBAIKI: Menggunakan string "pemasukan" (huruf kecil) --- */}
       <TouchableOpacity
         style={[styles.tombol, tipeAktif === 'pemasukan' && styles.tombolPemasukkanAktif]}
         activeOpacity={0.85}
@@ -19,7 +21,6 @@ export default function TombolTipe() {
         </Text>
       </TouchableOpacity>
 
-      {/* --- DIPERBAIKI: Menggunakan string "pengeluaran" (huruf kecil) --- */}
       <TouchableOpacity
         style={[styles.tombol, tipeAktif === 'pengeluaran' && styles.tombolPengeluaranAktif]}
         activeOpacity={0.85}
@@ -33,7 +34,6 @@ export default function TombolTipe() {
   );
 }
 
-// Gaya tidak berubah
 const warna = {
   latar: '#f8fafc',
   border: '#e2e8f0',

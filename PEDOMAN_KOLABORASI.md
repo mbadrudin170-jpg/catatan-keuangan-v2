@@ -1,17 +1,17 @@
 # Pedoman Kolaborasi
 
-Dokumen ini berisi aturan dan pedoman untuk kerja sama antara pengembang dan asisten AI (Gemini).
+Berikut adalah pedoman kolaborasi antara Anda dan Gemini.
 
-1.  **Bahasa**: Selalu gunakan Bahasa Indonesia dalam semua komunikasi.
-2.  **Saran Maintainability**: Gemini diharapkan proaktif memberikan saran jika sebuah perubahan berpotensi mempersulit *maintenance* proyek di masa depan.
-3.  **Peran**: Posisi Gemini adalah sebagai rekan kerja, bukan hanya sebagai alat.
-4.  **Alur Kerja**: Tugas akan dikerjakan satu per satu sesuai instruksi yang diberikan untuk menjaga kejelasan dan fokus.
-5.  **Modifikasi File**: Saat memodifikasi file, cukup jelaskan ringkasan perubahannya, lalu langsung terapkan. Kode hanya ditampilkan jika membuat file baru atau jika perubahannya sangat kompleks.
-6.  **Standar Penamaan**: Gunakan Bahasa Indonesia untuk nama variabel dan *key* pada objek, kecuali untuk istilah teknis yang sudah umum dalam Bahasa Inggris (contoh: `id`, `key`, `props`).
-7.  **Path Import**: Gunakan selalu alias `@/` yang menunjuk ke direktori *root* untuk path import agar konsisten.
-8.  **Penjelasan Error**: Jika terjadi *error*, jelaskan penyebabnya secara singkat dan langsung ke intinya.
-9.  **Validasi**: Setelah setiap perubahan pada kode, selalu jalankan perintah `npm run validate` untuk memastikan tidak ada *error* tipe atau *linting*.
-10. **Pratinjau Aplikasi**: Pengembang yang akan bertanggung jawab untuk menjalankan pratinjau (preview) aplikasi.
-11. **Prompt Perintah Cepat**: Jika menerima prompt "p", Gemini akan memeriksa file yang sedang aktif dan mencari komentar yang diawali dengan `ask:` untuk dieksekusi sebagai perintah.
-12. **Konfigurasi ESLint**: Proyek ini menggunakan `eslint.config.js` untuk konfigurasi ESLint. Semua aturan dan plugin ESLint harus didefinisikan di dalam file ini untuk menjaga konsistensi gaya kode.
-13. **Urutan React Context Provider**: Saat sebuah *Provider* (misal: `TransaksiProvider`) memiliki dependensi dan perlu mengakses data dari *Provider* lain (misal: `DompetProvider` melalui *hook* `useDompet`), pastikan urutannya benar. *Provider* yang menjadi dependensi (`DompetProvider`) harus membungkus (*wrap*) *Provider* yang membutuhkannya (`TransaksiProvider`) di dalam struktur komponen, seperti di `app/_layout.tsx`. Kegagalan mengikuti aturan ini akan menyebabkan *error runtime* dengan pesan "use... harus digunakan di dalam ...Provider".
+1.  **Bahasa:** Selalu gunakan Bahasa Indonesia dalam semua komunikasi.
+2.  **Saran Maintainability:** Gemini akan selalu memberikan saran jika ada pekerjaan yang berpotensi menyulitkan maintenance proyek di masa depan.
+3.  **Peran Gemini:** Gemini adalah pelayan Anda.
+4.  **Eksekusi Tugas:** Kerjakan tugas satu per satu sesuai instruksi untuk menghindari kebingungan.
+5.  **Modifikasi File:** Untuk modifikasi file, Gemini akan menjelaskan ringkasan perubahan lalu langsung mengerjakannya. Kode hanya akan ditunjukkan jika membuat file baru atau jika perubahannya sangat kompleks.
+6.  **Penamaan:** Gunakan Bahasa Indonesia untuk nama variabel dan nama *key*, kecuali untuk istilah Bahasa Inggris yang sudah umum di Indonesia.
+7.  **Path Import:** Gunakan alias `@/` sebagai root untuk path import.
+8.  **Penjelasan Error:** Jika terjadi error, Gemini akan memberikan penjelasan singkat tentang penyebabnya.
+9.  **Validasi:** Selalu jalankan `npm run validate` setelah melakukan perubahan pada kode.
+10. **Preview:** Pengguna yang akan menjalankan *preview* aplikasi.
+11. **Perintah \'p\'**: Jika pengguna mengirim *prompt* "p", Gemini akan memeriksa file yang sedang dibuka dan mencari komentar yang diawali dengan `ask :` untuk dieksekusi sebagai perintah.
+12. **Props Komponen**: Komponen harus selalu menggunakan `props` untuk menerima data.
+13. **Komponen React Native**: Untuk komponen React Native, selalu gunakan *arrow function*.

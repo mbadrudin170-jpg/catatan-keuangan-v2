@@ -1,54 +1,77 @@
 // screens/form-kategori/FormKategoriScreen.tsx
-import { useKategori } from '@/context/KategoriContext'; // DIIMPOR
-import type { Kategori } from '@/database/tipe';
-import React, { useState } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import React from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HeaderFormKategori from './HeaderFormKategori';
 import ListKategori from './ListKategori';
 import ListSubKategori from './ListSubKategori';
-import TombolSimpan from './TombolSimpan';
 import TombolTipe from './TombolTipe';
+import { useFormKategori } from './useFormKategori';
 
-export default function FormKategoriScreen() {
-  const [kategoriTerpilih, setKategoriTerpilih] = useState<Kategori | null>(null);
-  // DIUBAH: Dapatkan tipe aktif dari context untuk diberikan ke komponen anak
-  const { tipeAktif } = useKategori();
-
-  const handleSimpan = () => {
-    Alert.alert('Simpan', 'Tombol Simpan Ditekan!');
-  };
+const FormKategoriScreen: React.FC = () => {
+  const {
+    tipeAktif,
+    setTipeAktif,
+    kategoriTerpilih,
+    setKategoriTerpilih,
+    kategoriDisesuaikan,
+    subkategoriTerpilih,
+    tambahKategori,
+    hapusKategori,
+    tambahSubkategori,
+    hapusSubkategori,
+    perbaruiSubkategori,
+    handleSimpan,
+  } = useFormKategori();
 
   return (
-    <SafeAreaView style={gaya.container}>
+    <SafeAreaView style={gaya.penampung} edges={['top', 'left', 'right', 'bottom']}>
       <HeaderFormKategori />
-      <View style={gaya.kontenUtama}>
-        {/* TombolTipe akan mengubah `tipeAktif` di dalam context */}
-        <TombolTipe />
+      <KeyboardAvoidingView
+        style={gaya.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <TombolTipe tipeAktif={tipeAktif} setTipeAktif={setTipeAktif} />
 
-        {/*
-          DIUBAH:
-          - ListKategori sekarang hanya muncul jika tipenya bukan 'transfer'.
-          - Prop `tipe` yang dibutuhkan oleh ListKategori sekarang dipenuhi.
-        */}
-        {tipeAktif !== 'transfer' && (
-          <ListKategori onKategoriSelect={setKategoriTerpilih} tipe={tipeAktif} />
-        )}
-
-        <ListSubKategori kategoriTerpilih={kategoriTerpilih} />
-        <TombolSimpan onPress={handleSimpan} />
-      </View>
+        <ScrollView contentContainerStyle={gaya.kontenGulir}>
+          <ListKategori
+            onKategoriSelect={setKategoriTerpilih}
+            tipe={tipeAktif}
+            daftarKategori={kategoriDisesuaikan}
+            tambahKategori={tambahKategori}
+            hapusKategori={hapusKategori}
+          />
+          <ListSubKategori
+            kategoriTerpilih={kategoriTerpilih}
+            subkategori={subkategoriTerpilih}
+            tambahSubkategori={tambahSubkategori}
+            hapusSubkategori={hapusSubkategori}
+            perbaruiSubkategori={perbaruiSubkategori}
+          />
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
-}
+};
+
+export default FormKategoriScreen;
 
 const gaya = StyleSheet.create({
-  container: {
+  penampung: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
   },
-  kontenUtama: {
+  keyboardView: {
     flex: 1,
-    paddingHorizontal: 20,
+  },
+  kontenGulir: {
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  penampungTombol: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    backgroundColor: '#ffffff',
   },
 });

@@ -7,6 +7,8 @@ import {
   ambilSatuDompet,
   ambilSemuaDompet,
   hapusDompet as dbHapusDompet,
+  // Mengimpor fungsi baru
+  hapusSemuaDompet as dbHapusSemuaDompet,
   perbaruiDompet as dbPerbaruiDompet,
   tambahDompet as dbTambahDompet,
 } from '@/database/operasi';
@@ -34,6 +36,8 @@ interface ContextDompetType {
   simpanDompetBaru: () => Promise<void>;
   perbaruiDompet: (id: number) => Promise<void>;
   hapusDompet: (id: number) => Promise<void>;
+  // Menambahkan fungsi baru ke tipe konteks
+  hapusSemuaDompet: () => Promise<void>;
   modalTipeTerlihat: boolean;
   bukaModalTipe: () => void;
   tutupModalTipe: () => void;
@@ -134,6 +138,17 @@ export function DompetProvider({ children, initialDaftarDompet }: DompetProvider
     },
     [muatUlangDaftarDompet]
   );
+
+  // Implementasi fungsi hapus semua dompet
+  const hapusSemuaDompet = useCallback(async (): Promise<void> => {
+    try {
+      await dbHapusSemuaDompet();
+      await muatUlangDaftarDompet(); // Memuat ulang daftar yang sekarang kosong
+    } catch (error) {
+      console.error('Gagal menghapus semua dompet:', error);
+      throw error;
+    }
+  }, [muatUlangDaftarDompet]);
 
   const tambahPemasukan = useCallback(
     async (dompetId: number, jumlah: number): Promise<void> => {
@@ -236,6 +251,8 @@ export function DompetProvider({ children, initialDaftarDompet }: DompetProvider
         simpanDompetBaru,
         perbaruiDompet,
         hapusDompet,
+        // Menyediakan fungsi baru melalui konteks
+        hapusSemuaDompet,
         modalTipeTerlihat,
         bukaModalTipe,
         tutupModalTipe,

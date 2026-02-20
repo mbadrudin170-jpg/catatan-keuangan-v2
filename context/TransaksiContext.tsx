@@ -53,7 +53,7 @@ export const TransaksiProvider = ({
     tanggal: new Date().toISOString(),
     tipe: 'pengeluaran',
     kategori_id: null,
-    dompet_id: 0,
+    dompet_id: null,
     dompet_tujuan_id: null,
     subkategori_id: null,
   });
@@ -84,10 +84,11 @@ export const TransaksiProvider = ({
       Alert.alert('Input Tidak Valid', 'Jumlah transaksi harus lebih dari nol.');
       throw new Error('Jumlah transaksi tidak valid.');
     }
-    if (transaksiBaru.dompet_id === 0) {
+    if (transaksiBaru.dompet_id === null) {
       Alert.alert('Input Tidak Valid', 'Anda harus memilih dompet sumber.');
       throw new Error('Dompet sumber tidak dipilih.');
     }
+
     if (transaksiBaru.tipe === 'transfer') {
       if (!transaksiBaru.dompet_tujuan_id) {
         Alert.alert('Input Tidak Valid', 'Anda harus memilih dompet tujuan untuk transfer.');
@@ -97,24 +98,35 @@ export const TransaksiProvider = ({
         Alert.alert('Input Tidak Valid', 'Dompet sumber dan tujuan tidak boleh sama.');
         throw new Error('Dompet sumber dan tujuan sama.');
       }
+    } else {
+      // DIUBAH: Menambahkan validasi untuk memastikan kategori dipilih
+      if (transaksiBaru.kategori_id === null) {
+        Alert.alert('Input Tidak Valid', 'Anda harus memilih kategori.');
+        throw new Error('Kategori tidak dipilih.');
+      }
     }
 
     try {
       await dbTambahTransaksi(transaksiBaru);
-      switch (transaksiBaru.tipe) {
-        case 'pemasukan':
-          await tambahPemasukan(transaksiBaru.dompet_id, transaksiBaru.jumlah);
-          break;
-        case 'pengeluaran':
-          await tambahPengeluaran(transaksiBaru.dompet_id, transaksiBaru.jumlah);
-          break;
-        case 'transfer':
-          await tambahTransfer(
-            transaksiBaru.dompet_id,
-            transaksiBaru.dompet_tujuan_id!,
-            transaksiBaru.jumlah
-          );
-          break;
+
+      if (transaksiBaru.dompet_id !== null) {
+        switch (transaksiBaru.tipe) {
+          case 'pemasukan':
+            await tambahPemasukan(transaksiBaru.dompet_id, transaksiBaru.jumlah);
+            break;
+          case 'pengeluaran':
+            await tambahPengeluaran(transaksiBaru.dompet_id, transaksiBaru.jumlah);
+            break;
+          case 'transfer':
+            if (transaksiBaru.dompet_tujuan_id !== null) {
+              await tambahTransfer(
+                transaksiBaru.dompet_id,
+                transaksiBaru.dompet_tujuan_id,
+                transaksiBaru.jumlah
+              );
+            }
+            break;
+        }
       }
       await muatUlangDaftarTransaksi();
     } catch (error) {

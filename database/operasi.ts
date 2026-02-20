@@ -139,20 +139,28 @@ export const hapusDompet = async (id: number): Promise<void> => {
   await db.runAsync('DELETE FROM dompet WHERE id = ?;', id);
 };
 
+// Fungsi baru untuk menghapus semua dompet
+export const hapusSemuaDompet = async (): Promise<void> => {
+  // Menghapus semua data dari tabel dompet
+  await db.runAsync('DELETE FROM dompet;');
+  // Mereset auto-increment ID untuk tabel dompet (khusus SQLite)
+  await db.runAsync(`DELETE FROM sqlite_sequence WHERE name='dompet';`);
+};
+
 // ─────────────────────────────────────────────
 // OPERASI TRANSAKSI
 // ─────────────────────────────────────────────
 
 export const tambahSatuTransaksi = async (transaksi: Transaksi): Promise<void> => {
+  // DIUBAH: Memastikan semua nilai yang bisa null ditangani secara konsisten
   await db.runAsync(
     'INSERT INTO transaksi (jumlah, keterangan, tanggal, tipe, kategori_id, dompet_id, dompet_tujuan_id, subkategori_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?);',
     transaksi.jumlah,
-    // DIUBAH: Menggunakan `?? null` untuk memastikan nilai `null` dikirim ke DB jika undefined.
     transaksi.keterangan ?? null,
     transaksi.tanggal,
     transaksi.tipe,
     transaksi.kategori_id ?? null,
-    transaksi.dompet_id,
+    transaksi.dompet_id ?? null, // Ditambahkan pengaman nullish coalescing
     transaksi.dompet_tujuan_id ?? null,
     transaksi.subkategori_id ?? null
   );

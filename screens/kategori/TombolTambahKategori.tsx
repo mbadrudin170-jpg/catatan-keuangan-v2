@@ -5,10 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 export default function TombolTambahKategori() {
   return (
     <View style={styles.wadah}>
-      <Pressable
-        style={styles.tombol}
-        onPress={() => router.push('/(form)/form-kategori')}
-      >
+      <Pressable style={styles.tombol} onPress={() => router.push('/(form)/form-kategori')}>
         <Text style={styles.teksTombol}>Tambah / Edit</Text>
       </Pressable>
     </View>

@@ -1,84 +1,74 @@
 // screens/kategori/ListKategori.tsx
-import React, { useEffect, useState } from 'react';
+import type { Kategori, Subkategori } from '@/database/tipe';
+import React from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { useKategori } from '../../context/KategoriContext';
-import type { Kategori, Subkategori } from '../../database/tipe';
 
-export default function ListKategori() {
-  const { daftarKategori } = useKategori();
+interface ListKategoriProps {
+  daftarKategori: Kategori[];
+  kategoriTerpilih: Kategori | null;
+  onKategoriSelect: (kategori: Kategori) => void;
+  daftarSubKategori: Subkategori[];
+}
 
-  const [kategoriTerpilih, setKategoriTerpilih] = useState<Kategori | null>(null);
-
-  useEffect(() => {
-    if (daftarKategori && daftarKategori.length > 0) {
-      setKategoriTerpilih(daftarKategori[0]);
-    } else {
-      setKategoriTerpilih(null);
-    }
-  }, [daftarKategori]);
-
-  const daftarSubKategori = kategoriTerpilih?.subkategori || [];
-
+export const ListKategori: React.FC<ListKategoriProps> = ({
+  daftarKategori,
+  kategoriTerpilih,
+  onKategoriSelect,
+  daftarSubKategori,
+}) => {
   const renderKategoriItem = ({ item }: { item: Kategori }) => {
     const isSelected = kategoriTerpilih?.id === item.id;
 
     return (
       <TouchableOpacity
-        style={[styles.kategoriItem, isSelected && styles.kategoriItemSelected]}
+        style={[gaya.itemKategori, isSelected && gaya.itemKategoriTerpilih]}
         activeOpacity={0.85}
-        onPress={() => setKategoriTerpilih(item)}
+        onPress={() => onKategoriSelect(item)}
       >
-        <Text style={[styles.kategoriText, isSelected && styles.kategoriTextSelected]}>
+        <Text style={[gaya.teksKategori, isSelected && gaya.teksKategoriTerpilih]}>
           {item.nama}
         </Text>
       </TouchableOpacity>
     );
   };
 
-  // --- DIPERBAIKI: Menggunakan tipe Subkategori dari tipe database ---
   const renderSubKategoriItem = ({ item }: { item: Subkategori }) => {
     return (
-      <View style={styles.subKategoriItem}>
-        <Text style={styles.subKategoriText}>{item.nama}</Text>
+      <View style={gaya.itemSubKategori}>
+        <Text style={gaya.teksSubKategori}>{item.nama}</Text>
       </View>
     );
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.kategoriContainer}>
+    <View style={gaya.penampung}>
+      <View style={gaya.penampungKategori}>
         <FlatList
           data={daftarKategori}
           renderItem={renderKategoriItem}
-          // --- DIPERBAIKI: Konversi ID number ke string ---
           keyExtractor={(item) => item.id.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.paddingHorizontalList}
-          ListEmptyComponent={<Text style={styles.emptyText}>Belum ada kategori.</Text>}
+          ListEmptyComponent={<Text style={gaya.teksKosong}>Belum ada kategori.</Text>}
         />
       </View>
 
-      <View style={styles.subKategoriContainer}>
-        <Text style={styles.subKategoriHeader}>
+      <View style={gaya.penampungSubKategori}>
+        <Text style={gaya.judulSubKategori}>
           Sub-kategori untuk:{' '}
-          <Text style={styles.subKategoriNama}>{kategoriTerpilih?.nama || 'Pilih Kategori'}</Text>
+          <Text style={gaya.namaSubKategori}>{kategoriTerpilih?.nama || 'Pilih Kategori'}</Text>
         </Text>
 
         <FlatList
           data={daftarSubKategori}
           renderItem={renderSubKategoriItem}
-          // --- DIPERBAIKI: Konversi ID number ke string ---
           keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.paddingList}
-          ListEmptyComponent={<Text style={styles.emptyText}>Tidak ada sub-kategori.</Text>}
+          contentContainerStyle={gaya.paddingList}
+          ListEmptyComponent={<Text style={gaya.teksKosong}>Tidak ada sub-kategori.</Text>}
         />
       </View>
     </View>
   );
-}
+};
 
-// Gaya tidak berubah
 const warna = {
   primer: '#4F46E5',
   border: '#e2e8f0',
@@ -88,29 +78,28 @@ const warna = {
   permukaan: '#ffffff',
 };
 
-const styles = StyleSheet.create({
-  container: {
+const gaya = StyleSheet.create({
+  penampung: {
+    flex: 1,
     paddingHorizontal: 14,
     paddingTop: 10,
   },
-  kategoriContainer: {
+  penampungKategori: {
+    maxHeight: '35%',
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: warna.border,
   },
-  paddingHorizontalList: {
-    paddingRight: 6,
-  },
-  kategoriItem: {
+  itemKategori: {
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: warna.border,
-    marginRight: 10,
+    marginBottom: 10,
     backgroundColor: warna.permukaan,
   },
-  kategoriItemSelected: {
+  itemKategoriTerpilih: {
     backgroundColor: warna.primer,
     borderColor: warna.primer,
     shadowColor: '#000',
@@ -118,32 +107,33 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  kategoriText: {
+  teksKategori: {
     fontSize: 14,
     fontWeight: '600',
     color: warna.teksUtama,
   },
-  kategoriTextSelected: {
+  teksKategoriTerpilih: {
     color: '#ffffff',
     fontWeight: '700',
   },
-  subKategoriContainer: {
+  penampungSubKategori: {
+    flex: 1,
     paddingTop: 18,
   },
-  subKategoriHeader: {
+  judulSubKategori: {
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 14,
     color: warna.teksSekunder,
   },
-  subKategoriNama: {
+  namaSubKategori: {
     color: warna.teksUtama,
     fontWeight: '700',
   },
   paddingList: {
     paddingBottom: 20,
   },
-  subKategoriItem: {
+  itemSubKategori: {
     backgroundColor: warna.permukaan,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -156,12 +146,12 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
-  subKategoriText: {
+  teksSubKategori: {
     fontSize: 15,
     fontWeight: '500',
     color: warna.teksUtama,
   },
-  emptyText: {
+  teksKosong: {
     textAlign: 'center',
     marginTop: 20,
     color: warna.teksSekunder,

@@ -1,6 +1,7 @@
 // context/KategoriContext.tsx
-import type { JSX, ReactNode } from 'react';
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import type { Kategori, Subkategori, TipeKategori } from '@/database/tipe';
+import type { Dispatch, JSX, ReactNode, SetStateAction } from 'react';
+import React, { createContext, useCallback, useContext, useState, useEffect } from 'react';
 
 import {
   ambilSemuaKategori,
@@ -11,153 +12,188 @@ import {
   tambahKategori as dbTambahKategori,
   tambahSubkategori as dbTambahSubkategori,
 } from '@/database/operasi';
-import type { Kategori, TipeTransaksi } from '@/database/tipe';
+
+export interface FormKategori {
+  nama: string;
+  ikon: string;
+  tipe: TipeKategori | '';
+}
+
+export interface FormSubkategori {
+  nama: string;
+}
 
 interface KategoriContextType {
+  formKategori: FormKategori;
+  setFormKategori: Dispatch<SetStateAction<FormKategori>>;
+  formSubkategori: FormSubkategori;
+  setFormSubkategori: Dispatch<SetStateAction<FormSubkategori>>;
   daftarKategori: Kategori[];
-  tipeAktif: TipeTransaksi;
   memuat: boolean;
-  setTipeAktif: (tipe: TipeTransaksi) => void;
-  tambahKategori: (nama: string, ikon: string, tipe: 'pemasukan' | 'pengeluaran') => Promise<void>;
-  hapusKategori: (idKategori: number) => Promise<void>;
-  perbaruiKategori: (idKategori: number, namaBaru: string, ikonBaru: string) => Promise<void>;
-  tambahSubkategori: (idKategori: number, namaSubkategori: string) => Promise<void>;
-  hapusSubkategori: (_idKategori: number, idSubkategori: number) => Promise<void>;
-  perbaruiSubkategori: (
-    _idKategori: number,
-    idSubkategori: number,
-    namaBaru: string
-  ) => Promise<void>;
   muatUlangDaftarKategori: () => Promise<void>;
+  tambahKategori: (nama: string, ikon: string, tipe: TipeKategori) => Promise<void>;
+  perbaruiKategori: (id: number) => Promise<void>;
+  hapusKategori: (id: number) => Promise<void>;
+  muatKategoriUntukForm: (kategori: Kategori) => void;
+  tambahSubkategori: (nama: string, idKategori: number) => Promise<void>;
+  perbaruiSubkategori: (id: number, nama: string) => Promise<void>;
+  hapusSubkategori: (id: number) => Promise<void>;
+  muatSubkategoriUntukForm: (subkategori: Subkategori) => void;
+  tipeAktif: TipeKategori;
+  setTipeAktif: Dispatch<SetStateAction<TipeKategori>>;
 }
 
 const KategoriContext = createContext<KategoriContextType | undefined>(undefined);
 
-export const useKategori = (): KategoriContextType => {
-  const context = useContext(KategoriContext);
-  if (!context) {
-    throw new Error('useKategori harus digunakan di dalam KategoriProvider');
-  }
-  return context;
-};
-
 interface KategoriProviderProps {
   children: ReactNode;
-  initialDaftarKategori?: Kategori[];
 }
 
-export function KategoriProvider({ children, initialDaftarKategori }: KategoriProviderProps): JSX.Element {
-  const [daftarKategori, setDaftarKategori] = useState<Kategori[]>(initialDaftarKategori || []);
-  const [tipeAktif, setTipeAktif] = useState<TipeTransaksi>('pengeluaran');
-  const [memuat, setMemuat] = useState(!initialDaftarKategori);
+export function KategoriProvider({ children }: KategoriProviderProps): JSX.Element {
+  const [formKategori, setFormKategori] = useState<FormKategori>({ nama: '', ikon: '', tipe: '' });
+  const [formSubkategori, setFormSubkategori] = useState<FormSubkategori>({ nama: '' });
+  const [daftarKategori, setDaftarKategori] = useState<Kategori[]>([]);
+  const [memuat, setMemuat] = useState(true);
+  const [tipeAktif, setTipeAktif] = useState<TipeKategori>('pengeluaran');
 
   const muatUlangDaftarKategori = useCallback(async (): Promise<void> => {
     setMemuat(true);
     try {
-      const data = await ambilSemuaKategori();
-      setDaftarKategori(data);
-    } catch (e) {
-      console.error('Gagal memuat kategori dari database:', e);
+      const semuaKategori = await ambilSemuaKategori();
+      setDaftarKategori(semuaKategori);
+    } catch (error) {
+      console.error('Gagal memuat ulang daftar kategori:', error);
     } finally {
       setMemuat(false);
     }
   }, []);
 
   useEffect(() => {
-    if (!initialDaftarKategori) {
-      void muatUlangDaftarKategori();
-    }
-  }, [initialDaftarKategori, muatUlangDaftarKategori]);
+    muatUlangDaftarKategori();
+  }, []);
 
-  const tambahKategori = async (
-    nama: string,
-    ikon: string,
-    tipe: 'pemasukan' | 'pengeluaran'
-  ): Promise<void> => {
-    try {
-      await dbTambahKategori(nama, ikon, tipe);
-      await muatUlangDaftarKategori();
-    } catch (error) {
-      console.error('Gagal menambah kategori:', error);
-      throw error;
-    }
+  const tambahKategori = useCallback(
+    async (nama: string, ikon: string, tipe: TipeKategori): Promise<void> => {
+      if (!nama) throw new Error('Nama kategori tidak boleh kosong.');
+      if (!tipe) throw new Error('Tipe kategori harus dipilih.');
+      try {
+        await dbTambahKategori(nama, ikon, tipe);
+        await muatUlangDaftarKategori();
+      } catch (error) {
+        console.error('Gagal menambah kategori:', error);
+        throw error;
+      }
+    },
+    [muatUlangDaftarKategori]
+  );
+
+  const perbaruiKategori = useCallback(
+    async (id: number): Promise<void> => {
+      if (!formKategori.nama) throw new Error('Nama kategori tidak boleh kosong.');
+      try {
+        await dbPerbaruiKategori(id, formKategori.nama, formKategori.ikon);
+        await muatUlangDaftarKategori();
+      } catch (error) {
+        console.error('Gagal memperbarui kategori:', error);
+        throw error;
+      }
+    },
+    [formKategori, muatUlangDaftarKategori]
+  );
+
+  const hapusKategori = useCallback(
+    async (id: number): Promise<void> => {
+      try {
+        await dbHapusKategori(id);
+        await muatUlangDaftarKategori();
+      } catch (error) {
+        console.error('Gagal menghapus kategori:', error);
+        throw error;
+      }
+    },
+    [muatUlangDaftarKategori]
+  );
+
+  const muatKategoriUntukForm = (kategori: Kategori) => {
+    setFormKategori({ nama: kategori.nama, ikon: kategori.ikon ?? '', tipe: kategori.tipe });
   };
 
-  const hapusKategori = async (idKategori: number): Promise<void> => {
-    try {
-      await dbHapusKategori(idKategori);
-      await muatUlangDaftarKategori();
-    } catch (error) {
-      console.error('Gagal menghapus kategori:', error);
-      throw error;
-    }
-  };
+  const tambahSubkategori = useCallback(
+    async (nama: string, idKategori: number): Promise<void> => {
+      if (!nama) throw new Error('Nama subkategori tidak boleh kosong.');
+      try {
+        await dbTambahSubkategori(nama, idKategori);
+        await muatUlangDaftarKategori();
+      } catch (error) {
+        console.error('Gagal menambah subkategori:', error);
+        throw error;
+      }
+    },
+    [muatUlangDaftarKategori]
+  );
 
-  const perbaruiKategori = async (
-    idKategori: number,
-    namaBaru: string,
-    ikonBaru: string
-  ): Promise<void> => {
-    try {
-      await dbPerbaruiKategori(idKategori, namaBaru, ikonBaru);
-      await muatUlangDaftarKategori();
-    } catch (error) {
-      console.error('Gagal memperbarui kategori:', error);
-      throw error;
-    }
-  };
+  const perbaruiSubkategori = useCallback(
+    async (id: number, nama: string): Promise<void> => {
+      if (!nama) throw new Error('Nama subkategori tidak boleh kosong.');
+      try {
+        await dbPerbaruiSubkategori(id, nama);
+        await muatUlangDaftarKategori();
+      } catch (error) {
+        console.error('Gagal memperbarui subkategori:', error);
+        throw error;
+      }
+    },
+    [muatUlangDaftarKategori]
+  );
 
-  const tambahSubkategori = async (idKategori: number, namaSubkategori: string): Promise<void> => {
-    try {
-      await dbTambahSubkategori(namaSubkategori, idKategori);
-      await muatUlangDaftarKategori();
-    } catch (error) {
-      console.error('Gagal menambah subkategori:', error);
-      throw error;
-    }
-  };
+  const hapusSubkategori = useCallback(
+    async (id: number): Promise<void> => {
+      try {
+        await dbHapusSubkategori(id);
+        await muatUlangDaftarKategori();
+      } catch (error) {
+        console.error('Gagal menghapus subkategori:', error);
+        throw error;
+      }
+    },
+    [muatUlangDaftarKategori]
+  );
 
-  const hapusSubkategori = async (_idKategori: number, idSubkategori: number): Promise<void> => {
-    try {
-      await dbHapusSubkategori(idSubkategori);
-      await muatUlangDaftarKategori();
-    } catch (error) {
-      console.error('Gagal menghapus subkategori:', error);
-      throw error;
-    }
-  };
-
-  const perbaruiSubkategori = async (
-    _idKategori: number,
-    idSubkategori: number,
-    namaBaru: string
-  ): Promise<void> => {
-    try {
-      await dbPerbaruiSubkategori(idSubkategori, namaBaru);
-      await muatUlangDaftarKategori();
-    } catch (error) {
-      console.error('Gagal memperbarui subkategori:', error);
-      throw error;
-    }
+  const muatSubkategoriUntukForm = (subkategori: Subkategori) => {
+    setFormSubkategori({ nama: subkategori.nama });
   };
 
   return (
     <KategoriContext.Provider
       value={{
+        formKategori,
+        setFormKategori,
+        formSubkategori,
+        setFormSubkategori,
         daftarKategori,
-        tipeAktif,
         memuat,
-        setTipeAktif,
-        tambahKategori,
-        hapusKategori,
-        perbaruiKategori,
-        tambahSubkategori,
-        hapusSubkategori,
-        perbaruiSubkategori,
         muatUlangDaftarKategori,
+        tambahKategori,
+        perbaruiKategori,
+        hapusKategori,
+        muatKategoriUntukForm,
+        tambahSubkategori,
+        perbaruiSubkategori,
+        hapusSubkategori,
+        muatSubkategoriUntukForm,
+        tipeAktif,
+        setTipeAktif,
       }}
     >
       {children}
     </KategoriContext.Provider>
   );
 }
+
+export const useKategori = (): KategoriContextType => {
+  const context = useContext(KategoriContext);
+  if (context === undefined) {
+    throw new Error('useKategori harus digunakan di dalam KategoriProvider');
+  }
+  return context;
+};

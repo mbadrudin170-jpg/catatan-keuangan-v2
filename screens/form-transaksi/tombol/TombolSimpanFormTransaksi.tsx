@@ -8,7 +8,8 @@ export default function TombolSimpanFormTransaksi() {
   const { transaksi, setTransaksi, tambahTransaksi } = useTransaksi();
 
   const apakahTombolNonaktif = (() => {
-    if (transaksi.jumlah <= 0 || !transaksi.dompet_id) {
+    // DIUBAH: Pengecekan disesuaikan untuk dompet_id yang bisa null
+    if (transaksi.jumlah <= 0 || transaksi.dompet_id === null) {
       return true;
     }
     if (transaksi.tipe === 'transfer') {
@@ -23,15 +24,13 @@ export default function TombolSimpanFormTransaksi() {
     return false;
   })();
 
-  // DIUBAH: Logika handleSimpan dibuat async dan dibungkus try...catch
   const handleSimpan = async () => {
     if (apakahTombolNonaktif) return;
 
     try {
-      // 1. Tunggu proses penyimpanan selesai
       await tambahTransaksi(transaksi);
 
-      // 2. Jika berhasil, reset form ke kondisi awal
+      // DIUBAH: Reset form sekarang menggunakan null untuk dompet_id
       setTransaksi({
         id: Date.now(),
         jumlah: 0,
@@ -39,15 +38,13 @@ export default function TombolSimpanFormTransaksi() {
         tanggal: new Date().toISOString(),
         tipe: 'pengeluaran',
         kategori_id: null,
-        dompet_id: 0,
+        dompet_id: null, // Diganti dari 0 ke null
         dompet_tujuan_id: null,
         subkategori_id: null,
       });
 
-      // 3. Navigasi kembali hanya setelah semua berhasil
       router.back();
     } catch (error: any) {
-      // 4. Jika ada error (dari validasi di context), tampilkan ke pengguna
       console.error('Gagal menyimpan dari TombolSimpan:', error);
       Alert.alert('Gagal Menyimpan', error.message || 'Terjadi kesalahan yang tidak diketahui.');
     }
@@ -55,6 +52,31 @@ export default function TombolSimpanFormTransaksi() {
 
   return (
     <View style={gaya.penampung}>
+      {/** ask:  saat mau menyimpan muncul ini  Gagal menyimpan dari TombolSimpan: [Error: Call to function 'NativeStatement.finalizeAsync' has been rejected.
+→ Caused by: Error code : FOREIGN KEY constraint failed] 
+
+Code: construct.js
+  2 | var setPrototypeOf = require("./setPrototypeOf.js");
+  3 | function _construct(t, e, r) {
+> 4 |   if (isNativeReflectConstruct()) return Reflect.construct.apply(null, arguments);
+    |                                                                 ^
+  5 |   var o = [null];
+  6 |   o.push.apply(o, e);
+  7 |   var p = new (t.bind.apply(t, o))();
+Call Stack
+  construct (<native>)
+  apply (<native>)
+  _construct (node_modules/@babel/runtime/helpers/construct.js:4:65)
+  Wrapper (node_modules/@babel/runtime/helpers/wrapNativeSuper.js:15:23)
+  construct (<native>)
+  _callSuper (node_modules/@babel/runtime/helpers/callSuper.js:5:108)
+  constructor (node_modules/expo-modules-core/src/errors/CodedError.ts:11:5)
+   
+       baca dahulu file  GEMINI.md
+      ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu
+       selalu tulis kan jalur path file di paling atas setiap file
+       tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya
+       */}
       <Pressable
         style={({ pressed }) => [
           gaya.tombol,

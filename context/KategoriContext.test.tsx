@@ -70,15 +70,14 @@ describe('KategoriContext', () => {
     expect(result.current.tipeAktif).toBe('pemasukan');
   });
 
-  it('harus memanggil hapusSubkategori tanpa memerlukan idKategori', async () => {
+  it('harus memanggil hapusSubkategori dengan benar', async () => {
     const { result } = renderHook(() => useKategori(), { wrapper });
 
     // Menunggu pemuatan awal
     await waitFor(() => expect(dbOps.ambilSemuaKategori).toHaveBeenCalledTimes(1));
 
     await act(async () => {
-      // 999 adalah _idKategori yang diabaikan
-      await result.current.hapusSubkategori(999, 10);
+      await result.current.hapusSubkategori(10);
     });
 
     expect(dbOps.hapusSubkategori).toHaveBeenCalledWith(10);

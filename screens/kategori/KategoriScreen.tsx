@@ -1,32 +1,48 @@
 // screens/kategori/KategoriScreen.tsx
-import HeaderKategori from '@/screens/kategori/HeaderKategori';
-import ListKategori from '@/screens/kategori/ListKategori';
-import TombolTambahKategori from '@/screens/kategori/TombolTambahKategori';
-import TombolTipe from '@/screens/kategori/TombolTipe';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import HeaderKategori from './HeaderKategori';
+import { ListKategori } from './ListKategori'; // Menggunakan named import
+import TombolTambahKategori from './TombolTambahKategori';
+import TombolTipe from './TombolTipe';
+import { useKategoriScreen } from './useKategoriScreen';
 
-export default function KategoriScreen() {
+const KategoriScreen: React.FC = () => {
+  const {
+    tipeAktif,
+    setTipeAktif,
+    kategoriDisesuaikan,
+    kategoriTerpilih,
+    daftarSubKategori,
+    handlePilihKategori,
+  } = useKategoriScreen();
+
   return (
-    <SafeAreaView style={gaya.wadah}>
+    <SafeAreaView style={gaya.penampung}>
       <HeaderKategori />
-      <View style={gaya.kontenUtama} testID="konten-utama">
-        <TombolTipe />
-        <ListKategori />
+      <View style={gaya.kontenUtama}>
+        <TombolTipe tipeAktif={tipeAktif} setTipeAktif={setTipeAktif} />
+        <ListKategori
+          daftarKategori={kategoriDisesuaikan}
+          kategoriTerpilih={kategoriTerpilih}
+          onKategoriSelect={handlePilihKategori}
+          daftarSubKategori={daftarSubKategori}
+        />
       </View>
       <TombolTambahKategori />
     </SafeAreaView>
   );
-}
+};
+
+export default KategoriScreen;
 
 const gaya = StyleSheet.create({
-  wadah: {
+  penampung: {
     flex: 1,
-    backgroundColor: '#f8f9fa', // Latar belakang yang lebih modern dan bersih
+    backgroundColor: '#f8fafc',
   },
   kontenUtama: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
   },
 });

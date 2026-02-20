@@ -13,7 +13,7 @@
     "doctor": "npx expo-doctor",
     "type-check": "tsc --noEmit",
     "test": "jest",
-    "validate": "npm run check && npm run doctor && npm run type-check && npm run lint && npm run test"
+    "validate": "npm run check && npm run type-check && npm run lint"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

@@ -3,22 +3,20 @@ import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { useDompet, type FormDompet } from '@/context/DompetContext'; // DIUBAH
+import { useDompet, type FormDompet } from '@/context/DompetContext';
 
-const daftarTipeDompet = [
-  { id: 1, nama: 'Dompet Digital', ikon: 'wallet-outline' },
-  { id: 2, nama: 'Rekening Bank', ikon: 'card-outline' },
-  { id: 3, nama: 'Uang Tunai', ikon: 'cash-outline' },
-  { id: 4, nama: 'Investasi', ikon: 'analytics-outline' },
-  { id: 5, nama: 'Lainnya', ikon: 'ellipsis-horizontal-outline' },
+const daftarTipe = [
+  { id: '1', nama: 'Tunai', ikon: 'cash-outline' },
+  { id: '2', nama: 'Bank', ikon: 'business-outline' },
+  { id: '3', nama: 'E-Wallet', ikon: 'wallet-outline' },
+  { id: '4', nama: 'Pinjaman', ikon: 'card-outline' },
+  { id: '5', nama: 'Lainnya', ikon: 'ellipsis-horizontal-outline' },
 ];
 
 export default function ModalTipeDompet() {
-  // DIUBAH: Menggunakan nama baru dari context
   const { modalTipeTerlihat, tutupModalTipe, setFormDompet, formDompet } = useDompet();
 
   const handlePilihTipe = (tipe: { nama: string; ikon: string }) => {
-    // DIUBAH: Menggunakan setFormDompet dengan tipe eksplisit
     setFormDompet((dataSebelumnya: FormDompet) => ({
       ...dataSebelumnya,
       tipe: tipe.nama,
@@ -45,16 +43,12 @@ export default function ModalTipeDompet() {
         </View>
 
         <View style={gaya.daftarPilihan}>
-          {daftarTipeDompet.map((item) => {
-            // DIUBAH: Menggunakan formDompet.tipe
+          {daftarTipe.map((item) => {
             const terpilih = formDompet.tipe === item.nama;
             return (
               <Pressable
                 key={item.id}
-                style={[
-                  gaya.itemPilihan,
-                  terpilih && gaya.itemPilihanTerpilih,
-                ]}
+                style={[gaya.itemPilihan, terpilih && gaya.itemPilihanTerpilih]}
                 onPress={() => handlePilihTipe(item)}
               >
                 <Ionicons
@@ -62,12 +56,7 @@ export default function ModalTipeDompet() {
                   size={22}
                   color={terpilih ? warna.primer : warna.teksSekunder}
                 />
-                <Text
-                  style={[
-                    gaya.teksItemPilihan,
-                    terpilih && gaya.teksItemPilihanTerpilih,
-                  ]}
-                >
+                <Text style={[gaya.teksItemPilihan, terpilih && gaya.teksItemPilihanTerpilih]}>
                   {item.nama}
                 </Text>
               </Pressable>

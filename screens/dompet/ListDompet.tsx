@@ -5,8 +5,8 @@ import React from 'react';
 import { ActivityIndicator, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 
 import type { Dompet } from '@/database/tipe';
-import { formatAngka } from '@/utils/format/FormatAngka';
 import { useLogikaDompet } from '@/screens/dompet/logikaDompet';
+import { formatAngka } from '@/utils/format/FormatAngka';
 
 export default function ListDompet() {
   const { seksiData, memuat, daftarDompet } = useLogikaDompet();
@@ -31,16 +31,8 @@ export default function ListDompet() {
       onPress={() => router.push(`/dompet/${item.id}`)}
     >
       <View style={gaya.infoKiri}>
-        <View style={gaya.ikonWadah}>
-          <Ionicons
-            name={(item.ikon as React.ComponentProps<typeof Ionicons>['name']) || 'wallet'}
-            size={24}
-            color={warna.primer}
-          />
-        </View>
         <Text style={gaya.teksNama}>{item.nama}</Text>
       </View>
-      {/* DIUBAH: Mengembalikan tampilan saldo dan menghapus komentar serta spasi penyebab error */}
       <Text style={gaya.teksSaldo}>{formatAngka(item.saldo)}</Text>
     </Pressable>
   );
@@ -113,12 +105,6 @@ const gaya = StyleSheet.create({
   infoKiri: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-  },
-  ikonWadah: {
-    backgroundColor: warna.latarIkon,
-    padding: 10,
-    borderRadius: 99,
   },
   teksNama: {
     fontSize: 16,
