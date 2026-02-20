@@ -1,98 +1,136 @@
 // screens/transaksi/DaftarTransaksi.tsx
-import { useMemo } from 'react';
-import { SectionList, StyleSheet, Text, View } from 'react-native';
 
-import { useKategori } from '@/context/KategoriContext';
-import { useTransaksi } from '@/context/TransaksiContext';
-import { formatAngka } from '@/utils/format/FormatAngka';
-import { grupTransaksiBerdasarkanTanggal } from '@/utils/transaksi/GrupTransaksi';
-import ItemTransaksi from './ItemTransaksi';
+import KartuTransaksi from '@/components/KartuTransaksi';
+import { Transaksi } from '@/database/tipe';
+import { formatTanggal } from '@/utils/format/FormatTanggal';
+import { formatMataUang } from '@/utils/formatMataUang';
+import { grupTransaksiUrutTanggal } from '@/utils/transaksi/GrupTransaksi';
+import React from 'react';
+import { Dimensions, SectionList, StyleSheet, Text, View } from 'react-native';
 
-export default function DaftarTransaksi() {
-  const { daftarTransaksi } = useTransaksi();
-  const { daftarKategori } = useKategori();
-
-  // DIUBAH: Menggunakan useMemo untuk mengelompokkan data hanya saat daftar berubah
-  const seksiTransaksi = useMemo(() => {
-    // Hanya mengambil id dan tipe untuk efisiensi
-    const infoKategori = daftarKategori.map(({ id, tipe }) => ({ id, tipe }));
-    return grupTransaksiBerdasarkanTanggal(daftarTransaksi, infoKategori);
-  }, [daftarTransaksi, daftarKategori]);
-
-  if (seksiTransaksi.length === 0) {
-    return (
-      <View style={gaya.penampungKosong}>
-        <Text style={gaya.teksKosong}>Belum ada riwayat transaksi.</Text>
-      </View>
-    );
-  }
-
-  // DIUBAH: Mengganti FlatList dengan SectionList untuk tampilan grup
-  return (
-    <SectionList
-      sections={seksiTransaksi}
-      keyExtractor={(item) => item.id.toString()}
-      renderItem={({ item }) => <ItemTransaksi item={item} />}
-      renderSectionHeader={({ section: { tanggal, total } }) => (
-        <View style={gaya.headerGrup}>
-          <Text style={gaya.teksTanggalGrup}>{tanggal}</Text>
-          <Text style={gaya.teksTotalGrup}>{formatAngka(total, { denganTanda: true })}</Text>
-        </View>
-      )}
-      contentContainerStyle={gaya.daftar}
-      showsVerticalScrollIndicator={false}
-    />
-  );
+interface DaftarTransaksiProps {
+  transaksi: Transaksi[];
+  onPressItem: (id: number) => void;
 }
 
-const gaya = StyleSheet.create({
-  daftar: {
-    paddingTop: 8,
-    paddingBottom: 24,
+const { width } = Dimensions.get('window');
+
+const DaftarTransaksi: React.FC<DaftarTransaksiProps> = ({ transaksi, onPressItem }) => {
+  const sections = grupTransaksiUrutTanggal(transaksi);
+
+  return (
+    <SectionList
+      sections={sections}
+      keyExtractor={(item) => item.id.toString()}
+      stickySectionHeadersEnabled={true}
+      contentContainerStyle={styles.listContent}
+      renderItem={({ item }) => <KartuTransaksi transaksi={item} onPress={onPressItem} />}
+      renderSectionHeader={({ section: { title, data } }) => {
+        // Hitung ringkasan harian
+        const totalHarian = data.reduce((acc, curr) => {
+          return curr.tipe === 'pemasukan' ? acc + curr.nominal : acc - curr.nominal;
+        }, 0);
+
+        return (
+          <View style={styles.headerContainer}>
+            <View style={styles.headerBlur}>
+              <View style={styles.tglBox}>
+                <Text style={styles.textHari}>{formatTanggal(title).split(',')[0]}</Text>
+                <Text style={styles.textTanggal}>{title.split('-')[2]}</Text>
+              </View>
+              <View style={styles.infoBox}>
+                <Text style={styles.textBulanTahun}>{formatTanggal(title).split(',')[1]}</Text>
+                <Text
+                  style={[
+                    styles.textTotalHarian,
+                    { color: totalHarian >= 0 ? '#2E7D32' : '#C62828' },
+                  ]}
+                >
+                  {totalHarian >= 0 ? '+' : ''}
+                  {formatMataUang(totalHarian)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        );
+      }}
+      ListEmptyComponent={
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Belum ada transaksi di periode ini</Text>
+        </View>
+      }
+    />
+  );
+};
+
+const styles = StyleSheet.create({
+  listContent: {
+    paddingBottom: 100,
   },
-  // BARU: Gaya untuk header grup di SectionList
-  headerGrup: {
-    paddingHorizontal: 22,
-    paddingTop: 20,
-    paddingBottom: 12,
+  headerContainer: {
+    backgroundColor: '#F8F9FA', // Warna background layar
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  headerBlur: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ECEFF1',
+    // Shadow halus untuk header
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tglBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    marginRight: 12,
+    minWidth: 45,
+  },
+  textHari: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#78909C',
+    textTransform: 'uppercase',
+  },
+  textTanggal: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#263238',
+  },
+  infoBox: {
+    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8fafc', // Warna latar belakang agar header menonjol
   },
-  teksTanggalGrup: {
+  textBulanTahun: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#475569',
+    color: '#455A64',
   },
-  teksTotalGrup: {
-    fontSize: 14,
+  textTotalHarian: {
+    fontSize: 13,
     fontWeight: '700',
-    color: '#1e293b',
   },
-  penampungKosong: {
-    flex: 1,
-    justifyContent: 'center',
+  emptyContainer: {
+    padding: 40,
     alignItems: 'center',
-    padding: 24,
-    backgroundColor: '#f8fafc',
   },
-  teksKosong: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#94a3b8',
-    textAlign: 'center',
-    letterSpacing: -0.2,
-    backgroundColor: '#ffffff',
-    paddingVertical: 24,
-    paddingHorizontal: 32,
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 8,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.03)',
+  emptyText: {
+    color: '#90A4AE',
+    fontSize: 14,
   },
 });
+
+export default DaftarTransaksi;
