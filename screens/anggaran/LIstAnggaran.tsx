@@ -1,11 +1,12 @@
 // screens/form-anggaran/ListAnggaran.tsx
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 // import { useFocusEffect } from 'expo-router';
 // import { ambilSemuaAnggaran } from '@/database/operasi';
 import type { AnggaranLokal } from '@/screens/anggaran/dataDummy'; // Perbarui path impor
 import { dataDummyAnggaran } from '@/screens/anggaran/dataDummy'; // Perbarui path impor
 import { formatMataUang } from '@/utils/formatMataUang';
+import { router } from 'expo-router';
 
 export default function ListAnggaran() {
   // Gunakan data dummy sebagai state awal
@@ -48,13 +49,19 @@ export default function ListAnggaran() {
   return (
     <View style={gaya.penampung}>
       {daftarAnggaran.map((anggaran) => (
-        <View key={anggaran.id} style={gaya.item}>
+        <Pressable
+          key={anggaran.id}
+          style={gaya.item}
+          onPress={() =>
+            router.push({ pathname: '/(detail)/anggaran/[id]', params: { id: anggaran.id } })
+          }
+        >
           <Text style={gaya.namaKategori}>{anggaran.nama_kategori}</Text>
           <View>
             <Text style={gaya.jumlah}>{formatMataUang(anggaran.jumlah)}</Text>
             <Text style={gaya.periode}>{anggaran.periode}</Text>
           </View>
-        </View>
+        </Pressable>
       ))}
     </View>
   );

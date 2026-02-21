@@ -27,7 +27,7 @@ export default function KartuTransaksi({ transaksi }: Props) {
   const tanda = isPemasukkan ? '+' : '-';
 
   const bukaDetail = () => {
-    router.push(`/transaksi/${transaksi.id}`);
+    router.push({ pathname: '/(detail)/transaksi/[id]', params: { id: transaksi.id } });
   };
 
   return (

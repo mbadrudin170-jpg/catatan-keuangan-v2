@@ -1,20 +1,6 @@
-// app/(form)/form-anggaran.tsx
-import { View, StyleSheet } from 'react-native';
-import HeaderFormAnggaran from '@/screens/form-anggaran/HeaderFormAnggaran';
-import InputFormAnggaran from '@/screens/form-anggaran/InputFormAnggaran';
+// ~/catatan-keuangan-v2/app/(form)/form-anggaran.tsx
+import ScreenFormAnggaran from '@/screens/form-anggaran/ScreenFormAnggaran';
 
 export default function HalamanFormAnggaran() {
-  return (
-    <View style={gaya.wadah}>
-      <HeaderFormAnggaran />
-      <InputFormAnggaran />
-    </View>
-  );
+  return <ScreenFormAnggaran />;
 }
-
-const gaya = StyleSheet.create({
-  wadah: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-});

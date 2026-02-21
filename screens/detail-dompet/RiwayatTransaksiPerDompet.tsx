@@ -57,7 +57,9 @@ function ItemRiwayat({ item, dompetId }: { item: Transaksi; dompetId: number }) 
   return (
     <Pressable
       style={({ pressed }) => [gayaItem.wadah, pressed && gayaItem.wadahTekan]}
-      onPress={() => router.push(`/transaksi/${item.id}`)}
+      onPress={() =>
+        router.push({ pathname: '/(detail)/transaksi/[id]', params: { id: item.id } })
+      }
       android_ripple={{ color: warna.abuRipple, borderless: false }}
     >
       <View style={gayaItem.info}>

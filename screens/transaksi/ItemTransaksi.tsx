@@ -29,7 +29,7 @@ export default function ItemTransaksi({ item }: Props) {
 
   // Fungsi untuk menangani navigasi ke halaman detail
   const bukaDetail = () => {
-    router.push(`/transaksi/${item.id}`);
+    router.push({ pathname: '/(detail)/transaksi/[id]', params: { id: item.id } });
   };
 
   return (

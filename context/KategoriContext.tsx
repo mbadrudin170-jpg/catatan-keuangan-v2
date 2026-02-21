@@ -30,7 +30,7 @@ interface KategoriContextType {
   setTipeAktif: Dispatch<SetStateAction<TipeKategori>>;
 }
 
-const KategoriContext = createContext<KategoriContextType | undefined>(undefined);
+export const KategoriContext = createContext<KategoriContextType | undefined>(undefined);
 
 export const KategoriProvider = ({ children }: { children: ReactNode }) => {
   const [semuaKategori, setSemuaKategori] = useState<Kategori[]>([]);

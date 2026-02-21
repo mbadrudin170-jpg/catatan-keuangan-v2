@@ -15,7 +15,10 @@ export default function Transaksi() {
   const router = useRouter();
 
   const handlePressItem = (id: number) => {
-    router.push(`/(detail)/transaksi/${String(id)}`);
+    router.push({
+      pathname: '/(detail)/transaksi/[id]',
+      params: { id: String(id) },
+    });
   };
 
   return (

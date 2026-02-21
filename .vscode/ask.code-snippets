@@ -2,24 +2,24 @@
   "Tanya Gemini": {
     "prefix": ";ask",
     "body": [
-      "{/** ask:  $1 ",
+      "/** ask:  $1 ",
       " baca dahulu file  GEMINI.md",
       "ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu",
       " selalu tulis kan jalur path file di paling atas setiap file",
       " tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya",
-      " */}"
+      " */"
     ],
     "description": "Sisipkan template pertanyaan untuk Gemini"
   },
   "Pertanyaan style": {
     "prefix": ";pStyle",
     "body": [
-      "{/** ask:  $1,  tolong tambahkan style nya saja dan percantik style nya saja agar terlihat modern ",
+      "/** ask:  $1,  tolong tambahkan style nya saja dan percantik style nya saja agar terlihat modern ",
       " baca dahulu file  GEMINI.md",
       "ini file terbaru yang sudah saya modifikasi jadi kamu gunakan data ini jangan gunakan data yang tersimpan di memori kamu",
       " selalu tulis kan jalur path file di paling atas setiap file",
       " tolong untuk penamaan variabel dan kunci usahakan gunakan bahasa indonesia terkecuali bahasa inggris nya yang sudah umum baru gunakana bahasa inggris nya",
-      " */}"
+      " */"
     ],
     "description": "Pertanyaan untuk memperbaiki style"
   }

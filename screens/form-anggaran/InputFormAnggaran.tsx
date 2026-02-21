@@ -1,103 +1,139 @@
-// screens/form-anggaran/InputFormAnggaran.tsx
-import type { TipePeriode } from '@/database/tipe';
-import { formatMataUang } from '@/utils/formatMataUang';
+// ~/catatan-keuangan-v2/screens/form-anggaran/InputFormAnggaran.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+
+import type { TipePeriode } from '@/database/tipe';
+import type { AnggaranLokal, SubKategoriDetail } from '@/screens/anggaran/dataDummy';
+import { formatMataUang } from '@/utils/formatMataUang';
 import ModalPilihKategori from './ModalPilihKategori';
+import RincianAnggaran from './RincianAnggaran';
 
 export default function InputFormAnggaran() {
-  const [jumlah, setJumlah] = useState('');
-  const [kategori, setKategori] = useState(null);
+  const [kategori, setKategori] = useState<AnggaranLokal | null>(null);
+  const [rincian, setRincian] = useState<SubKategoriDetail[]>([]);
   const [periode, setPeriode] = useState<TipePeriode>('bulanan');
   const [modalKategoriTerbuka, setModalKategoriTerbuka] = useState(false);
 
-  const handlePilihKategori = (kategoriTerpilih) => {
+  const totalAnggaran = rincian.reduce((total, item) => total + item.jumlah, 0);
+
+  const handlePilihKategori = (kategoriTerpilih: AnggaranLokal) => {
     setKategori(kategoriTerpilih);
+    // Perbaiki: Gunakan `subKategori` dan beri tipe pada parameter `sub`
+    const rincianDiinisialisasi = kategoriTerpilih.subKategori.map((sub: { nama: string }) => ({
+      nama: sub.nama,
+      jumlah: 0,
+      terpakai: 0,
+      sisa: 0,
+    }));
+    setRincian(rincianDiinisialisasi);
     setModalKategoriTerbuka(false);
   };
 
+  const handleSimpan = () => {
+    console.log({
+      namaKategori: kategori?.nama_kategori,
+      totalAnggaran,
+      periode,
+      rincian,
+    });
+    alert('Simpan Anggaran');
+  };
+
   return (
-    <View style={gaya.wadah}>
-      {/* Input Jumlah Anggaran */}
-      <View style={gaya.grupInput}>
-        <Text style={gaya.label}>Jumlah Anggaran</Text>
-        <TextInput
-          style={gaya.input}
-          placeholder="Rp 0"
-          keyboardType="numeric"
-          value={jumlah ? formatMataUang(parseInt(jumlah, 10)) : ''}
-          onChangeText={(teks) => setJumlah(teks.replace(/[^0-9]/g, ''))}
-        />
-      </View>
-
-      {/* Pemilih Kategori */}
-      <View style={gaya.grupInput}>
-        <Text style={gaya.label}>Kategori</Text>
-        <Pressable style={gaya.pemilih} onPress={() => setModalKategoriTerbuka(true)}>
-          <Text style={gaya.teksPemilih}>{kategori ? kategori.nama : 'Pilih Kategori'}</Text>
-          <Ionicons name="chevron-down" size={20} color="#6c757d" />
-        </Pressable>
-      </View>
-
-      {/* Pemilih Periode */}
-      <View style={gaya.grupInput}>
-        <Text style={gaya.label}>Periode</Text>
-        <View style={gaya.grupTombolPeriode}>
-          <Pressable
-            style={[gaya.tombolPeriode, periode === 'bulanan' && gaya.tombolPeriodeAktif]}
-            onPress={() => setPeriode('bulanan')}
-          >
-            <Text style={[gaya.teksPeriode, periode === 'bulanan' && gaya.teksPeriodeAktif]}>
-              Bulanan
+    <>
+      <ScrollView style={gaya.wadah} contentContainerStyle={gaya.kontenWadah}>
+        {/* Pemilih Kategori */}
+        <View style={gaya.grupInput}>
+          <Text style={gaya.label}>Kategori</Text>
+          <Pressable style={gaya.pemilih} onPress={() => setModalKategoriTerbuka(true)}>
+            <Text style={gaya.teksPemilih}>
+              {kategori ? kategori.nama_kategori : 'Pilih Kategori'}
             </Text>
-          </Pressable>
-          <Pressable
-            style={[gaya.tombolPeriode, periode === 'tahunan' && gaya.tombolPeriodeAktif]}
-            onPress={() => setPeriode('tahunan')}
-          >
-            <Text style={[gaya.teksPeriode, periode === 'tahunan' && gaya.teksPeriodeAktif]}>
-              Tahunan
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[gaya.tombolPeriode, periode === 'sekali' && gaya.tombolPeriodeAktif]}
-            onPress={() => setPeriode('sekali')}
-          >
-            <Text style={[gaya.teksPeriode, periode === 'sekali' && gaya.teksPeriodeAktif]}>
-              Sekali
-            </Text>
+            <Ionicons name="chevron-down" size={20} color="#6c757d" />
           </Pressable>
         </View>
-      </View>
 
-      {/* Tombol Simpan */}
-      <Pressable style={gaya.tombolSimpan} onPress={() => alert('Simpan Anggaran')}>
-        <Text style={gaya.teksTombolSimpan}>Simpan Anggaran</Text>
-      </Pressable>
+        {/* Rincian Anggaran (muncul setelah kategori dipilih) */}
+        {kategori && (
+          <>
+            <RincianAnggaran subKategoriList={rincian} onUpdateSubKategori={setRincian} />
+
+            <View style={gaya.grupInput}>
+              <Text style={gaya.label}>Total Anggaran</Text>
+              <TextInput
+                style={[gaya.input, gaya.inputNonaktif]}
+                value={formatMataUang(totalAnggaran)}
+                editable={false}
+              />
+            </View>
+          </>
+        )}
+
+        {/* Pemilih Periode */}
+        <View style={gaya.grupInput}>
+          <Text style={gaya.label}>Periode</Text>
+          <View style={gaya.grupTombolPeriode}>
+            <Pressable
+              style={[gaya.tombolPeriode, periode === 'bulanan' && gaya.tombolPeriodeAktif]}
+              onPress={() => setPeriode('bulanan')}
+            >
+              <Text style={[gaya.teksPeriode, periode === 'bulanan' && gaya.teksPeriodeAktif]}>
+                Bulanan
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[gaya.tombolPeriode, periode === 'tahunan' && gaya.tombolPeriodeAktif]}
+              onPress={() => setPeriode('tahunan')}
+            >
+              <Text style={[gaya.teksPeriode, periode === 'tahunan' && gaya.teksPeriodeAktif]}>
+                Tahunan
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[gaya.tombolPeriode, periode === 'sekali' && gaya.tombolPeriodeAktif]}
+              onPress={() => setPeriode('sekali')}
+            >
+              <Text style={[gaya.teksPeriode, periode === 'sekali' && gaya.teksPeriodeAktif]}>
+                Sekali
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Tombol Simpan (di luar ScrollView) */}
+      <View style={gaya.wadahAksi}>
+        <Pressable style={gaya.tombolSimpan} onPress={handleSimpan}>
+          <Text style={gaya.teksTombolSimpan}>Simpan Anggaran</Text>
+        </Pressable>
+      </View>
 
       <ModalPilihKategori
         isVisible={modalKategoriTerbuka}
         onClose={() => setModalKategoriTerbuka(false)}
         onSelectKategori={handlePilihKategori}
       />
-    </View>
+    </>
   );
 }
 
 const gaya = StyleSheet.create({
   wadah: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#f8f9fa',
   },
+  kontenWadah: {
+    padding: 20,
+    gap: 20,
+    paddingBottom: 120, // Tambah padding bawah agar tidak tertutup tombol simpan
+  },
   grupInput: {
-    marginBottom: 20,
+    gap: 8,
   },
   label: {
     fontSize: 16,
     color: '#495057',
-    marginBottom: 8,
     fontWeight: '600',
   },
   input: {
@@ -108,6 +144,10 @@ const gaya = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 12,
     fontSize: 16,
+  },
+  inputNonaktif: {
+    backgroundColor: '#E9ECEF',
+    color: '#6C757D',
   },
   pemilih: {
     backgroundColor: 'white',
@@ -125,16 +165,14 @@ const gaya = StyleSheet.create({
   },
   grupTombolPeriode: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   tombolPeriode: {
     flex: 1,
     paddingVertical: 12,
     borderWidth: 1,
     borderColor: '#007bff',
-    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
-    marginHorizontal: 4,
   },
   tombolPeriodeAktif: {
     backgroundColor: '#007bff',
@@ -147,12 +185,21 @@ const gaya = StyleSheet.create({
   teksPeriodeAktif: {
     color: 'white',
   },
+  wadahAksi: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#DEE2E6',
+    backgroundColor: '#FFFFFF',
+  },
   tombolSimpan: {
     backgroundColor: '#28a745',
     paddingVertical: 15,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20,
   },
   teksTombolSimpan: {
     color: 'white',
