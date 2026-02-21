@@ -52,13 +52,28 @@ export interface Transaksi {
 // Mendefinisikan tipe untuk periode anggaran.
 export type TipePeriode = 'bulanan' | 'tahunan' | 'harian' | 'mingguan' | 'sekali';
 
-// Mendefinisikan struktur data untuk Anggaran.
+// --- STRUKTUR ANGGARAN BARU ---
+
+// Mendefinisikan struktur untuk rincian anggaran per subkategori.
+export interface RincianAnggaran {
+  id: number;
+  anggaran_id: number; // FK ke tabel Anggaran
+  subkategori_id: number; // FK ke tabel Subkategori
+  jumlah: number; // Jumlah yang dianggarkan untuk subkategori ini
+  // Salinan nama untuk kemudahan tampilan
+  nama_subkategori?: string;
+}
+
+// Mendefinisikan struktur data untuk Anggaran (Induk).
 export interface Anggaran {
   id: number;
-  jumlah: number;
+  total_anggaran: number; // Total dari semua rincian anggaran
   periode: TipePeriode;
-  tanggal_mulai: string;
+  tanggal_mulai: string; // Tanggal awal periode anggaran
   kategori_id: number;
+  tipe: 'flat' | 'persentase'; // Tipe anggaran (BARU)
   // Opsional, untuk kemudahan menampilkan nama kategori di UI.
   nama_kategori?: string;
+  // Opsional, untuk menampung semua rincian dari tabel RincianAnggaran.
+  rincian?: RincianAnggaran[];
 }

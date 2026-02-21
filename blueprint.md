@@ -1,27 +1,34 @@
 # Blueprint Proyek
 
-Dokumen ini menguraikan fitur yang sudah diimplementasikan dan rencana pengembangan selanjutnya untuk aplikasi Catatan Keuangan v2.
+Dokumen ini berisi daftar fitur yang telah diimplementasikan dan rencana pengembangan selanjutnya.
 
-## Fitur yang Sudah Ada
+## Fitur yang Telah Selesai
 
-- **Manajemen Kategori (CRUD):** Pengguna dapat menambah, melihat, mengubah, dan menghapus kategori pemasukan dan pengeluaran.
-- **Manajemen Dompet (CRUD):** Pengguna dapat mengelola beberapa dompet, termasuk menambah, melihat, mengubah, dan menghapus.
-- **Manajemen Transaksi (CRUD):** Pengguna dapat mencatat transaksi pemasukan dan pengeluaran, serta melihat, mengubah, dan menghapusnya.
-- **Manajemen Anggaran (CRUD):**
-  - Pengguna dapat melihat, mengubah, dan menghapus anggaran yang sudah ada.
-  - **Form Pembuatan Anggaran:** Antarmuka (UI) untuk membuat anggaran baru telah selesai, termasuk pemilihan kategori dan input rincian anggaran dinamis per sub-kategori.
-- **Statistik Keuangan:** Tampilan ringkasan statistik dasar (pemasukan, pengeluaran, saldo).
-- **Tampilan Detail:**
-  - **Detail Dompet:** Menampilkan rincian saldo dan riwayat transaksi per dompet.
-  - **Detail Transaksi:** Menampilkan rincian lengkap untuk satu transaksi.
-  - **Detail Anggaran:** Menampilkan rincian pagu, pemakaian, dan sisa untuk satu anggaran.
+### 1. Buat Anggaran
+- **Deskripsi**: Fungsionalitas untuk membuat anggaran baru dengan dua mode: "flat" dan "persentase".
+- **Detail Implementasi**:
+    - **Mode Flat**: Pengguna dapat memasukkan jumlah anggaran untuk setiap sub-kategori secara langsung.
+    - **Mode Persentase**: Pengguna dapat menentukan total anggaran, lalu mengalokasikan persentase untuk setiap sub-kategori. Nilai Rupiah yang sesuai akan ditampilkan secara dinamis.
+    - **Periode**: Anggaran dapat diatur untuk periode bulanan, tahunan, atau sekali.
+    - **Penyimpanan**: Anggaran dan rinciannya disimpan ke dalam database SQLite.
+- **File Terkait**:
+    - `screens/form-anggaran/ScreenFormAnggaran.tsx`
+    - `screens/form-anggaran/useFormAnggaran.ts`
+    - `screens/form-anggaran/InputFormAnggaran.tsx`
+    - `screens/form-anggaran/RincianAnggaran.tsx`
+    - `database/operasi.ts`
 
-## Rencana Selanjutnya (Prioritas Logika)
+## Rencana Selanjutnya
 
-- **Implementasi Penyimpanan Anggaran:** **(Prioritas utama saat ini)** Menyelesaikan logika untuk **menyimpan data** dari form anggaran baru (termasuk rincian sub-kategorinya) ke dalam database SQLite.
-- **Filter Transaksi:** Menambahkan fungsionalitas untuk memfilter daftar transaksi berdasarkan rentang tanggal, kategori, dan dompet.
-- **Pencarian Transaksi:** Menambahkan fitur pencarian untuk memudahkan pengguna menemukan transaksi spesifik.
-- **Export Data:** Memungkinkan pengguna untuk mengekspor data keuangan mereka ke format CSV atau PDF.
-- **Sinkronisasi Cloud:** Mengintegrasikan aplikasi dengan layanan cloud untuk pencadangan dan sinkronisasi data (misalnya, Google Drive atau Dropbox).
-- **Autentikasi Pengguna:** Menambahkan sistem login untuk melindungi data pengguna.
-- **Notifikasi Anggaran:** Memberikan notifikasi saat anggaran mendekati batas atau sudah terlampaui.
+### 1. Halaman Detail Anggaran
+- **Deskripsi**: Membuat halaman yang menampilkan rincian dari anggaran yang telah dibuat.
+- **Tugas**:
+    - Menampilkan ringkasan anggaran (total, terpakai, sisa).
+    - Menampilkan daftar sub-kategori beserta alokasi dan penggunaannya.
+    - Menambahkan tombol untuk mengedit atau menghapus anggaran.
+
+### 2. Fungsionalitas Edit Anggaran
+- **Deskripsi**: Memungkinkan pengguna untuk mengubah anggaran yang sudah ada.
+
+### 3. Fungsionalitas Hapus Anggaran
+- **Deskripsi**: Memberikan kemampuan untuk menghapus anggaran yang tidak lagi diperlukan.

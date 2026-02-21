@@ -1,21 +1,78 @@
 // ~/catatan-keuangan-v2/screens/form-anggaran/ScreenFormAnggaran.tsx
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ambilSemuaKategori } from '@/database/operasi';
+import type { Kategori } from '@/database/tipe';
+import type { AnggaranLokal } from '@/screens/anggaran/dataDummy';
 import HeaderFormAnggaran from './HeaderFormAnggaran';
 import InputFormAnggaran from './InputFormAnggaran';
+import TombolTipeAnggaran from './TombolTipeAnggaran';
+import { useFormAnggaran } from './useFormAnggaran';
 
-/**
- * @description Layar utama untuk membuat atau mengedit anggaran.
- */
 export default function ScreenFormAnggaran() {
+  const {
+    tipeAnggaran,
+    kategori,
+    rincian,
+    periode,
+    totalAnggaran,
+    modalKategoriTerbuka,
+    setTipeAnggaran,
+    setPeriode,
+    setRincian,
+    setTotalAnggaranPersentase, // Ambil fungsi dari hook
+    handleSimpan,
+    bukaModalKategori,
+    tutupModalKategori,
+    handlePilihKategori,
+  } = useFormAnggaran();
+
+  const [kategoriList, setKategoriList] = useState<AnggaranLokal[]>([]);
+
+  useEffect(() => {
+    const muatKategori = async () => {
+      const kategoriPengeluaran = await ambilSemuaKategori('pengeluaran');
+      const formattedList: AnggaranLokal[] = kategoriPengeluaran.map((kat: Kategori) => ({
+        id: kat.id,
+        nama_kategori: kat.nama,
+        total_anggaran: 0,
+        terpakai: 0,
+        sisa: 0,
+        periode: 'bulanan',
+        subKategori: kat.subkategori
+          ? kat.subkategori.map(sub => ({ id: sub.id, nama: sub.nama }))
+          : [],
+      }));
+      setKategoriList(formattedList);
+    };
+
+    muatKategori();
+  }, []);
+
   return (
     <SafeAreaView style={gaya.container}>
-      {/* Header Form */}
       <HeaderFormAnggaran />
 
-      {/* Komponen Form Input */}
-      <InputFormAnggaran />
+      <TombolTipeAnggaran tipeAnggaran={tipeAnggaran} setTipeAnggaran={setTipeAnggaran} />
+
+      <InputFormAnggaran
+        tipeAnggaran={tipeAnggaran}
+        kategori={kategori}
+        rincian={rincian}
+        periode={periode}
+        totalAnggaran={totalAnggaran}
+        modalKategoriTerbuka={modalKategoriTerbuka}
+        kategoriList={kategoriList}
+        onPilihPeriode={setPeriode}
+        onUpdateRincian={setRincian}
+        onSimpan={handleSimpan}
+        onBukaModalKategori={bukaModalKategori}
+        onTutupModalKategori={tutupModalKategori}
+        onPilihKategori={handlePilihKategori}
+        onUbahTotalAnggaran={setTotalAnggaranPersentase} // Teruskan ke komponen input
+      />
     </SafeAreaView>
   );
 }

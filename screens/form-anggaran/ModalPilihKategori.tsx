@@ -1,42 +1,44 @@
-// ~/catatan-keuangan-v2/screens/form-anggaran/ModalPilihKategori.tsx
-import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
-import { AnggaranLokal, dataDummyAnggaran } from '@/screens/anggaran/dataDummy';
+import React from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-interface ModalPilihKategoriProps {
-  isVisible: boolean;
-  onClose: () => void;
-  onSelectKategori: (kategori: AnggaranLokal) => void;
+import type { AnggaranLokal } from '@/screens/anggaran/dataDummy';
+
+interface Props {
+  terlihat: boolean;
+  kategoriList: AnggaranLokal[]; // Terima daftar kategori sebagai props
+  onPilih: (kategori: AnggaranLokal) => void;
+  onTutup: () => void;
 }
 
 export default function ModalPilihKategori({
-  isVisible,
-  onClose,
-  onSelectKategori,
-}: ModalPilihKategoriProps) {
-  const handlePilihKategori = (kategori: AnggaranLokal) => {
-    onSelectKategori(kategori);
-    onClose();
-  };
-
+  terlihat,
+  kategoriList,
+  onPilih,
+  onTutup,
+}: Props) {
   return (
-    <Modal animationType="slide" transparent={true} visible={isVisible} onRequestClose={onClose}>
-      <View style={gaya.modalWadah}>
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={terlihat}
+      onRequestClose={onTutup}
+    >
+      <View style={gaya.modalOverlay}>
         <View style={gaya.modalKonten}>
           <Text style={gaya.modalJudul}>Pilih Kategori Anggaran</Text>
-          <FlatList
-            data={dataDummyAnggaran}
-            keyExtractor={(item) => item.id.toString()}
-            renderItem={({ item }) => (
+          <ScrollView>
+            {kategoriList.map(kategori => (
               <Pressable
-                onPress={() => handlePilihKategori(item)}
+                key={kategori.id}
                 style={gaya.itemKategori}
+                onPress={() => onPilih(kategori)}
               >
-                <Text style={gaya.teksKategori}>{item.nama_kategori}</Text>
+                <Text style={gaya.teksItemKategori}>{kategori.nama_kategori}</Text>
               </Pressable>
-            )}
-          />
-          <Pressable onPress={onClose} style={gaya.tombolBatal}>
-            <Text style={gaya.teksTombolBatal}>Batal</Text>
+            ))}
+          </ScrollView>
+          <Pressable style={gaya.tombolTutup} onPress={onTutup}>
+            <Text style={gaya.teksTombolTutup}>Batal</Text>
           </Pressable>
         </View>
       </View>
@@ -45,43 +47,43 @@ export default function ModalPilihKategori({
 }
 
 const gaya = StyleSheet.create({
-  modalWadah: {
+  modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalKonten: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
     width: '80%',
-    maxHeight: '80%',
+    maxHeight: '70%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    elevation: 5,
   },
   modalJudul: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
   },
   itemKategori: {
-    paddingVertical: 12,
+    padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  teksKategori: {
-    fontSize: 18,
+  teksItemKategori: {
+    fontSize: 16,
   },
-  tombolBatal: {
-    marginTop: 20,
+  tombolTutup: {
+    marginTop: 15,
     padding: 10,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#DC3545',
     borderRadius: 5,
     alignItems: 'center',
   },
-  teksTombolBatal: {
-    fontSize: 16,
-    color: 'red',
-    fontWeight: 'bold'
+  teksTombolTutup: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });

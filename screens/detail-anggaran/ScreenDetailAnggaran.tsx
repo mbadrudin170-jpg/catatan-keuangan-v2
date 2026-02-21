@@ -1,18 +1,49 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { dataDummyAnggaran, SubKategoriDetail } from '@/screens/anggaran/dataDummy';
+import { ambilSemuaAnggaranDenganRincian } from '@/database/operasi';
+import type { Anggaran, RincianAnggaran } from '@/database/tipe';
 import { formatMataUang } from '@/utils/formatMataUang';
 
 export default function ScreenDetailAnggaran() {
   const { id } = useLocalSearchParams();
+  const [anggaran, setAnggaran] = useState<Anggaran | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const anggaran = useMemo(() => {
-    if (!id) return null;
-    return dataDummyAnggaran.find((a) => a.id === Number(id));
+  useEffect(() => {
+    const muatAnggaran = async () => {
+      if (!id) {
+        setIsLoading(false);
+        return;
+      }
+      try {
+        // Ambil semua anggaran dan cari yang sesuai
+        const semuaAnggaran = await ambilSemuaAnggaranDenganRincian();
+        const anggaranDitemukan = semuaAnggaran.find(
+          (a: Anggaran) => a.id === Number(id)
+        );
+        setAnggaran(anggaranDitemukan || null);
+      } catch (error) {
+        console.error('Gagal memuat detail anggaran:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    muatAnggaran();
   }, [id]);
+
+  const totalTerpakai = 0; // Placeholder, akan diimplementasikan nanti
+  const totalSisa = anggaran ? anggaran.total_anggaran - totalTerpakai : 0;
 
   return (
     <SafeAreaView style={gaya.container}>
@@ -27,7 +58,9 @@ export default function ScreenDetailAnggaran() {
 
       {/* Konten */}
       <ScrollView contentContainerStyle={gaya.scrollViewContainer}>
-        {!anggaran ? (
+        {isLoading ? (
+          <ActivityIndicator size="large" color="#007BFF" style={{ marginTop: 20 }} />
+        ) : !anggaran ? (
           <View style={gaya.kontenPusat}>
             <Text style={gaya.teksInfo}>Anggaran tidak ditemukan.</Text>
           </View>
@@ -50,25 +83,27 @@ export default function ScreenDetailAnggaran() {
             <View style={gaya.kartuTotalContainer}>
               <View style={gaya.barisTotal}>
                 <Text style={gaya.labelTotal}>Total Anggaran</Text>
-                <Text style={gaya.totalHijau}>{formatMataUang(anggaran.jumlah)}</Text>
+                <Text style={gaya.totalHijau}>
+                  {formatMataUang(anggaran.total_anggaran)}
+                </Text>
               </View>
               <View style={gaya.garisPemisahTipis} />
               <View style={gaya.barisTotal}>
                 <Text style={gaya.labelTotal}>Total Terpakai</Text>
-                <Text style={gaya.totalMerah}>{formatMataUang(anggaran.terpakai)}</Text>
+                <Text style={gaya.totalMerah}>{formatMataUang(totalTerpakai)}</Text>
               </View>
               <View style={gaya.garisPemisahTipis} />
               <View style={gaya.barisTotal}>
                 <Text style={gaya.labelTotal}>Total Sisa</Text>
-                <Text style={gaya.totalBiru}>{formatMataUang(anggaran.sisa)}</Text>
+                <Text style={gaya.totalBiru}>{formatMataUang(totalSisa)}</Text>
               </View>
             </View>
 
             {/* Detail Sub-Kategori */}
             <View style={gaya.kartuInfo}>
               <Text style={gaya.labelInfo}>Rincian Sub-Kategori</Text>
-              {anggaran.subKategori.map((sub, index) => (
-                <SubKategoriKartu key={index} subKategori={sub} />
+              {anggaran.rincian?.map((sub: RincianAnggaran, index: number) => (
+                <SubKategoriKartu key={index} rincian={sub} />
               ))}
             </View>
           </View>
@@ -79,21 +114,24 @@ export default function ScreenDetailAnggaran() {
 }
 
 // Komponen untuk menampilkan setiap sub-kategori
-const SubKategoriKartu = ({ subKategori }: { subKategori: SubKategoriDetail }) => {
+const SubKategoriKartu = ({ rincian }: { rincian: RincianAnggaran }) => {
+  const terpakai = 0; // Placeholder
+  const sisa = rincian.jumlah - terpakai;
+
   return (
     <View style={gaya.subKategoriKontainer}>
-      <Text style={gaya.subKategoriNama}>{subKategori.nama}</Text>
+      <Text style={gaya.subKategoriNama}>{rincian.nama_subkategori}</Text>
       <View style={gaya.subKategoriDetailRow}>
         <Text style={gaya.subKategoriLabel}>Anggaran:</Text>
-        <Text style={gaya.subKategoriNilaiHijau}>{formatMataUang(subKategori.jumlah)}</Text>
+        <Text style={gaya.subKategoriNilaiHijau}>{formatMataUang(rincian.jumlah)}</Text>
       </View>
       <View style={gaya.subKategoriDetailRow}>
         <Text style={gaya.subKategoriLabel}>Terpakai:</Text>
-        <Text style={gaya.subKategoriNilaiMerah}>{formatMataUang(subKategori.terpakai)}</Text>
+        <Text style={gaya.subKategoriNilaiMerah}>{formatMataUang(terpakai)}</Text>
       </View>
       <View style={gaya.subKategoriDetailRow}>
         <Text style={gaya.subKategoriLabel}>Sisa:</Text>
-        <Text style={gaya.subKategoriNilaiBiru}>{formatMataUang(subKategori.sisa)}</Text>
+        <Text style={gaya.subKategoriNilaiBiru}>{formatMataUang(sisa)}</Text>
       </View>
     </View>
   );

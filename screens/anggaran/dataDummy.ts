@@ -1,96 +1,71 @@
-/**
- * @interface SubKategoriDetail
- * @description Mendefinisikan struktur untuk setiap sub-kategori anggaran.
- */
+// screens/anggaran/dataDummy.ts
+
+// Definisikan struktur detail untuk setiap sub-kategori dalam sebuah anggaran.
+// Ini digunakan di dalam form untuk melacak input pengguna.
 export interface SubKategoriDetail {
+  subkategori_id: number; // ID subkategori untuk referensi database (BARU)
   nama: string;
-  jumlah: number;
-  terpakai: number;
-  sisa: number;
+  jumlah: number; // Jumlah yang dianggarkan (bisa flat atau persentase)
+  terpakai: number; // Jumlah yang sudah digunakan
+  sisa: number; // Sisa anggaran
 }
 
-/**
- * @interface AnggaranLokal
- * @description Mendefinisikan struktur objek untuk data anggaran utama.
- */
-export interface AnggaranLokal {
+// Definisikan struktur sub-kategori dasar.
+export interface SubKategori {
   id: number;
-  kategori_id: number;
-  nama_kategori: string;
-  jumlah: number;
-  subKategori: SubKategoriDetail[];
-  periode: 'bulanan' | 'tahunan' | 'harian' | 'mingguan';
-  tanggal_mulai: string;
-  harian: '';
-  terpakai: number;
-  sisa: number;
+  nama: string;
 }
 
-// Data dummy untuk digunakan dalam pengembangan dan pengujian antarmuka.
-export const dataDummyAnggaran: AnggaranLokal[] = [
+// Definisikan struktur data anggaran lokal yang digunakan di UI,
+// terutama untuk memilih kategori di form anggaran.
+export interface AnggaranLokal {
+  id: number; // Ini adalah ID KATEGORI
+  nama_kategori: string;
+  total_anggaran: number;
+  terpakai: number;
+  sisa: number;
+  periode: 'bulanan' | 'tahunan';
+  subKategori: SubKategori[]; // Daftar sub-kategori di bawah kategori ini
+}
+
+// Data dummy untuk daftar anggaran yang bisa dipilih pengguna.
+export const daftarAnggaranLokal: AnggaranLokal[] = [
   {
     id: 1,
-    kategori_id: 1,
-    nama_kategori: 'Makanan & Minuman',
-    jumlah: 1500000,
+    nama_kategori: 'Kebutuhan Pokok',
+    total_anggaran: 5000000,
+    terpakai: 2500000,
+    sisa: 2500000,
     periode: 'bulanan',
-    tanggal_mulai: '2024-07-01',
     subKategori: [
-      { nama: 'Belanja Bahan Pokok', jumlah: 800000, terpakai: 300000, sisa: 500000 },
-      { nama: 'Jajan di Luar', jumlah: 500000, terpakai: 200000, sisa: 300000 },
-      { nama: 'Kopi & Minuman', jumlah: 200000, terpakai: 0, sisa: 200000 },
+      { id: 1, nama: 'Belanja Bulanan' },
+      { id: 2, nama: 'Tagihan Listrik' },
+      { id: 3, nama: 'Transportasi' },
     ],
-    harian: '',
-    terpakai: 500000,
-    sisa: 1000000,
   },
   {
     id: 2,
-    kategori_id: 2,
-    nama_kategori: 'Transportasi',
-    jumlah: 750000,
+    nama_kategori: 'Hiburan',
+    total_anggaran: 1000000,
+    terpakai: 750000,
+    sisa: 250000,
     periode: 'bulanan',
-    tanggal_mulai: '2024-07-01',
     subKategori: [
-      { nama: 'Bensin Motor', jumlah: 350000, terpakai: 150000, sisa: 200000 },
-      { nama: 'Servis Rutin', jumlah: 250000, terpakai: 100000, sisa: 150000 },
-      { nama: 'Parkir & Tol', jumlah: 150000, terpakai: 0, sisa: 150000 },
-      { nama: 'Biaya Tak Terduga', jumlah: 0, terpakai: 50000, sisa: -50000 },
+      { id: 4, nama: 'Langganan Streaming' },
+      { id: 5, nama: 'Makan di Luar' },
+      { id: 6, nama: 'Nonton Bioskop' },
     ],
-    harian: '',
-    terpakai: 300000,
-    sisa: 450000,
   },
   {
     id: 3,
-    kategori_id: 5,
     nama_kategori: 'Pendidikan',
-    jumlah: 5000000,
-    periode: 'tahunan',
-    tanggal_mulai: '2024-01-01',
-    subKategori: [
-      { nama: 'Uang Sekolah Anak', jumlah: 4500000, terpakai: 4000000, sisa: 500000 },
-      { nama: 'Buku & Alat Tulis', jumlah: 300000, terpakai: 0, sisa: 300000 },
-      { nama: 'Kursus Tambahan', jumlah: 200000, terpakai: 0, sisa: 200000 },
-    ],
-    harian: '',
-    terpakai: 4000000,
-    sisa: 1000000,
-  },
-  {
-    id: 4,
-    kategori_id: 10,
-    nama_kategori: 'Liburan',
-    jumlah: 2000000,
-    periode: 'harian',
-    tanggal_mulai: '2024-12-01',
-    subKategori: [
-      { nama: 'Akomodasi Hotel', jumlah: 1000000, terpakai: 0, sisa: 1000000 },
-      { nama: 'Transportasi Liburan', jumlah: 500000, terpakai: 0, sisa: 500000 },
-      { nama: 'Makan & Oleh-oleh', jumlah: 500000, terpakai: 0, sisa: 500000 },
-    ],
-    harian: '',
-    terpakai: 0,
+    total_anggaran: 12000000,
+    terpakai: 10000000,
     sisa: 2000000,
+    periode: 'tahunan',
+    subKategori: [
+      { id: 7, nama: 'Uang Sekolah' },
+      { id: 8, nama: 'Buku & Alat Tulis' },
+    ],
   },
 ];

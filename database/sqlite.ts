@@ -109,14 +109,29 @@ export const inisialisasiDB = async (): Promise<void> => {
         FOREIGN KEY (dompet_id) REFERENCES dompet (id) ON DELETE CASCADE,
         FOREIGN KEY (dompet_tujuan_id) REFERENCES dompet (id) ON DELETE SET NULL
       );
+      
+      -- Hapus tabel lama untuk pengembangan, ganti dengan sistem migrasi di produksi
+      DROP TABLE IF EXISTS anggaran;
+      DROP TABLE IF EXISTS rincian_anggaran;
 
       CREATE TABLE IF NOT EXISTS anggaran (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        jumlah REAL NOT NULL,
-        periode TEXT NOT NULL CHECK(periode IN ('bulanan', 'tahunan', 'sekali')),
+        total_anggaran REAL NOT NULL,
+        tipe TEXT NOT NULL CHECK(tipe IN ('flat', 'persentase')),
+        periode TEXT NOT NULL CHECK(periode IN ('harian', 'mingguan', 'bulanan', 'tahunan', 'sekali')),
         tanggal_mulai TEXT NOT NULL,
-        kategori_id INTEGER NOT NULL UNIQUE,
+        kategori_id INTEGER NOT NULL,
         FOREIGN KEY (kategori_id) REFERENCES kategori (id) ON DELETE CASCADE
+      );
+      
+      CREATE TABLE IF NOT EXISTS rincian_anggaran (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        anggaran_id INTEGER NOT NULL,
+        subkategori_id INTEGER NOT NULL,
+        jumlah REAL NOT NULL,
+        FOREIGN KEY (anggaran_id) REFERENCES anggaran (id) ON DELETE CASCADE,
+        FOREIGN KEY (subkategori_id) REFERENCES subkategori (id) ON DELETE CASCADE,
+        UNIQUE (anggaran_id, subkategori_id)
       );
     `);
 

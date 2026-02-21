@@ -1,5 +1,13 @@
 // database/operasi.ts
-import type { Kategori, Subkategori, Transaksi, Dompet, TipeKategori, Anggaran } from '@/database/tipe';
+import type {
+  Anggaran,
+  Dompet,
+  Kategori,
+  RincianAnggaran,
+  Subkategori,
+  TipeKategori,
+  Transaksi,
+} from '@/database/tipe';
 import { db } from './sqlite';
 
 // Operasi untuk Kategori
@@ -108,40 +116,91 @@ export const hapusSemuaDompet = async (): Promise<void> => {
   await db.runAsync('DELETE FROM dompet;');
 };
 
-// Operasi untuk Anggaran
-export const simpanAnggaran = async (anggaran: Omit<Anggaran, 'id' | 'nama_kategori'>): Promise<void> => {
-  const { jumlah, periode, tanggal_mulai, kategori_id } = anggaran;
+// Operasi untuk Anggaran (dengan Rincian)
 
-  // Cek apakah anggaran untuk kategori ini sudah ada
-  const existing = await db.getFirstAsync<Anggaran>(
-    'SELECT * FROM anggaran WHERE kategori_id = ? AND periode = ?;',
-    [kategori_id, periode]
-  );
+/**
+ * Menambahkan anggaran baru beserta rinciannya ke dalam database menggunakan transaksi.
+ * @param anggaranData Data utama anggaran.
+ * @param rincianData Array dari rincian anggaran per subkategori.
+ * @returns ID dari anggaran yang baru dibuat.
+ */
+export const tambahAnggaranDenganRincian = async (
+  anggaranData: Omit<Anggaran, 'id' | 'rincian' | 'nama_kategori'>,
+  rincianData: Omit<RincianAnggaran, 'id' | 'anggaran_id' | 'nama_subkategori'>[]
+): Promise<number | undefined> => {
+  let anggaranId: number | undefined;
 
-  if (existing) {
-    // Jika ada, perbarui
-    await db.runAsync(
-      'UPDATE anggaran SET jumlah = ?, tanggal_mulai = ? WHERE id = ?;',
-      [jumlah, tanggal_mulai, existing.id]
+  await db.withTransactionAsync(async () => {
+    // 1. Masukkan data ke tabel anggaran utama
+    const hasil = await db.runAsync(
+      'INSERT INTO anggaran (total_anggaran, tipe, periode, tanggal_mulai, kategori_id) VALUES (?, ?, ?, ?, ?);',
+      [
+        anggaranData.total_anggaran,
+        anggaranData.tipe,
+        anggaranData.periode,
+        anggaranData.tanggal_mulai,
+        anggaranData.kategori_id,
+      ]
     );
-  } else {
-    // Jika tidak ada, buat baru
-    await db.runAsync(
-      'INSERT INTO anggaran (jumlah, periode, tanggal_mulai, kategori_id) VALUES (?, ?, ?, ?);',
-      [jumlah, periode, tanggal_mulai, kategori_id]
-    );
-  }
+    anggaranId = hasil.lastInsertRowId;
+
+    if (!anggaranId) {
+      throw new Error('Gagal mendapatkan ID anggaran yang baru dibuat.');
+    }
+
+    // 2. Masukkan semua rincian ke tabel rincian_anggaran
+    for (const rincian of rincianData) {
+      await db.runAsync(
+        'INSERT INTO rincian_anggaran (anggaran_id, subkategori_id, jumlah) VALUES (?, ?, ?);',
+        [anggaranId, rincian.subkategori_id, rincian.jumlah]
+      );
+    }
+  });
+
+  return anggaranId;
 };
 
-export const ambilSemuaAnggaran = async (): Promise<Anggaran[]> => {
-  return await db.getAllAsync<Anggaran>(
+/**
+ * Mengambil semua anggaran beserta rincian subkategorinya.
+ * @returns Array dari objek Anggaran, masing-masing berisi rinciannya.
+ */
+export const ambilSemuaAnggaranDenganRincian = async (): Promise<Anggaran[]> => {
+  // 1. Ambil semua anggaran utama beserta nama kategorinya
+  const semuaAnggaran = await db.getAllAsync<Anggaran>(
     `SELECT a.*, k.nama as nama_kategori 
      FROM anggaran a 
      JOIN kategori k ON a.kategori_id = k.id 
      ORDER BY k.nama ASC;`
   );
+
+  // 2. Ambil semua rincian anggaran beserta nama subkategorinya
+  const semuaRincian = await db.getAllAsync<RincianAnggaran>(
+    `SELECT r.*, s.nama as nama_subkategori
+     FROM rincian_anggaran r
+     JOIN subkategori s ON r.subkategori_id = s.id;`
+  );
+
+  // 3. Gabungkan rincian ke dalam masing-masing anggaran
+  return semuaAnggaran.map(anggaran => ({
+    ...anggaran,
+    rincian: semuaRincian.filter(rincian => rincian.anggaran_id === anggaran.id),
+  }));
 };
 
+/**
+ * Menghapus sebuah anggaran dan semua rincian terkaitnya (via ON DELETE CASCADE).
+ * @param id ID dari anggaran yang akan dihapus.
+ */
 export const hapusAnggaran = async (id: number): Promise<void> => {
   await db.runAsync('DELETE FROM anggaran WHERE id = ?;', [id]);
+};
+
+/**
+ * Menghapus SEMUA anggaran dan semua rincian terkaitnya.
+ * Perintah ini akan mengosongkan tabel `anggaran` dan `rincian_anggaran`.
+ */
+export const hapusSemuaAnggaran = async (): Promise<void> => {
+  // `ON DELETE CASCADE` pada foreign key di `rincian_anggaran` akan otomatis
+  // menghapus semua rincian yang terkait saat anggaran induknya dihapus.
+  await db.runAsync('DELETE FROM anggaran;');
 };
