@@ -8,9 +8,10 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 
 import {
   ambilSemuaTransaksi,
-  hapusSemuaTransaksi as dbHapusSemuaTransaksi, // Impor fungsi reset saldo
-  tambahSatuTransaksi as dbTambahTransaksi, // Impor fungsi hapus semua
-  resetSemuaSaldoDompet, // Impor fungsi reset saldo
+  hapusSemuaTransaksi as dbHapusSemuaTransaksi,
+  perbaruiSaldoDompet, // Langsung impor fungsi ini
+  resetSemuaSaldoDompet,
+  tambahSatuTransaksi as dbTambahTransaksi,
 } from '@/database/operasi';
 import type { Transaksi } from '@/database/tipe';
 import { useDompet } from './DompetContext';
@@ -52,18 +53,9 @@ export const TransaksiProvider = ({
   children,
   initialDaftarTransaksi,
 }: TransaksiProviderProps): JSX.Element => {
-  // Mengambil fungsi-fungsi yang berhubungan dengan dompet dari DompetContext.
-  const {
-    muatUlangDaftarDompet,
-    tambahPemasukan,
-    tambahPengeluaran,
-    tambahTransfer,
-    ambilDompetDenganId,
-  } = useDompet();
-  // Mengambil daftar kategori dari KategoriContext.
+  const { muatUlangDaftarDompet, ambilDompetDenganId } = useDompet();
   const { semuaKategori } = useKategori();
 
-  // State untuk menampung data transaksi yang sedang dibuat atau diubah di form.
   const [transaksi, setTransaksi] = useState<Transaksi>({
     id: Date.now(),
     jumlah: 0,
@@ -80,12 +72,9 @@ export const TransaksiProvider = ({
     nama_dompet_tujuan: null,
   });
 
-  // State untuk menyimpan daftar semua transaksi yang diambil dari database.
   const [semuaTransaksi, setSemuaTransaksi] = useState<Transaksi[]>(initialDaftarTransaksi || []);
-  // State untuk menandakan apakah sedang ada proses pemuatan data (loading).
   const [memuat, setMemuat] = useState(!initialDaftarTransaksi);
 
-  // Fungsi untuk memuat ulang daftar transaksi dari database.
   const muatUlangDaftarTransaksi = useCallback(async (): Promise<void> => {
     setMemuat(true);
     try {
@@ -98,25 +87,20 @@ export const TransaksiProvider = ({
     }
   }, []);
 
-  // Efek untuk memuat daftar transaksi saat komponen pertama kali dirender.
   useEffect(() => {
     if (!initialDaftarTransaksi) {
       void muatUlangDaftarTransaksi();
     }
   }, [initialDaftarTransaksi, muatUlangDaftarTransaksi]);
 
-  // Fungsi untuk menambah satu transaksi baru, termasuk logika bisnis.
   const tambahTransaksi = async (transaksiInput: Transaksi): Promise<void> => {
-    // Membuat salinan objek transaksi untuk dimodifikasi sebelum disimpan.
     const transaksiUntukSimpan = { ...transaksiInput };
 
-    // Mengambil dan menyimpan nama dompet sumber.
     const dompetSumber = ambilDompetDenganId(transaksiUntukSimpan.dompet_id);
     if (dompetSumber) {
       transaksiUntukSimpan.nama_dompet = dompetSumber.nama;
     }
 
-    // Jika transfer, ambil dan simpan nama dompet tujuan.
     if (transaksiUntukSimpan.tipe === 'transfer' && transaksiUntukSimpan.dompet_tujuan_id) {
       const dompetTujuan = ambilDompetDenganId(transaksiUntukSimpan.dompet_tujuan_id);
       if (dompetTujuan) {
@@ -124,7 +108,6 @@ export const TransaksiProvider = ({
       }
     }
 
-    // Jika bukan transfer, proses dan simpan nama kategori/subkategori.
     if (transaksiUntukSimpan.tipe !== 'transfer' && transaksiUntukSimpan.kategori_id) {
       const semuaSubkategori = semuaKategori.flatMap((k) => k.subkategori);
       const subkategoriDariId = semuaSubkategori.find(
@@ -151,81 +134,68 @@ export const TransaksiProvider = ({
     }
 
     try {
-      // Menyimpan transaksi ke database.
       await dbTambahTransaksi(transaksiUntukSimpan);
 
-      // Logika pembaruan saldo dompet setelah transaksi berhasil disimpan.
       if (transaksiUntukSimpan.tipe === 'pemasukan') {
-        await tambahPemasukan(transaksiUntukSimpan.dompet_id, transaksiUntukSimpan.jumlah);
+        await perbaruiSaldoDompet(transaksiUntukSimpan.dompet_id, transaksiUntukSimpan.jumlah);
       } else if (transaksiUntukSimpan.tipe === 'pengeluaran') {
-        await tambahPengeluaran(transaksiUntukSimpan.dompet_id, transaksiUntukSimpan.jumlah);
+        await perbaruiSaldoDompet(transaksiUntukSimpan.dompet_id, -transaksiUntukSimpan.jumlah);
       } else if (transaksiUntukSimpan.tipe === 'transfer') {
         if (transaksiUntukSimpan.dompet_tujuan_id) {
-          await tambahTransfer(
-            transaksiUntukSimpan.dompet_id,
+          await perbaruiSaldoDompet(transaksiUntukSimpan.dompet_id, -transaksiUntukSimpan.jumlah);
+          await perbaruiSaldoDompet(
             transaksiUntukSimpan.dompet_tujuan_id,
             transaksiUntukSimpan.jumlah
           );
         }
       }
 
-      // Memuat ulang daftar transaksi untuk menampilkan data terbaru.
       await muatUlangDaftarTransaksi();
+      await muatUlangDaftarDompet();
     } catch (error) {
       console.error('Gagal menambah transaksi:', error);
       throw error;
     }
   };
 
-  // Fungsi untuk menghapus satu transaksi (saat ini hanya di state).
   const hapusSatuTransaksi = async (id: number): Promise<void> => {
     setSemuaTransaksi((daftarLama) => daftarLama.filter((item) => item.id !== id));
   };
 
-  // Fungsi untuk menghapus SEMUA transaksi.
   const hapusSemuaTransaksi = async (): Promise<void> => {
     try {
-      await dbHapusSemuaTransaksi(); // Panggil operasi DB
-      await resetSemuaSaldoDompet(); // Reset saldo semua dompet
-      setSemuaTransaksi([]); // Kosongkan state transaksi
-      await muatUlangDaftarDompet(); // Sinkronkan ulang daftar dompet
+      await dbHapusSemuaTransaksi();
+      await resetSemuaSaldoDompet();
+      setSemuaTransaksi([]);
+      await muatUlangDaftarDompet();
     } catch (error) {
       console.error('Gagal menghapus semua transaksi:', error);
-      throw error; // Lemparkan error agar bisa ditangani di komponen
+      throw error;
     }
   };
 
-  // State untuk mengontrol visibilitas modal pemilihan dompet.
   const [modalDompetTerlihat, setModalDompetTerlihat] = useState(false);
-  // State untuk mengontrol visibilitas modal pemilihan kategori.
   const [modalKategoriTerlihat, setModalKategoriTerlihat] = useState(false);
-  // State untuk membedakan apakah modal dompet dibuka untuk 'sumber' atau 'tujuan'.
   const [tipePilihanDompet, setTipePilihanDompet] = useState<TipePilihanDompet | null>(null);
 
-  // Fungsi untuk membuka modal dompet.
   const bukaModalDompet = (tipe: TipePilihanDompet): void => {
     setTipePilihanDompet(tipe);
     setModalDompetTerlihat(true);
   };
 
-  // Fungsi untuk menutup modal dompet.
   const tutupModalDompet = (): void => {
     setModalDompetTerlihat(false);
     setTipePilihanDompet(null);
   };
 
-  // Fungsi untuk membuka modal kategori.
   const bukaModalKategori = (): void => setModalKategoriTerlihat(true);
-  // Fungsi untuk menutup modal kategori.
   const tutupModalKategori = (): void => setModalKategoriTerlihat(false);
 
-  // Fungsi callback untuk menangani perubahan tanggal/waktu dari picker.
   const gantiTanggal = (event: DateTimePickerEvent, tanggalTerpilih?: Date): void => {
     const tanggalObj = tanggalTerpilih || new Date(transaksi.tanggal);
     setTransaksi((prev) => ({ ...prev, tanggal: tanggalObj.toISOString() }));
   };
 
-  // Fungsi internal untuk menampilkan picker Android (tanggal atau waktu).
   const tampilkanMode = (modeSaatIni: 'date' | 'time'): void => {
     DateTimePickerAndroid.open({
       value: new Date(transaksi.tanggal),
@@ -235,12 +205,9 @@ export const TransaksiProvider = ({
     });
   };
 
-  // Fungsi untuk menampilkan pemilih tanggal.
   const tampilkanPemilihTanggal = (): void => tampilkanMode('date');
-  // Fungsi untuk menampilkan pemilih waktu.
   const tampilkanPemilihWaktu = (): void => tampilkanMode('time');
 
-  // Objek yang berisi semua state dan fungsi yang akan disediakan oleh context.
   const nilai = {
     transaksi,
     setTransaksi,
@@ -249,7 +216,7 @@ export const TransaksiProvider = ({
     muatUlangDaftarTransaksi,
     tambahTransaksi,
     hapusSatuTransaksi,
-    hapusSemuaTransaksi, // Tambahkan ke nilai context
+    hapusSemuaTransaksi,
     modalDompetTerlihat,
     modalKategoriTerlihat,
     tipePilihanDompet,
@@ -265,9 +232,7 @@ export const TransaksiProvider = ({
   return <TransaksiContext.Provider value={nilai}>{children}</TransaksiContext.Provider>;
 };
 
-// Hook kustom untuk mempermudah penggunaan TransaksiContext.
 export const useTransaksi = (): TransaksiContextType => {
-  // Mengambil nilai dari context.
   const context = useContext(TransaksiContext);
   if (context === undefined) {
     throw new Error('useTransaksi harus digunakan di dalam TransaksiProvider');

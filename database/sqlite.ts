@@ -109,7 +109,7 @@ export const inisialisasiDB = async (): Promise<void> => {
         FOREIGN KEY (dompet_id) REFERENCES dompet (id) ON DELETE CASCADE,
         FOREIGN KEY (dompet_tujuan_id) REFERENCES dompet (id) ON DELETE SET NULL
       );
-      
+
       -- Hapus tabel lama untuk pengembangan, ganti dengan sistem migrasi di produksi
       DROP TABLE IF EXISTS anggaran;
       DROP TABLE IF EXISTS rincian_anggaran;
@@ -123,7 +123,7 @@ export const inisialisasiDB = async (): Promise<void> => {
         kategori_id INTEGER NOT NULL,
         FOREIGN KEY (kategori_id) REFERENCES kategori (id) ON DELETE CASCADE
       );
-      
+
       CREATE TABLE IF NOT EXISTS rincian_anggaran (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         anggaran_id INTEGER NOT NULL,

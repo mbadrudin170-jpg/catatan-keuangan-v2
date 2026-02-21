@@ -12,23 +12,6 @@ import TombolTipeAnggaran from './TombolTipeAnggaran';
 import { useFormAnggaran } from './useFormAnggaran';
 
 export default function ScreenFormAnggaran() {
-  const {
-    tipeAnggaran,
-    kategori,
-    rincian,
-    periode,
-    totalAnggaran,
-    modalKategoriTerbuka,
-    setTipeAnggaran,
-    setPeriode,
-    setRincian,
-    setTotalAnggaranPersentase, // Ambil fungsi dari hook
-    handleSimpan,
-    bukaModalKategori,
-    tutupModalKategori,
-    handlePilihKategori,
-  } = useFormAnggaran();
-
   const [kategoriList, setKategoriList] = useState<AnggaranLokal[]>([]);
 
   useEffect(() => {
@@ -51,9 +34,27 @@ export default function ScreenFormAnggaran() {
     muatKategori();
   }, []);
 
+  const {
+    isEdit,
+    tipeAnggaran,
+    kategori,
+    rincian,
+    periode,
+    totalAnggaran,
+    modalKategoriTerbuka,
+    setTipeAnggaran,
+    setPeriode,
+    setRincian,
+    setTotalAnggaranPersentase,
+    handleSimpan,
+    bukaModalKategori,
+    tutupModalKategori,
+    handlePilihKategori,
+  } = useFormAnggaran(kategoriList);
+
   return (
     <SafeAreaView style={gaya.container}>
-      <HeaderFormAnggaran />
+      <HeaderFormAnggaran isEdit={isEdit} />
 
       <TombolTipeAnggaran tipeAnggaran={tipeAnggaran} setTipeAnggaran={setTipeAnggaran} />
 
@@ -71,7 +72,7 @@ export default function ScreenFormAnggaran() {
         onBukaModalKategori={bukaModalKategori}
         onTutupModalKategori={tutupModalKategori}
         onPilihKategori={handlePilihKategori}
-        onUbahTotalAnggaran={setTotalAnggaranPersentase} // Teruskan ke komponen input
+        onUbahTotalAnggaran={setTotalAnggaranPersentase}
       />
     </SafeAreaView>
   );

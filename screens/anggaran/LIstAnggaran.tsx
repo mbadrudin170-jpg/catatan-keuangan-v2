@@ -1,23 +1,74 @@
+// screens/anggaran/LIstAnggaran.tsx
 import { router } from 'expo-router';
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { hapusAnggaran } from '@/database/operasi';
 import type { Anggaran } from '@/database/tipe';
+import ModalOpsi from '@/screens/anggaran/ModalOpsi';
 import { formatMataUang } from '@/utils/formatMataUang';
 
 interface Props {
-  anggaran: Anggaran[]; // Terima data anggaran sebagai props
+  anggaran: Anggaran[];
+  setAnggaran: React.Dispatch<React.SetStateAction<Anggaran[]>>;
 }
 
-// Fungsi untuk menghitung total pemakaian dari rincian
 const hitungTotalTerpakai = (rincian: any[] = []) => {
-  // Implementasi ini mungkin perlu disesuaikan saat data terpakai sudah ada
   return rincian.reduce((total, item) => total + (item.terpakai || 0), 0);
 };
 
-export default function ListAnggaran({ anggaran }: Props) {
+export default function ListAnggaran({ anggaran, setAnggaran }: Props) {
+  const [modalTerlihat, setModalTerlihat] = useState(false);
+  const [anggaranTerpilih, setAnggaranTerpilih] = useState<Anggaran | null>(null);
+
   const handlePress = (id: number) => {
     router.push(`/anggaran/${id}`);
+  };
+
+  const bukaModal = (item: Anggaran) => {
+    setAnggaranTerpilih(item);
+    setModalTerlihat(true);
+  };
+
+  const tutupModal = () => {
+    setModalTerlihat(false);
+    setAnggaranTerpilih(null);
+  };
+
+  const handleEdit = () => {
+    if (anggaranTerpilih) {
+      router.push(`/form-anggaran?id=${anggaranTerpilih.id}`);
+      tutupModal();
+    }
+  };
+
+  const handleHapus = () => {
+    if (!anggaranTerpilih) return;
+
+    Alert.alert(
+      'Hapus Anggaran',
+      `Apakah Anda yakin ingin menghapus anggaran "${anggaranTerpilih.nama_kategori}"?`,
+      [
+        { text: 'Batal', style: 'cancel', onPress: tutupModal },
+        {
+          text: 'Hapus',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await hapusAnggaran(anggaranTerpilih.id);
+              // Perbarui daftar anggaran di UI
+              setAnggaran((prev) => prev.filter((a) => a.id !== anggaranTerpilih.id));
+              Alert.alert('Sukses', 'Anggaran berhasil dihapus.');
+            } catch (error) {
+              console.error('Gagal menghapus anggaran:', error);
+              Alert.alert('Error', 'Gagal menghapus anggaran.');
+            } finally {
+              tutupModal();
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (anggaran.length === 0) {
@@ -29,34 +80,50 @@ export default function ListAnggaran({ anggaran }: Props) {
   }
 
   return (
-    <ScrollView style={gaya.wadah}>
-      {anggaran.map(item => {
-        const terpakai = hitungTotalTerpakai(item.rincian);
-        const sisa = item.total_anggaran - terpakai;
-        const persentase = item.total_anggaran > 0 ? (terpakai / item.total_anggaran) * 100 : 0;
+    <View style={{ flex: 1 }}>
+      <ScrollView style={gaya.wadah}>
+        {anggaran.map((item) => {
+          const terpakai = hitungTotalTerpakai(item.rincian);
+          const sisa = item.total_anggaran - terpakai;
+          const persentase = item.total_anggaran > 0 ? (terpakai / item.total_anggaran) * 100 : 0;
 
-        return (
-          <Pressable key={item.id} style={gaya.kartu} onPress={() => handlePress(item.id)}>
-            <View style={gaya.infoKiri}>
-              <Text style={gaya.namaKategori}>{item.nama_kategori}</Text>
-              <Text style={gaya.periode}>Periode: {item.periode}</Text>
-              <View style={gaya.barProgress}>
-                <View style={[gaya.barProgressTerisi, { width: `${persentase}%` }]} />
+          return (
+            <Pressable
+              key={item.id}
+              style={gaya.kartu}
+              onPress={() => handlePress(item.id)}
+              onLongPress={() => bukaModal(item)}
+            >
+              <View style={gaya.infoKiri}>
+                <Text style={gaya.namaKategori}>{item.nama_kategori}</Text>
+                <Text style={gaya.periode}>Periode: {item.periode}</Text>
+                <View style={gaya.barProgress}>
+                  <View style={[gaya.barProgressTerisi, { width: `${persentase}%` }]} />
+                </View>
+                <Text style={gaya.teksProgress}>
+                  {formatMataUang(terpakai)} / {formatMataUang(item.total_anggaran)}
+                </Text>
               </View>
-              <Text style={gaya.teksProgress}>
-                {formatMataUang(terpakai)} / {formatMataUang(item.total_anggaran)}
-              </Text>
-            </View>
-            <View style={gaya.infoKanan}>
-              <Text style={gaya.sisaLabel}>Sisa</Text>
-              <Text style={[gaya.sisaJumlah, sisa < 0 && gaya.sisaMinus]}>
-                {formatMataUang(sisa)}
-              </Text>
-            </View>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
+              <View style={gaya.infoKanan}>
+                <Text style={gaya.sisaLabel}>Sisa</Text>
+                <Text style={[gaya.sisaJumlah, sisa < 0 && gaya.sisaMinus]}>
+                  {formatMataUang(sisa)}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {anggaranTerpilih && (
+        <ModalOpsi
+          visible={modalTerlihat}
+          onClose={tutupModal}
+          onEdit={handleEdit}
+          onHapus={handleHapus}
+        />
+      )}
+    </View>
   );
 }
 

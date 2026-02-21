@@ -4,8 +4,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 
 import {
   ambilSemuaDompet,
-  hapusSemuaDompet as hapusSemuaDompetDariDb,
   hapusSatuDompet,
+  hapusSemuaDompet as hapusSemuaDompetDariDb,
   perbaruiSaldoDompet,
   perbaruiSatuDompet,
   tambahSatuDompet,
@@ -103,9 +103,12 @@ export const DompetProvider = ({ children }: { children: ReactNode }) => {
     await muatUlangDaftarDompet();
   };
 
-  const ambilDompetDenganId = useCallback((id: number) => {
-    return daftarDompet.find((d) => d.id === id);
-  }, [daftarDompet]);
+  const ambilDompetDenganId = useCallback(
+    (id: number) => {
+      return daftarDompet.find((d) => d.id === id);
+    },
+    [daftarDompet]
+  );
 
   // --- Logika Form ---
   const bukaModalTipe = () => setModalTipeTerlihat(true);

@@ -1,37 +1,30 @@
+// screens/detail-anggaran/ScreenDetailAnggaran.tsx
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ambilSemuaAnggaranDenganRincian } from '@/database/operasi';
+import { ambilSatuAnggaranDenganRincian } from '@/database/operasi';
 import type { Anggaran, RincianAnggaran } from '@/database/tipe';
 import { formatMataUang } from '@/utils/formatMataUang';
 
 export default function ScreenDetailAnggaran() {
   const { id } = useLocalSearchParams();
+  const anggaranId = Number(id);
   const [anggaran, setAnggaran] = useState<Anggaran | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const muatAnggaran = async () => {
-      if (!id) {
+      if (!anggaranId) {
         setIsLoading(false);
         return;
       }
       try {
-        // Ambil semua anggaran dan cari yang sesuai
-        const semuaAnggaran = await ambilSemuaAnggaranDenganRincian();
-        const anggaranDitemukan = semuaAnggaran.find(
-          (a: Anggaran) => a.id === Number(id)
-        );
-        setAnggaran(anggaranDitemukan || null);
+        // Langsung ambil satu anggaran berdasarkan ID untuk efisiensi
+        const anggaranDitemukan = await ambilSatuAnggaranDenganRincian(anggaranId);
+        setAnggaran(anggaranDitemukan);
       } catch (error) {
         console.error('Gagal memuat detail anggaran:', error);
       } finally {
@@ -40,7 +33,15 @@ export default function ScreenDetailAnggaran() {
     };
 
     muatAnggaran();
-  }, [id]);
+  }, [anggaranId]);
+
+  const handleEdit = () => {
+    if (!anggaran) return;
+    router.push({
+      pathname: '/(form)/form-anggaran',
+      params: { id: anggaran.id },
+    });
+  };
 
   const totalTerpakai = 0; // Placeholder, akan diimplementasikan nanti
   const totalSisa = anggaran ? anggaran.total_anggaran - totalTerpakai : 0;
@@ -50,10 +51,12 @@ export default function ScreenDetailAnggaran() {
       {/* Header */}
       <View style={gaya.header}>
         <Pressable onPress={() => router.back()} style={gaya.tombolKembali}>
-          <Text style={gaya.teksTombolKembali}>{'<'}</Text>
+          <Ionicons name="arrow-back" size={24} color="#007BFF" />
         </Pressable>
         <Text style={gaya.judulHeader}>Detail Anggaran</Text>
-        <View style={{ width: 40 }} />
+        <Pressable onPress={handleEdit}>
+          <Ionicons name="pencil" size={24} color="black" />
+        </Pressable>
       </View>
 
       {/* Konten */}
@@ -83,9 +86,7 @@ export default function ScreenDetailAnggaran() {
             <View style={gaya.kartuTotalContainer}>
               <View style={gaya.barisTotal}>
                 <Text style={gaya.labelTotal}>Total Anggaran</Text>
-                <Text style={gaya.totalHijau}>
-                  {formatMataUang(anggaran.total_anggaran)}
-                </Text>
+                <Text style={gaya.totalHijau}>{formatMataUang(anggaran.total_anggaran)}</Text>
               </View>
               <View style={gaya.garisPemisahTipis} />
               <View style={gaya.barisTotal}>
@@ -102,7 +103,7 @@ export default function ScreenDetailAnggaran() {
             {/* Detail Sub-Kategori */}
             <View style={gaya.kartuInfo}>
               <Text style={gaya.labelInfo}>Rincian Sub-Kategori</Text>
-              {anggaran.rincian?.map((sub: RincianAnggaran, index: number) => (
+              {(anggaran.rincian || []).map((sub: RincianAnggaran, index: number) => (
                 <SubKategoriKartu key={index} rincian={sub} />
               ))}
             </View>
@@ -157,10 +158,6 @@ const gaya = StyleSheet.create({
     alignItems: 'center',
     width: 40,
     height: 40,
-  },
-  teksTombolKembali: {
-    fontSize: 24,
-    color: '#007BFF',
   },
   judulHeader: {
     fontSize: 18,

@@ -54,6 +54,9 @@ export type TipePeriode = 'bulanan' | 'tahunan' | 'harian' | 'mingguan' | 'sekal
 
 // --- STRUKTUR ANGGARAN BARU ---
 
+// Tipe untuk anggaran (flat atau persentase).
+export type TipeAnggaran = 'flat' | 'persentase';
+
 // Mendefinisikan struktur untuk rincian anggaran per subkategori.
 export interface RincianAnggaran {
   id: number;
@@ -71,7 +74,7 @@ export interface Anggaran {
   periode: TipePeriode;
   tanggal_mulai: string; // Tanggal awal periode anggaran
   kategori_id: number;
-  tipe: 'flat' | 'persentase'; // Tipe anggaran (BARU)
+  tipe: TipeAnggaran; // Menggunakan tipe yang sudah didefinisikan
   // Opsional, untuk kemudahan menampilkan nama kategori di UI.
   nama_kategori?: string;
   // Opsional, untuk menampung semua rincian dari tabel RincianAnggaran.

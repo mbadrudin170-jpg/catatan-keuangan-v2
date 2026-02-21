@@ -1,31 +1,40 @@
-// screens/form-anggaran/HeaderFormAnggaran.tsx
+// ~/catatan-keuangan-v2/screens/form-anggaran/HeaderFormAnggaran.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-export default function HeaderFormAnggaran() {
+interface Props {
+  isEdit: boolean;
+}
+
+export default function HeaderFormAnggaran({ isEdit }: Props) {
   return (
-    <View style={style.wadah}>
-      <Pressable onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={24} color="black" />
+    <View style={gaya.header}>
+      <Pressable onPress={() => router.back()} style={gaya.tombolKembali}>
+        <Ionicons name="arrow-back" size={24} color="#343A40" />
       </Pressable>
-      <Text style={style.judul}>Form Anggaran</Text>
+      <Text style={gaya.judul}>{isEdit ? 'Edit Anggaran' : 'Tambah Anggaran'}</Text>
     </View>
   );
 }
 
-const style = StyleSheet.create({
-  wadah: {
+const gaya = StyleSheet.create({
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    backgroundColor: 'white',
+    borderBottomColor: '#DEE2E6',
+    backgroundColor: '#FFFFFF',
+  },
+  tombolKembali: {
+    marginRight: 16,
   },
   judul: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 16,
+    fontWeight: '600',
+    color: '#343A40',
   },
 });

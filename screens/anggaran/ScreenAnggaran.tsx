@@ -1,18 +1,10 @@
 // screens/anggaran/ScreenAnggaran.tsx
 import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import {
-  ambilSemuaAnggaranDenganRincian,
-  hapusSemuaAnggaran,
-} from '@/database/operasi';
+import { ambilSemuaAnggaranDenganRincian, hapusSemuaAnggaran } from '@/database/operasi';
 import type { Anggaran } from '@/database/tipe';
 import HeaderAnggaran from './HeaderAnggaran';
 import ListAnggaran from './LIstAnggaran';
@@ -51,7 +43,7 @@ export default function ScreenAnggaran() {
       return semuaAnggaran; // Tampilkan semua jika filter 'semua'
     }
     // Filter daftar anggaran berdasarkan periode yang cocok
-    return semuaAnggaran.filter(anggaran => anggaran.periode === filterAktif);
+    return semuaAnggaran.filter((anggaran) => anggaran.periode === filterAktif);
   }, [semuaAnggaran, filterAktif]);
 
   // Fungsi untuk menangani penghapusan semua anggaran
@@ -88,16 +80,13 @@ export default function ScreenAnggaran() {
         />
 
         {/* Tambahkan komponen filter di sini */}
-        <TombolSortirTipe
-          periodeAktif={filterAktif}
-          onPilihPeriode={setFilterAktif}
-        />
+        <TombolSortirTipe periodeAktif={filterAktif} onPilihPeriode={setFilterAktif} />
 
         {isLoading ? (
           <ActivityIndicator style={{ flex: 1 }} size="large" color="#007bff" />
         ) : (
           // Gunakan data yang sudah difilter untuk ditampilkan
-          <ListAnggaran anggaran={anggaranTersaring} />
+          <ListAnggaran anggaran={anggaranTersaring} setAnggaran={setSemuaAnggaran} />
         )}
       </View>
       <TombolTambahAnggaran />
