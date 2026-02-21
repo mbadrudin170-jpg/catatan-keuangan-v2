@@ -38,11 +38,29 @@ export default function TabLayout(): React.ReactNode {
         }}
       />
       <Tabs.Screen
+        name="anggaran"
+        options={{
+          title: 'Anggaran',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name="pie-chart" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="statistik"
         options={{
           title: 'Statistik',
           tabBarIcon: ({ color, size }: { color: string; size: number }) => (
             <Ionicons name="stats-chart" color={color} size={size} />
+          ),
+        }}
+      />
+       <Tabs.Screen
+        name="kategori"
+        options={{
+          title: 'Kategori',
+          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
+            <Ionicons name="pricetags" color={color} size={size} />
           ),
         }}
       />

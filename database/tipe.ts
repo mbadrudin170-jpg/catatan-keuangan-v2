@@ -50,7 +50,7 @@ export interface Transaksi {
 }
 
 // Mendefinisikan tipe untuk periode anggaran.
-export type TipePeriode = 'bulanan' | 'tahunan' | 'sekali';
+export type TipePeriode = 'bulanan' | 'tahunan' | 'harian'| 'mingguan';
 
 // Mendefinisikan struktur data untuk Anggaran.
 export interface Anggaran {

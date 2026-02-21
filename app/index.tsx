@@ -1,8 +1,8 @@
 // app/index.tsx
 import { Link } from 'expo-router';
+import type { JSX } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import type { JSX } from 'react';
 
 export default function Index(): JSX.Element {
   return (
@@ -39,9 +39,9 @@ export default function Index(): JSX.Element {
           </Pressable>
         </Link>
         {/* DIUBAH: Mengarahkan ke rute yang benar setelah file dipindahkan */}
-        <Link href="/(tabs)/kategori" asChild>
+        <Link href="/anggaran" asChild>
           <Pressable style={gaya.tombol}>
-            <Text style={gaya.teksTombol}>Kategori (Tab)</Text>
+            <Text style={gaya.teksTombol}>Anggaran</Text>
           </Pressable>
         </Link>
       </View>
